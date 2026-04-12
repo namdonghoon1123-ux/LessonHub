@@ -1,0 +1,27 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">LessonHub LH Logo</title>
+  <desc id="desc">Rounded LH monogram inspired by a grand piano silhouette without keys.</desc>
+  <defs>
+    <linearGradient id="lhGradient" x1="34" y1="28" x2="222" y2="228" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E1BEE7"/>
+      <stop offset="1" stop-color="#FFAB91"/>
+    </linearGradient>
+    <linearGradient id="lhOverlay" x1="86" y1="72" x2="208" y2="208" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#C06BC9" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#8C3B9F" stop-opacity="0.76"/>
+    </linearGradient>
+    <radialGradient id="lhGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(188 118) rotate(126.87) scale(66.5445 63.9902)">
+      <stop stop-color="#FFB193"/>
+      <stop offset="1" stop-color="#FFB193" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="256" height="256" rx="40" fill="#FFF8E1"/>
+
+  <path d="M54 38C64.4934 38 73 46.5066 73 57V181H157C167.493 181 176 189.507 176 200C176 210.493 167.493 219 157 219H54C43.5066 219 35 210.493 35 200V57C35 46.5066 43.5066 38 54 38Z" fill="url(#lhGradient)"/>
+
+  <path d="M111 38H147C183.451 38 213 67.5492 213 104C213 128.016 200.162 149.034 181 160.57V201C181 211.493 172.493 220 162 220C151.507 220 143 211.493 143 201V169.5C143 160.387 135.613 153 126.5 153H111C100.507 153 92 144.493 92 134V57C92 46.5066 100.507 38 111 38Z" fill="url(#lhGradient)"/>
+
+  <path d="M176 101C191.5 102.5 204.833 112.833 216 132C212.667 145.5 205 155.5 193 162C179 168 166.333 167 155 159C154 138.333 161 119 176 101Z" fill="url(#lhGlow)"/>
+  <path d="M93 164H129C136.732 164 143 170.268 143 178V184C143 191.732 136.732 198 129 198H93V164Z" fill="url(#lhOverlay)"/>
+</svg>
