@@ -50,6 +50,14 @@
   const logoutBtn = document.getElementById('logoutBtn');
   const loginForm = document.getElementById('loginForm');
   const registerForm = document.getElementById('registerForm');
+  const findLoginIdForm = document.getElementById('findLoginIdForm');
+  const resetPasswordForm = document.getElementById('resetPasswordForm');
+  const findLoginIdResult = document.getElementById('findLoginIdResult');
+  const resetPasswordResult = document.getElementById('resetPasswordResult');
+  const authLayout = document.getElementById('authLayout');
+  const authViewTabs = Array.from(document.querySelectorAll('[data-auth-view-tab]'));
+  const authViewPanels = Array.from(document.querySelectorAll('[data-auth-view]'));
+  const authViewSwitchButtons = Array.from(document.querySelectorAll('[data-switch-auth-view]'));
   const loginRouteHint = document.getElementById('loginRouteHint');
   const roleTitle = document.getElementById('roleTitle');
   const registerTitle = document.getElementById('registerTitle');
@@ -61,6 +69,8 @@
 
   const URL_PARAMS = new URLSearchParams(window.location.search || '');
   const RETURN_TO_RAW = String(URL_PARAMS.get('return_to') || '').trim();
+  const AUTH_TAB_RAW = String(URL_PARAMS.get('tab') || '').trim().toLowerCase();
+  let activeAuthView = AUTH_TAB_RAW === 'register' ? 'register' : 'login';
 
   function resolveReturnToPath(raw) {
     if (!raw) return '';
@@ -80,6 +90,50 @@
     element.hidden = !visible;
   }
 
+  function updateAuthViewUrl(view) {
+    const next = new URL(window.location.href);
+    if (view === 'register') {
+      next.searchParams.set('tab', 'register');
+    } else {
+      next.searchParams.delete('tab');
+    }
+    window.history.replaceState({}, '', `${next.pathname}${next.search}${next.hash}`);
+  }
+
+  function applyAuthView(view, { syncUrl = true } = {}) {
+    const nextView = view === 'register' ? 'register' : 'login';
+    activeAuthView = nextView;
+    authViewPanels.forEach((panel) => {
+      const panelView = String(panel.dataset.authView || '').toLowerCase();
+      panel.hidden = panelView !== nextView;
+    });
+    authViewTabs.forEach((tab) => {
+      const tabView = String(tab.dataset.authViewTab || '').toLowerCase();
+      const active = tabView === nextView;
+      tab.classList.toggle('active', active);
+      tab.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    if (authLayout) {
+      authLayout.classList.add('single-pane');
+    }
+    if (syncUrl) {
+      updateAuthViewUrl(nextView);
+    }
+  }
+
+  function attachAuthViewSwitches() {
+    authViewTabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        applyAuthView(tab.dataset.authViewTab || 'login');
+      });
+    });
+    authViewSwitchButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        applyAuthView(button.dataset.switchAuthView || 'login');
+      });
+    });
+  }
+
   function applyDebugUiVisibility() {
     setElementVisible(presetBtn, SHOW_QUICK_PRESET);
     setElementVisible(healthBtn, SHOW_HEALTH_CHECK);
@@ -96,10 +150,68 @@
     logEl.textContent = line + logEl.textContent;
   }
 
+  function translateApiError(errorCode) {
+    const code = String(errorCode || '').trim();
+    if (!code) return '';
+    if (code.endsWith(' is required') || code.endsWith(' are required')) {
+      const fieldsText = code.replace(/ (is required|are required)$/u, '').trim();
+      const labels = fieldsText
+        .split(',')
+        .map((token) => String(token || '').trim())
+        .filter(Boolean)
+        .map((field) => {
+          const labelMap = {
+            login_id: '아이디',
+            phone: '휴대폰번호',
+            password: '비밀번호',
+            name: '이름',
+            role: '역할',
+          };
+          return labelMap[field] || field;
+        });
+      if (labels.length > 0) {
+        return `${labels.join(', ')} 항목을 입력해 주세요.`;
+      }
+    }
+    const map = {
+      unauthorized: '로그인이 필요합니다.',
+      forbidden: '권한이 없습니다.',
+      internal_server_error: '서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+      invalid_credentials: '아이디 또는 비밀번호가 올바르지 않습니다.',
+      account_deactivated: '비활성화된 계정입니다. 관리자에게 문의해 주세요.',
+      provider_not_found: '지원하지 않는 간편로그인 공급자입니다.',
+      social_login_not_configured: '간편로그인이 아직 설정되지 않았습니다.',
+      social_login_not_implemented: '간편로그인은 준비 중입니다. 일반 로그인/회원가입을 이용해 주세요.',
+      'login_id and password are required': '아이디와 비밀번호를 입력해 주세요.',
+      'login_id, phone, password, name, role are required': '아이디/휴대폰/비밀번호/이름을 모두 입력해 주세요.',
+      'login_id already exists': '이미 사용 중인 아이디입니다.',
+      'phone already exists': '이미 사용 중인 휴대폰번호입니다.',
+      'phone is invalid': '휴대폰번호 형식이 올바르지 않습니다.',
+      'login_id must be 3~60 characters': '아이디는 3~60자여야 합니다.',
+      'password must be at least 8 characters': '비밀번호는 8자 이상이어야 합니다.',
+      'name must be 80 characters or fewer': '이름은 80자 이하여야 합니다.',
+      'role must be TEACHER or STUDENT': '회원가입 역할 정보가 올바르지 않습니다.',
+      'name, phone are required': '이름과 휴대폰번호를 입력해 주세요.',
+      'login_id, name, phone, new_password are required': '아이디/이름/휴대폰번호/새 비밀번호를 입력해 주세요.',
+      'new_password must be at least 8 characters': '새 비밀번호는 8자 이상이어야 합니다.',
+      recovery_user_not_found: '입력한 정보와 일치하는 계정을 찾을 수 없습니다.',
+    };
+    return map[code] || '';
+  }
+
   function getErrorMessage(err) {
-    if (err?.payload?.error) return String(err.payload.error);
+    if (err?.payload?.error) {
+      const localized = translateApiError(err.payload.error);
+      if (localized) return localized;
+      return String(err.payload.error);
+    }
     if (err?.message) return String(err.message);
     return String(err);
+  }
+
+  function isSilentSessionRestoreError(err) {
+    const code = String(err?.payload?.error || '').trim();
+    return code === 'unauthorized' || code === 'account_deactivated';
   }
 
   async function runAction(label, fn) {
@@ -128,24 +240,52 @@
     socialStatus.textContent = String(text || '');
   }
 
+  function normalizePhoneInput(raw) {
+    return String(raw || '').replace(/\D/g, '');
+  }
+
+  function setHintText(element, text, tone = '') {
+    if (!element) return;
+    element.textContent = String(text || '');
+    if (tone) {
+      element.dataset.tone = tone;
+    } else {
+      delete element.dataset.tone;
+    }
+  }
+
   async function loadSocialProviders() {
     if (!socialButtons.length) return;
     const result = await api('/api/v1/auth/social/providers');
     const items = Array.isArray(result?.items) ? result.items : [];
     const byProvider = new Map(items.map((item) => [String(item.provider || '').toUpperCase(), item]));
 
-    let enabledCount = 0;
+    let availableCount = 0;
+    let configuredCount = 0;
     socialButtons.forEach((button) => {
       const provider = String(button.dataset.socialProvider || '').toUpperCase();
       const providerInfo = byProvider.get(provider);
-      const enabled = Boolean(providerInfo?.enabled);
-      if (enabled) enabledCount += 1;
-      setButtonEnabled(button, enabled);
-      button.title = enabled ? `${provider} 로그인 연동 사용 가능` : `${provider} 로그인 연동 미설정`;
+      const isConfigured = Boolean(providerInfo?.enabled);
+      const isImplemented = Boolean(providerInfo?.implemented);
+      const isAvailable = isConfigured && isImplemented;
+      if (isConfigured) configuredCount += 1;
+      if (isAvailable) availableCount += 1;
+      setButtonEnabled(button, isAvailable);
+      if (isAvailable) {
+        button.title = `${provider} 로그인 사용 가능`;
+      } else if (isConfigured) {
+        button.title = `${provider} 로그인 준비중`;
+      } else {
+        button.title = `${provider} 로그인 연동 미설정`;
+      }
     });
 
-    if (enabledCount > 0) {
-      setSocialStatusText(`간편로그인 사용 가능: ${enabledCount}개 공급자`);
+    if (availableCount > 0) {
+      setSocialStatusText(`간편로그인 사용 가능: ${availableCount}개 공급자`);
+      return;
+    }
+    if (configuredCount > 0) {
+      setSocialStatusText('간편로그인은 연동 설정은 되어 있으나 아직 준비중입니다. 일반 로그인/회원가입을 이용해 주세요.');
       return;
     }
     setSocialStatusText('간편로그인은 아직 설정되지 않았습니다. (Google/Naver 준비중)');
@@ -220,6 +360,9 @@
     if (!res.ok) {
       const err = new Error(`${method} ${path} failed (${res.status})`);
       err.payload = payload;
+      if (auth && (res.status === 401 || res.status === 403)) {
+        setAuth('', null);
+      }
       throw err;
     }
     return payload;
@@ -238,12 +381,14 @@
   function roleHomePath(userRole) {
     if (userRole === 'TEACHER') return '/teacher.html';
     if (userRole === 'STUDENT') return '/student.html';
+    if (userRole === 'POWER_ADMIN') return '/power-admin.html';
     return '/index.html';
   }
 
   function roleLoginPath(userRole) {
     if (userRole === 'TEACHER') return '/teacher-login.html';
     if (userRole === 'STUDENT') return '/student-login.html';
+    if (userRole === 'POWER_ADMIN') return '/power-admin.html';
     return '/index.html';
   }
 
@@ -295,9 +440,14 @@
     e.preventDefault();
     runAction('로그인', async () => {
       const form = formObject(loginForm);
+      const loginId = String(form.login_id || '').trim().toLowerCase();
+      const password = String(form.password || '');
+      if (!loginId || !password) {
+        throw new Error('아이디와 비밀번호를 입력해 주세요.');
+      }
       const result = await api('/api/v1/auth/login', {
         method: 'POST',
-        body: { login_id: form.login_id, password: form.password },
+        body: { login_id: loginId, password },
       });
       setAuth(result.token, result.user);
       if (!guardRoleOrRedirect(result.user?.role)) return;
@@ -309,17 +459,27 @@
     e.preventDefault();
     runAction('회원가입', async () => {
       const form = formObject(registerForm);
+      const loginId = String(form.login_id || '').trim().toLowerCase();
+      const phone = normalizePhoneInput(form.phone);
+      const password = String(form.password || '');
+      const passwordConfirm = String(form.password_confirm || '');
+      const name = String(form.name || '').trim();
+      if (!loginId || !phone || !password || !name || !role) {
+        throw new Error('아이디, 휴대폰번호, 이름, 비밀번호를 모두 입력해 주세요.');
+      }
+      if (password !== passwordConfirm) {
+        throw new Error('비밀번호와 비밀번호 확인이 일치하지 않습니다.');
+      }
       const body = {
-        login_id: form.login_id,
-        phone: form.phone,
-        password: form.password,
-        name: form.name,
+        login_id: loginId,
+        phone,
+        password,
+        name,
         role,
       };
 
       if (role === 'TEACHER') {
         const lessonDurationMin = String(form.lesson_duration_min || '').trim();
-        const timezone = String(form.timezone || '').trim();
         const cancelCutoffHours = String(form.cancel_cutoff_hours || '').trim();
         const bookingWindowDays = String(form.booking_window_days || '').trim();
         const studentCancelDayBeforeHour = String(form.student_cancel_day_before_hour || '').trim();
@@ -328,7 +488,6 @@
         const bio = String(form.bio || '').trim();
 
         if (lessonDurationMin) body.lesson_duration_min = lessonDurationMin;
-        if (timezone) body.timezone = timezone;
         if (cancelCutoffHours) body.cancel_cutoff_hours = cancelCutoffHours;
         if (bookingWindowDays) body.booking_window_days = bookingWindowDays;
         if (studentCancelDayBeforeHour) body.student_cancel_day_before_hour = studentCancelDayBeforeHour;
@@ -347,7 +506,75 @@
     });
   });
 
+  findLoginIdForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    runAction('아이디 찾기', async () => {
+      const form = formObject(findLoginIdForm);
+      const name = String(form.name || '').trim();
+      const phone = normalizePhoneInput(form.phone);
+      if (!name || !phone) {
+        throw new Error('이름과 휴대폰번호를 입력해 주세요.');
+      }
+      const result = await api('/api/v1/auth/recover/login-id', {
+        method: 'POST',
+        body: {
+          name,
+          phone,
+          role,
+        },
+      });
+      const loginId = String(result?.login_id || '').trim();
+      if (!loginId) {
+        throw new Error('아이디를 찾을 수 없습니다.');
+      }
+      setHintText(findLoginIdResult, `가입 아이디: ${loginId}`, 'success');
+      if (loginForm?.elements?.login_id) {
+        loginForm.elements.login_id.value = loginId;
+      }
+      applyAuthView('login');
+    });
+  });
+
+  resetPasswordForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    runAction('비밀번호 재설정', async () => {
+      const form = formObject(resetPasswordForm);
+      const loginId = String(form.login_id || '').trim().toLowerCase();
+      const name = String(form.name || '').trim();
+      const phone = normalizePhoneInput(form.phone);
+      const newPassword = String(form.new_password || '');
+      const newPasswordConfirm = String(form.new_password_confirm || '');
+      if (!loginId || !name || !phone || !newPassword) {
+        throw new Error('아이디, 이름, 휴대폰번호, 새 비밀번호를 입력해 주세요.');
+      }
+      if (newPassword !== newPasswordConfirm) {
+        throw new Error('새 비밀번호와 확인 비밀번호가 일치하지 않습니다.');
+      }
+      await api('/api/v1/auth/recover/password', {
+        method: 'POST',
+        body: {
+          login_id: loginId,
+          name,
+          phone,
+          new_password: newPassword,
+          role,
+        },
+      });
+      setHintText(resetPasswordResult, '비밀번호가 재설정되었습니다. 새 비밀번호로 로그인해 주세요.', 'success');
+      if (loginForm?.elements?.login_id) {
+        loginForm.elements.login_id.value = loginId;
+      }
+      if (loginForm?.elements?.password) {
+        loginForm.elements.password.value = '';
+      }
+      resetPasswordForm.reset();
+      applyAuthView('login');
+    });
+  });
+
   function bootstrap() {
+    attachAuthViewSwitches();
+    applyAuthView(activeAuthView, { syncUrl: false });
     applyDebugUiVisibility();
     if (roleTitle) roleTitle.textContent = `${info.label} 로그인`;
     if (registerTitle) registerTitle.textContent = `${info.label} 회원가입`;
@@ -366,12 +593,21 @@
     });
 
     if (!state.token) return;
-    runAction('세션 복원', async () => {
-      await syncMe();
-      if (!state.user?.role) return;
-      if (!guardRoleOrRedirect(state.user.role)) return;
-      redirectByRole(state.user.role);
-    });
+    (async () => {
+      try {
+        await syncMe();
+        if (!state.user?.role) return;
+        if (!guardRoleOrRedirect(state.user.role)) return;
+        redirectByRole(state.user.role);
+      } catch (err) {
+        const message = getErrorMessage(err);
+        pushLog('세션 복원 FAILED', { message, payload: err?.payload });
+        setAuth('', null);
+        if (!isSilentSessionRestoreError(err)) {
+          window.alert(`세션 복원 실패: ${message}`);
+        }
+      }
+    })();
   }
 
   bootstrap();

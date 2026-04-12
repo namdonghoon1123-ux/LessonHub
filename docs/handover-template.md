@@ -16,6 +16,8 @@
 3. 
 
 ## 참고 링크 / 파일
-- `/Volumes/Extreme SSD/workspace/README.md`
-- `/Volumes/Extreme SSD/workspace/GEMINI.md`
-- `/Volumes/Extreme SSD/workspace/CODEX.md`
+- `/Volumes/Extreme_SSD/workspace/README.md`
+- `/Volumes/Extreme_SSD/workspace/GEMINI.md`
+- `/Volumes/Extreme_SSD/workspace/CODEX.md`
+- `/Volumes/Extreme_SSD/workspace/CLAUDE.md`
+- `/Volumes/Extreme_SSD/workspace/docs/ai-handover-2026-03-30.md`

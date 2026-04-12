@@ -317,6 +317,52 @@ test('teacher profile can update student notice and day-before cancel hour', asy
   assert.equal(teachers.body.items[0].student_notice, '이번 주는 교재 3권 지참 바랍니다.');
 });
 
+test('public recovery endpoints do not expose power admin accounts', async () => {
+  await seedBookableScenario();
+  const powerAdminPasswordHash = await bcrypt.hash('local-test-fixture-password', 10);
+
+  await pool.query(
+    `
+      INSERT INTO users (role, email, phone_normalized, password_hash, name)
+      VALUES ('POWER_ADMIN', 'poweradmin', '01099990000', $1, 'Power Admin')
+    `,
+    [powerAdminPasswordHash]
+  );
+
+  const loginIdRecovery = await requestJson('/api/v1/auth/recover/login-id', {
+    method: 'POST',
+    body: {
+      name: 'Power Admin',
+      phone: '010-9999-0000',
+      role: 'POWER_ADMIN',
+    },
+  });
+  assert.equal(loginIdRecovery.status, 404);
+  assert.equal(loginIdRecovery.body.error, 'recovery_user_not_found');
+
+  const passwordRecovery = await requestJson('/api/v1/auth/recover/password', {
+    method: 'POST',
+    body: {
+      login_id: 'poweradmin',
+      name: 'Power Admin',
+      phone: '010-9999-0000',
+      new_password: 'new-secret-123',
+      role: 'POWER_ADMIN',
+    },
+  });
+  assert.equal(passwordRecovery.status, 404);
+  assert.equal(passwordRecovery.body.error, 'recovery_user_not_found');
+
+  const loginWithOldPassword = await requestJson('/api/v1/auth/login', {
+    method: 'POST',
+    body: {
+      login_id: 'poweradmin',
+      password: 'local-test-fixture-password',
+    },
+  });
+  assert.equal(loginWithOldPassword.status, 200);
+});
+
 test('teacher can cancel after cutoff as override', async () => {
   const scenario = await seedBookableScenario({ cancelCutoffHours: 999 });
   const studentToken = await login('student@example.com');
@@ -609,6 +655,27 @@ test('teacher availability and exceptions require 30-minute aligned times', asyn
   });
   assert.equal(exception.status, 400);
   assert.equal(exception.body.error, 'time_must_align_to_30_min');
+});
+
+test('teacher availability accepts midnight end time when aligned', async () => {
+  await seedBookableScenario();
+  const teacherToken = await login('teacher@example.com');
+
+  const availability = await requestJson('/api/v1/teachers/me/availability', {
+    method: 'POST',
+    token: teacherToken,
+    body: {
+      weekday: 5,
+      start_time_local: '23:30',
+      end_time_local: '24:00',
+      is_active: true,
+      lesson_title: '막타 수업',
+    },
+  });
+
+  assert.equal(availability.status, 201);
+  assert.equal(availability.body.item.start_time_local, '23:30:00');
+  assert.equal(availability.body.item.end_time_local, '24:00:00');
 });
 
 test('past booked lesson is auto-completed when bookings are queried', async () => {

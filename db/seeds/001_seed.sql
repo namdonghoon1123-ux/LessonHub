@@ -1,10 +1,10 @@
 INSERT INTO users (role, email, password_hash, name)
 VALUES
   ('TEACHER', 'teacher@example.com', '$2b$10$SAnonO1ZUr6gMNJMzd5CbO8Jx0jCwswrNDrR2eELeMqQfuv1excaG', 'Demo Teacher'),
-  ('STUDENT', 'student@example.com', '$2b$10$SAnonO1ZUr6gMNJMzd5CbO8Jx0jCwswrNDrR2eELeMqQfuv1excaG', 'Demo Student')
+  ('STUDENT', 'student@example.com', '$2b$10$SAnonO1ZUr6gMNJMzd5CbO8Jx0jCwswrNDrR2eELeMqQfuv1excaG', 'Demo Student'),
+  ('POWER_ADMIN', 'poweradmin', '$2a$10$5eVGtCMHIzOkM8ANenqKre6lrqsYcKDT1lJpIB1zvpl0dI1kCs8cq', 'Power Admin')
 ON CONFLICT (email) DO UPDATE SET
   role = EXCLUDED.role,
-  password_hash = EXCLUDED.password_hash,
   name = EXCLUDED.name,
   updated_at = NOW();
 

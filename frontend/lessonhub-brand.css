@@ -34,8 +34,8 @@
 }
 
 .lh-logo--sm {
-  --logo-size: 44px;
-  border-radius: 20px;
+  --logo-size: 36px;
+  border-radius: 16px;
 }
 
 .lh-logo--md {

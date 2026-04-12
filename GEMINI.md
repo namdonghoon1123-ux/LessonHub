@@ -36,16 +36,16 @@ docker compose up --build -d backend frontend
 ```
 
 ## 5) 참고 문서
-- 일일 인수인계: `/Volumes/Extreme SSD/workspace/docs/handover-YYYY-MM-DD.md`
-- 작업 기록: `/Volumes/Extreme SSD/workspace/docs/worklog-2026-03-02.md`
+- 일일 인수인계: `/Volumes/Extreme_SSD/workspace/docs/handover-YYYY-MM-DD.md`
+- 작업 기록: `/Volumes/Extreme_SSD/workspace/docs/worklog-2026-03-02.md`
 
 ## 6) 2026-03-02 추가 반영 (최신)
 - 설정파일 기반 운영값 적용
-  - 파일: `/Volumes/Extreme SSD/workspace/backend/config/app.config.json`
-  - 로더: `/Volumes/Extreme SSD/workspace/backend/src/config.js`
+  - 파일: `/Volumes/Extreme_SSD/workspace/backend/config/app.config.json`
+  - 로더: `/Volumes/Extreme_SSD/workspace/backend/src/config.js`
   - 반영된 설정: 게스트 취소사유 필수, PIN 락아웃 정책, 완료 코멘트 필수 정책, 스케줄러 주기
 - DB 스키마 추가
-  - `/Volumes/Extreme SSD/workspace/db/migrations/009_guest_pin_lockout_and_comment_split.sql`
+  - `/Volumes/Extreme_SSD/workspace/db/migrations/009_guest_pin_lockout_and_comment_split.sql`
   - `guest_students.pin_failed_attempts`, `guest_students.pin_locked_until`
   - `bookings.teacher_private_comment`, `bookings.student_comment`
 - API 정책
@@ -63,7 +63,7 @@ docker-compose build backend
 docker-compose run --rm backend npm test
 docker-compose up --build -d backend frontend
 docker-compose exec -T backend npm run -s migrate
-bash "/Volumes/Extreme SSD/workspace/scripts/smoke-test-api.sh"
+bash "/Volumes/Extreme_SSD/workspace/scripts/smoke-test-api.sh"
 ```
 
 ## 8) 2026-03-06 추가 인수인계
@@ -97,6 +97,6 @@ bash "/Volumes/Extreme SSD/workspace/scripts/smoke-test-api.sh"
   - 사용자 문구 통일(`Today` -> `오늘`, `This Week` -> `이번 주`)
   - 접근성 보강(`aria-current`, `role=status`, 표 `scope`, `prefers-reduced-motion`, `prefers-contrast`)
 - 참고 문서
-  - QA 체크리스트: `/Volumes/Extreme SSD/workspace/docs/ui-qa-checklist-2026-03-23.md`
-  - Gemini 검수 주의사항: `/Volumes/Extreme SSD/workspace/docs/gemini-design-review-notes-2026-03-23.md`
-  - 회귀 스냅샷: `/Volumes/Extreme SSD/workspace/docs/regression-snapshots/2026-03-23`
+  - QA 체크리스트: `/Volumes/Extreme_SSD/workspace/docs/ui-qa-checklist-2026-03-23.md`
+  - Gemini 검수 주의사항: `/Volumes/Extreme_SSD/workspace/docs/gemini-design-review-notes-2026-03-23.md`
+  - 회귀 스냅샷: `/Volumes/Extreme_SSD/workspace/docs/regression-snapshots/2026-03-23`

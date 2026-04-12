@@ -22,10 +22,11 @@
           </span>
         </a>
         <div class="top-links">
-          <a href="/index.html">로그인</a>
-          <a href="/student.html">학생</a>
-          <a href="/teacher.html">선생님</a>
-          <a href="/guide.html">사용자 설명서</a>
+          <a href="/index.html" data-top-link="login">로그인</a>
+          <a href="/student.html" data-top-link="student">학생</a>
+          <a href="/teacher.html" data-top-link="teacher">선생님</a>
+          <a href="/power-admin.html" data-top-link="power-admin">파워관리자</a>
+          <a href="/guide.html" data-top-link="guide">사용자 설명서</a>
           <button id="topLogoutBtn" type="button">로그아웃</button>
         </div>
       </nav>
@@ -78,6 +79,7 @@
                 </label>
               </div>
               <label>비밀번호 <input name="password" type="password" autocomplete="new-password" required /></label>
+              <label>비밀번호 확인 <input name="password_confirm" type="password" autocomplete="new-password" required /></label>
               <div class="actions">
                 <button type="submit">회원가입</button>
                 <button id="logoutBtn" class="danger" type="button">로그아웃</button>
@@ -107,16 +109,47 @@
           <h2>학생 예약 대시보드</h2>
           <p>주간 타임테이블에서 원하는 시간을 클릭해 수강신청할 수 있습니다.</p>
         </div>
+        <div id="studentLoginStatus" class="status compact-status" style="margin-bottom: 10px">현재 로그인: -</div>
 
         <div class="workspace-layout">
           <aside class="workspace-nav">
             <strong>학생 페이지</strong>
             <a href="/student-calendar.html" data-nav-section="calendar">수업 캘린더</a>
             <a href="/student-bookings.html" data-nav-section="bookings">내 예약 목록</a>
-            <a href="/student.html" data-nav-section="all">통합 보기</a>
+            <a href="/student-settings.html" data-nav-section="settings">설정</a>
           </aside>
 
           <div class="workspace-content">
+            <article id="studentTeacherConnectSection" class="subpanel" style="margin-bottom: 10px">
+              <h3>담당 선생님 연결</h3>
+              <p id="studentTeacherAssignHint" class="hint" style="margin: 0 0 8px 0">
+                선생님 ID, 아이디, 이름으로 검색 후 담당 선생님을 연결해 주세요.
+              </p>
+              <div class="grid two">
+                <label>선생님 검색 (ID / 아이디 / 이름)
+                  <input id="studentTeacherLookupInput" placeholder="예: 1, teacher01, 김선생" />
+                </label>
+                <div class="actions" style="align-self: end">
+                  <button id="studentTeacherSearchBtn" type="button">선생님 검색</button>
+                  <button id="studentTeacherAssignBtn" type="button" class="primary">입력값으로 연결</button>
+                  <button id="studentTeacherAssignSelectedBtn" type="button">선택 선생님 연결</button>
+                  <button id="studentTeacherInviteAssignBtn" type="button" class="warn hidden">초대 선생님 연결</button>
+                  <button id="studentTeacherClearBtn" type="button">연결 해제</button>
+                </div>
+              </div>
+              <label>검색 결과
+                <select id="studentTeacherSearchSelect">
+                  <option value="">검색 결과가 없습니다.</option>
+                </select>
+              </label>
+            </article>
+            <article id="studentNeedsTeacherNotice" class="subpanel hidden" style="margin-bottom: 10px">
+              <h3>선생님 연결이 필요합니다</h3>
+              <p class="hint" style="margin: 0">
+                수업 캘린더/예약 목록은 담당 선생님 연결 후 자동으로 열립니다. 위에서 선생님을 먼저 연결해 주세요.
+              </p>
+            </article>
+
             <section id="studentCalendarSection">
               <div class="stats">
                 <article class="stat-card">
@@ -138,19 +171,6 @@
                 <span id="studentPolicyWindow" class="meta-chip">예약 가능 범위: -</span>
                 <span id="studentPolicyCutoff" class="meta-chip">취소 마감: -</span>
               </div>
-              <article class="subpanel" style="margin-top: 10px">
-                <h3>담당 선생님 연결</h3>
-                <p id="studentTeacherAssignHint" class="hint" style="margin: 0 0 8px 0">선생님 ID 또는 로그인 ID로 담당 선생님을 먼저 연결해 주세요.</p>
-                <div class="grid two">
-                  <label>선생님 ID / 로그인 ID
-                    <input id="studentTeacherLookupInput" placeholder="예: 1 또는 teacher01" />
-                  </label>
-                  <div class="actions" style="align-self: end">
-                    <button id="studentTeacherAssignBtn" type="button" class="primary">선생님 연결</button>
-                    <button id="studentTeacherClearBtn" type="button">연결 해제</button>
-                  </div>
-                </div>
-              </article>
               <article class="subpanel" style="margin-top: 10px">
                 <h3>선생님 공지사항</h3>
                 <p id="studentTeacherNotice" class="hint" style="margin: 0">선생님을 선택하면 공지사항이 표시됩니다.</p>
@@ -228,7 +248,10 @@
                   </table>
                 </div>
               </article>
-              <article class="subpanel" style="margin-top: 12px">
+            </section>
+
+            <section id="studentSettingsSection">
+              <article class="subpanel">
                 <h3>내 계정 관리</h3>
                 <p id="studentAccountTierBadge" class="hint" style="margin: 0 0 8px 0">계정 유형: 확인 중...</p>
                 <div class="grid two">
@@ -276,15 +299,15 @@
           <h2>선생님 운영 대시보드</h2>
           <p>주간 반복 시간표와 특정 날짜 예외를 분리해 관리합니다.</p>
         </div>
+        <div id="teacherLoginStatus" class="status compact-status" style="margin-bottom: 10px">현재 로그인: -</div>
 
         <div class="workspace-layout">
           <aside class="workspace-nav">
             <strong>선생님 페이지</strong>
             <a href="/teacher-calendar.html" data-nav-section="calendar">캘린더</a>
             <a href="/teacher-manage.html" data-nav-section="manage">시간표/예외 관리</a>
-            <a href="/teacher-bookings.html" data-nav-section="bookings">예약 승인/취소</a>
-            <a href="/teacher-completed.html" data-nav-section="completed">완료 수업 관리</a>
-            <a href="/teacher.html" data-nav-section="all">통합 보기</a>
+            <a href="/teacher-bookings.html" data-nav-section="operations">수업관리</a>
+            <a href="/teacher-settings.html" data-nav-section="settings">설정</a>
           </aside>
 
           <div class="workspace-content">
@@ -313,10 +336,14 @@
                       <option value="exception">불가 시간/휴무</option>
                     </select>
                   </label>
-                  <button id="teacherInviteBtn" class="primary" type="button">학생 예약 링크 복사</button>
-                  <span class="hint">수업은 드래그한 한 블럭 단위로 생성됩니다. 모바일은 캘린더 칸을 길게 누른 뒤 드래그하면 동일하게 등록됩니다. 캘린더 링크는 전체 시간표 공유용이며, 레슨별 링크는 아래 오픈 슬롯 목록에서 복사할 수 있습니다.</span>
+                  <button id="teacherInviteBtn" class="primary" type="button">학생 링크 복사</button>
+                  <span class="hint">데스크톱은 드래그로 범위를 만들고, 모바일은 빈 칸을 한 번 눌러 시작시간을 고른 뒤 같은 날 종료시간을 다시 눌러 등록합니다. 캘린더 링크는 전체 시간표 공유용이며, 레슨별 링크는 아래 오픈 슬롯 목록에서 복사할 수 있습니다.</span>
                 </div>
                 <div class="right">
+                  <div class="actions" style="margin-right: 4px">
+                    <button id="teacherWeekViewBtn" type="button" class="primary">주 캘린더</button>
+                    <button id="teacherMonthViewBtn" type="button">월 캘린더</button>
+                  </div>
                   <button id="teacherPrevWeekBtn" type="button">이전 주</button>
                   <strong id="teacherWeekLabel" class="month-label mono"></strong>
                   <button id="teacherNextWeekBtn" type="button">다음 주</button>
@@ -333,16 +360,35 @@
                   <button id="teacherWeekRefreshBtn" type="button">캘린더 새로고침</button>
                 </div>
               </div>
+              <article class="subpanel calendar-mobile-tools">
+                <div class="actions">
+                  <button id="teacherJumpMorningBtn" type="button">오전 9시</button>
+                  <button id="teacherJumpAfternoonBtn" type="button">오후 1시</button>
+                  <button id="teacherJumpEveningBtn" type="button">오후 6시</button>
+                  <button id="teacherClearTouchSelectionBtn" class="warn" type="button">선택 초기화</button>
+                </div>
+                <p id="teacherTouchGuide" class="hint" style="margin: 0">
+                  모바일에서는 빈 칸을 한 번 눌러 시작시간을, 다시 눌러 종료시간을 고를 수 있습니다.
+                </p>
+              </article>
 
               <article class="calendar-card" style="margin-bottom: 12px">
                 <div id="teacherCalendarGrid" class="calendar-grid"></div>
               </article>
+              <article id="teacherCellDetailCard" class="subpanel hidden" style="margin-bottom: 12px">
+                <div class="table-head">
+                  <h3 id="teacherCellDetailTitle">선택한 시간 상세</h3>
+                  <button id="teacherCellDetailClearBtn" type="button">닫기</button>
+                </div>
+                <div id="teacherCellDetailBody" class="hint">캘린더에서 오픈/예약/완료 칸을 누르면 상세가 표시됩니다.</div>
+                <div id="teacherCellDetailActions" class="actions" style="margin-top: 8px"></div>
+              </article>
               <article class="table-card">
                 <div class="table-head">
-                  <h3>이번 주 오픈 슬롯 (링크/대리예약)</h3>
+                  <h3 id="teacherOpenSlotTitle">이번 주 오픈 슬롯 (링크/대리예약)</h3>
                   <button id="teacherOpenSlotRefreshBtn" type="button">새로고침</button>
                 </div>
-                <p class="hint" style="margin: 0 0 8px 0">
+                <p id="teacherOpenSlotHint" class="hint" style="margin: 0 0 8px 0">
                   캘린더 링크는 전체 주간 시간표 공유용, 레슨 링크는 특정 시간 1건 공유용입니다.
                 </p>
                 <div id="teacherOpenSlotList" class="slot-list"></div>
@@ -350,8 +396,22 @@
             </section>
 
             <section id="teacherManageSection">
+              <article class="subpanel" style="margin-bottom: 12px">
+                <h3>시간표/예외 관리 메뉴</h3>
+                <div class="grid two">
+                  <label>세부 메뉴
+                    <select id="teacherManagePanelSelect">
+                      <option value="availability" selected>주간 시간표</option>
+                      <option value="exception">불가 일정</option>
+                    </select>
+                  </label>
+                  <p class="hint" style="align-self: end; margin: 0">
+                    캘린더는 빠른 생성/확인용, 이 화면은 대량 수정/조회용입니다.
+                  </p>
+                </div>
+              </article>
               <div class="grid two">
-                <article class="subpanel">
+                <article class="subpanel" data-manage-panel="availability">
                   <h3>주간 시간표</h3>
                   <form id="availabilityForm" class="grid">
                     <div class="grid three">
@@ -365,8 +425,12 @@
                       </label>
                     </div>
                     <div class="grid two">
-                      <label>시작시간 <input name="start_time_local" type="time" step="1800" value="09:00" required /></label>
-                      <label>종료시간 <input name="end_time_local" type="time" step="1800" value="12:00" required /></label>
+                      <label>시작시간
+                        <select name="start_time_local" data-half-hour-select="start" data-default-time="09:00" required></select>
+                      </label>
+                      <label>종료시간
+                        <select name="end_time_local" data-half-hour-select="end" data-default-time="12:00" required></select>
+                      </label>
                     </div>
                     <div class="grid two">
                       <label>수업명 <input name="lesson_title" placeholder="예: 회화 입문" /></label>
@@ -398,7 +462,7 @@
                   </div>
                 </article>
 
-                <article class="subpanel">
+                <article class="subpanel" data-manage-panel="exception">
                   <h3>불가 일정</h3>
                   <form id="exceptionForm" class="grid">
                     <div class="grid three">
@@ -407,8 +471,12 @@
                       <label>사유 <input name="reason" placeholder="휴무" /></label>
                     </div>
                     <div class="grid two">
-                      <label>시작시간 <input name="start_time_local" type="time" step="1800" required /></label>
-                      <label>종료시간 <input name="end_time_local" type="time" step="1800" required /></label>
+                      <label>시작시간
+                        <select name="start_time_local" data-half-hour-select="start" data-allow-empty="true" required></select>
+                      </label>
+                      <label>종료시간
+                        <select name="end_time_local" data-half-hour-select="end" data-allow-empty="true" required></select>
+                      </label>
                     </div>
                   </form>
                   <div class="actions">
@@ -433,11 +501,138 @@
                   </div>
                 </article>
               </div>
-              <article class="subpanel" style="margin-top: 12px">
+            </section>
+
+            <section id="teacherOperationsSection">
+              <article class="subpanel" style="margin-bottom: 12px">
+                <h3>수업관리</h3>
+                <div class="segmented-control">
+                  <button id="teacherOperationsBookingsTab" class="primary" type="button">진행 중 예약</button>
+                  <button id="teacherOperationsCompletedTab" type="button">완료 수업</button>
+                </div>
+                <p class="hint" style="margin: 0">작은 화면에서도 헷갈리지 않도록 진행 중 예약과 완료 수업을 나눠서 봅니다.</p>
+              </article>
+
+              <section id="teacherBookingsSection">
+                <article class="table-card">
+                  <div class="table-head">
+                    <h3>진행 중 예약</h3>
+                    <button id="teacherBookingsRefreshBtn" type="button">새로고침</button>
+                  </div>
+                  <div class="subpanel">
+                    <div class="grid four compact-grid">
+                      <label>학생 검색
+                        <input id="teacherBookingsKeywordFilter" placeholder="학생 이름 또는 아이디" />
+                      </label>
+                      <label>상태
+                        <select id="teacherBookingsStatusFilter">
+                          <option value="all" selected>전체</option>
+                          <option value="PENDING">승인 대기</option>
+                          <option value="BOOKED">승인 완료</option>
+                        </select>
+                      </label>
+                      <label>시작일
+                        <input id="teacherBookingsFromDate" type="date" />
+                      </label>
+                      <label>종료일
+                        <input id="teacherBookingsToDate" type="date" />
+                      </label>
+                    </div>
+                    <div class="actions">
+                      <label style="min-width: 140px">
+                        페이지당 건수
+                        <select id="teacherBookingsPageSize">
+                          <option value="10">10건</option>
+                          <option value="20" selected>20건</option>
+                          <option value="30">30건</option>
+                          <option value="50">50건</option>
+                        </select>
+                      </label>
+                      <button id="teacherBookingsFilterBtn" type="button" class="primary">검색</button>
+                      <button id="teacherBookingsResetBtn" type="button">초기화</button>
+                    </div>
+                  </div>
+                  <p class="hint" style="margin: 0 0 10px 0">
+                    리스트에서 항목을 클릭하면 상세 확인/승인/취소/완료처리를 할 수 있습니다.
+                  </p>
+                  <div id="teacherBookingsList" class="history-list"></div>
+                  <div class="list-pagination">
+                    <button id="teacherBookingsPrevBtn" type="button">이전</button>
+                    <span id="teacherBookingsPageInfo" class="hint">총 0건</span>
+                    <button id="teacherBookingsNextBtn" type="button">다음</button>
+                  </div>
+                </article>
+              </section>
+
+              <section id="teacherCompletedSection">
+                <article class="table-card">
+                  <div class="table-head">
+                    <h3>완료 수업 이력</h3>
+                    <button id="teacherCompletedRefreshBtn" type="button">새로고침</button>
+                  </div>
+                  <div class="subpanel">
+                    <div class="grid four compact-grid">
+                      <label>레슨 항목 필터
+                        <select id="teacherCompletedLessonFilter"></select>
+                      </label>
+                      <label>학생 검색
+                        <input id="teacherCompletedKeywordFilter" placeholder="학생 이름 또는 아이디" />
+                      </label>
+                      <label>시작일
+                        <input id="teacherCompletedFromDate" type="date" />
+                      </label>
+                      <label>종료일
+                        <input id="teacherCompletedToDate" type="date" />
+                      </label>
+                    </div>
+                    <div class="actions">
+                      <label style="min-width: 140px">
+                        페이지당 건수
+                        <select id="teacherCompletedPageSize">
+                          <option value="10">10건</option>
+                          <option value="20" selected>20건</option>
+                          <option value="30">30건</option>
+                          <option value="50">50건</option>
+                        </select>
+                      </label>
+                      <button id="teacherCompletedFilterBtn" type="button" class="primary">검색</button>
+                      <button id="teacherCompletedResetBtn" type="button">초기화</button>
+                    </div>
+                  </div>
+                  <p class="hint" style="margin: 0 0 10px 0">
+                    운영 화면에서는 리스트가 가장 빠르게 스캔되어, 시간/학생/코멘트 확인과 수정이 한 번에 가능합니다.
+                  </p>
+                  <div id="teacherCompletedList" class="history-list"></div>
+                  <div class="list-pagination">
+                    <button id="teacherCompletedPrevBtn" type="button">이전</button>
+                    <span id="teacherCompletedPageInfo" class="hint">총 0건</span>
+                    <button id="teacherCompletedNextBtn" type="button">다음</button>
+                  </div>
+                </article>
+              </section>
+            </section>
+
+            <section id="teacherSettingsSection">
+              <article class="subpanel" style="margin-bottom: 12px">
+                <h3>설정</h3>
+                <div class="grid two">
+                  <label>세부 메뉴
+                    <select id="teacherSettingsPanelSelect">
+                      <option value="profile" selected>선생님 설정</option>
+                      <option value="account">내 계정 관리</option>
+                      <option value="students">임시 학생 계정 관리</option>
+                    </select>
+                  </label>
+                  <p class="hint" style="align-self: end; margin: 0">
+                    필요한 설정 묶음만 선택해 한 화면에서 집중해서 작업할 수 있습니다.
+                  </p>
+                </div>
+              </article>
+              <article class="subpanel" data-teacher-settings-panel="profile" style="margin-top: 12px">
                 <h3>선생님 설정</h3>
                 <form id="teacherProfileForm" class="grid">
                   <div class="grid two">
-                    <label>표시 이름
+                    <label>이름
                       <input name="display_name" placeholder="학생에게 보일 선생님 이름" />
                     </label>
                     <label>프로필 소개
@@ -448,9 +643,7 @@
                     <label>학생 취소 마감시각(전날 기준 0~23시)
                       <input name="student_cancel_day_before_hour" type="number" min="0" max="23" value="21" required />
                     </label>
-                    <label>시간대 (IANA)
-                      <input name="timezone" value="Asia/Seoul" />
-                    </label>
+                    <div class="hint" style="align-self: end">서비스 시간대는 한국(Asia/Seoul)으로 고정됩니다.</div>
                   </div>
                   <label>학생 공지사항
                     <textarea name="student_notice" rows="3" placeholder="수업 준비물, 연락 안내, 취소 규정 등을 입력하세요."></textarea>
@@ -462,12 +655,7 @@
                 </div>
                 <p class="hint">학생 취소는 수업 전날 설정 시각까지 허용됩니다. (예: 21시)</p>
               </article>
-              <article class="subpanel" style="margin-top: 12px">
-                <h3>레슨 항목별 링크</h3>
-                <p class="hint">수업명을 기준으로 묶어서, 학생 신청 페이지로 바로 이동하는 링크를 복사합니다.</p>
-                <div id="lessonCatalogList" class="slot-list"></div>
-              </article>
-              <article class="subpanel" style="margin-top: 12px">
+              <article class="subpanel" data-teacher-settings-panel="account" style="margin-top: 12px">
                 <h3>내 계정 관리</h3>
                 <div class="grid two">
                   <form id="teacherAccountForm" class="grid">
@@ -487,12 +675,22 @@
                   </form>
                 </div>
               </article>
-
-              <article class="subpanel" style="margin-top: 12px">
+              <article class="subpanel" data-teacher-settings-panel="students" style="margin-top: 12px">
                 <h3>임시 학생 계정 관리</h3>
                 <p class="hint" style="margin: 0 0 8px 0">
                   선생님이 학생 임시계정을 생성하고, 학생이 나중에 본인 계정으로 업그레이드할 수 있습니다.
                 </p>
+                <form id="teacherAssignStudentForm" class="grid" style="margin-bottom: 8px">
+                  <div class="grid two">
+                    <label>기존 학생 연결 (ID / 로그인ID / 이름)
+                      <input name="lookup" placeholder="예: 12 또는 student01 또는 김학생" />
+                    </label>
+                    <div class="actions" style="align-self: end">
+                      <button id="teacherAssignStudentBtn" type="button" class="primary">내 학생으로 연결</button>
+                    </div>
+                  </div>
+                  <p class="hint" style="margin: 0">학생이 초대 링크로 직접 연결하거나, 선생님이 여기서 직접 연결할 수 있습니다.</p>
+                </form>
                 <form id="teacherTempStudentForm" class="grid">
                   <div class="grid two">
                     <label>학생 이름 <input name="name" placeholder="임시 학생" required /></label>
@@ -526,51 +724,6 @@
                 </div>
               </article>
             </section>
-
-            <section id="teacherBookingsSection">
-              <article class="table-card">
-                <div class="table-head">
-                  <h3>진행 중 예약</h3>
-                  <button id="teacherBookingsRefreshBtn" type="button">새로고침</button>
-                </div>
-                <div class="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th scope="col">예약번호</th>
-                        <th scope="col">학생</th>
-                        <th scope="col">시작</th>
-                        <th scope="col">종료</th>
-                        <th scope="col">상태</th>
-                        <th scope="col">학생 전달 코멘트</th>
-                        <th scope="col">선생님 메모</th>
-                        <th scope="col">동작</th>
-                      </tr>
-                    </thead>
-                    <tbody id="teacherBookingsBody"></tbody>
-                  </table>
-                </div>
-              </article>
-            </section>
-
-            <section id="teacherCompletedSection">
-              <article class="table-card">
-                <div class="table-head">
-                  <h3>완료 수업 이력</h3>
-                  <button id="teacherCompletedRefreshBtn" type="button">새로고침</button>
-                </div>
-                <div class="actions" style="margin-bottom: 10px">
-                  <label style="min-width: 220px">
-                    레슨 항목 필터
-                    <select id="teacherCompletedLessonFilter"></select>
-                  </label>
-                </div>
-                <p class="hint" style="margin: 0 0 10px 0">
-                  운영 화면에서는 리스트가 가장 빠르게 스캔되어, 시간/학생/코멘트 확인과 수정이 한 번에 가능합니다.
-                </p>
-                <div id="teacherCompletedList" class="history-list"></div>
-              </article>
-            </section>
           </div>
         </div>
       </section>
@@ -595,8 +748,12 @@
             </label>
           </div>
           <div class="grid two">
-            <label>시작시간 <input name="start_time_local" type="time" step="1800" required /></label>
-            <label>종료시간 <input name="end_time_local" type="time" step="1800" required /></label>
+            <label>시작시간
+              <select name="start_time_local" data-half-hour-select="start" required></select>
+            </label>
+            <label>종료시간
+              <select name="end_time_local" data-half-hour-select="end" required></select>
+            </label>
           </div>
           <div class="grid two">
             <label>수업명(표시용) <input name="class_title" placeholder="예: 회화 입문" /></label>
@@ -627,8 +784,12 @@
             <label>날짜 <input name="date_local" type="date" required /></label>
             <label>사유 <input name="reason" placeholder="휴무, 출장, 시험 등" /></label>
           </div><div class="grid two">
-            <label>시작시간 <input name="start_time_local" type="time" step="1800" required /></label>
-            <label>종료시간 <input name="end_time_local" type="time" step="1800" required /></label>
+            <label>시작시간
+              <select name="start_time_local" data-half-hour-select="start" required></select>
+            </label>
+            <label>종료시간
+              <select name="end_time_local" data-half-hour-select="end" required></select>
+            </label>
           </div>
           <p class="hint">예외도 캘린더 블럭 단위로 등록됩니다.</p>
           <div class="actions">

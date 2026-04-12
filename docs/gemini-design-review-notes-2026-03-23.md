@@ -6,13 +6,13 @@
 
 ## 검수 입력 자료
 - 코드 기준 파일
-  - `/Volumes/Extreme SSD/workspace/frontend/app.html`
-  - `/Volumes/Extreme SSD/workspace/frontend/lesson-booking-app.css`
-  - `/Volumes/Extreme SSD/workspace/frontend/lesson-booking-app.js`
+  - `/Volumes/Extreme_SSD/workspace/frontend/app.html`
+  - `/Volumes/Extreme_SSD/workspace/frontend/lesson-booking-app.css`
+  - `/Volumes/Extreme_SSD/workspace/frontend/lesson-booking-app.js`
 - 회귀 스냅샷
-  - `/Volumes/Extreme SSD/workspace/docs/regression-snapshots/2026-03-23`
+  - `/Volumes/Extreme_SSD/workspace/docs/regression-snapshots/2026-03-23`
 - QA 체크리스트
-  - `/Volumes/Extreme SSD/workspace/docs/ui-qa-checklist-2026-03-23.md`
+  - `/Volumes/Extreme_SSD/workspace/docs/ui-qa-checklist-2026-03-23.md`
 
 ## 반드시 지킬 제약
 1. 기능 추가 금지

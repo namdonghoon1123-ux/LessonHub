@@ -6,7 +6,7 @@
 - 모바일 사용성, 접근성, 문구 일관성을 함께 점검한다.
 
 ## 실행 환경
-- 로컬 경로: `/Volumes/Extreme SSD/workspace`
+- 로컬 경로: `/Volumes/Extreme_SSD/workspace`
 - 실행: `docker-compose up -d --build frontend`
 - 백엔드 상태 확인: `bash scripts/smoke-test-api.sh`
 - 점검 기준일: 2026-03-23
@@ -54,7 +54,7 @@
 - [x] 관리 테이블 헤더를 사용자 용어(시작/종료/상태/예약번호)로 정리
 
 ## 회귀 스냅샷
-- 저장 경로: `/Volumes/Extreme SSD/workspace/docs/regression-snapshots/2026-03-23`
+- 저장 경로: `/Volumes/Extreme_SSD/workspace/docs/regression-snapshots/2026-03-23`
 - 생성 파일
   - `index-desktop.png`
   - `index-mobile.png`

@@ -3,8 +3,13 @@
   var rawMode = String((root && root.dataset && root.dataset.mode) || 'TEACHER').toUpperCase();
   var rawSection = String((root && root.dataset && root.dataset.section) || 'all').toLowerCase();
   var mode = rawMode === 'STUDENT' ? 'STUDENT' : 'TEACHER';
-  var allowedSections = { all: true, calendar: true, bookings: true, completed: true, manage: true };
+  var allowedSections = { all: true, calendar: true, bookings: true, completed: true, manage: true, operations: true, settings: true };
   var section = allowedSections[rawSection] ? rawSection : 'all';
+  if (mode === 'TEACHER' && (section === 'bookings' || section === 'completed')) {
+    section = 'operations';
+  } else if (mode === 'STUDENT' && (section === 'operations' || section === 'completed')) {
+    section = 'bookings';
+  }
   var params = new URLSearchParams(window.location.search || '');
   params.set('mode', mode);
   params.set('section', section);

@@ -3,7 +3,7 @@
 
 작성일: 2026-03-23  
 프로젝트: 레슨 예약 서비스 고도화  
-작업 경로: `/Volumes/Extreme SSD/workspace`
+작업 경로: `/Volumes/Extreme_SSD/workspace`
 
 ---
 
@@ -93,7 +93,7 @@
 
 - 하드코딩 경로 정리
   - 이전: `/Users/ndh/workspace`
-  - 현재: `/Volumes/Extreme SSD/workspace`
+  - 현재: `/Volumes/Extreme_SSD/workspace`
 - Docker/Colima 실행 안정화
 - 서비스 컨테이너 정상 구동 확인
 
@@ -207,16 +207,16 @@
 
 ## 핵심 문서
 - AI 앱 제작 회고(본 문서)
-  - `/Volumes/Extreme SSD/workspace/docs/notion-blog-full-nondev-ai-app-2026-03-23.md`
+  - `/Volumes/Extreme_SSD/workspace/docs/notion-blog-full-nondev-ai-app-2026-03-23.md`
 - UI/UX QA 체크리스트
-  - `/Volumes/Extreme SSD/workspace/docs/ui-qa-checklist-2026-03-23.md`
+  - `/Volumes/Extreme_SSD/workspace/docs/ui-qa-checklist-2026-03-23.md`
 - Gemini 디자인 검수 주의사항
-  - `/Volumes/Extreme SSD/workspace/docs/gemini-design-review-notes-2026-03-23.md`
+  - `/Volumes/Extreme_SSD/workspace/docs/gemini-design-review-notes-2026-03-23.md`
 - 비개발자용 요약본(짧은 버전)
-  - `/Volumes/Extreme SSD/workspace/docs/notion-ai-app-build-case-study-2026-03-23.md`
+  - `/Volumes/Extreme_SSD/workspace/docs/notion-ai-app-build-case-study-2026-03-23.md`
 
 ## 스냅샷 자료
-- 경로: `/Volumes/Extreme SSD/workspace/docs/regression-snapshots/2026-03-23`
+- 경로: `/Volumes/Extreme_SSD/workspace/docs/regression-snapshots/2026-03-23`
 - 파일 목록
   - `index-desktop.png`
   - `index-mobile.png`
@@ -228,9 +228,9 @@
   - `guide-mobile.png`
 
 ## 코드 기준 파일
-- `/Volumes/Extreme SSD/workspace/frontend/app.html`
-- `/Volumes/Extreme SSD/workspace/frontend/lesson-booking-app.css`
-- `/Volumes/Extreme SSD/workspace/frontend/lesson-booking-app.js`
+- `/Volumes/Extreme_SSD/workspace/frontend/app.html`
+- `/Volumes/Extreme_SSD/workspace/frontend/lesson-booking-app.css`
+- `/Volumes/Extreme_SSD/workspace/frontend/lesson-booking-app.js`
 
 ---
 

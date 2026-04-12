@@ -142,7 +142,7 @@
       }
 
       .hero h1 {
-        font-size: clamp(24px, 3vw, 34px);
+        font-size: clamp(20px, 2.4vw, 30px);
         line-height: 1.15;
         letter-spacing: -0.03em;
       }
@@ -225,6 +225,14 @@
 
       .grid.three {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .grid.four {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .compact-grid label {
+        margin-bottom: 0;
       }
 
       label {
@@ -330,6 +338,11 @@
         background: #fffdf9;
         padding: 10px;
         font-size: 13px;
+      }
+
+      .compact-status {
+        padding: 8px 10px;
+        border-radius: 14px;
       }
 
       .hint {
@@ -506,6 +519,22 @@
         margin-top: 12px;
       }
 
+      .calendar-mobile-tools {
+        display: none;
+      }
+
+      .segmented-control {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .segmented-control button {
+        flex: 1 1 0;
+        min-width: 0;
+        white-space: nowrap;
+      }
+
       .calendar-card,
       .slot-card {
         border: 1px solid #d7e2f0;
@@ -630,6 +659,11 @@
         box-shadow: inset 0 0 0 2px #4b7ec3;
       }
 
+      .week-cell.touch-anchor {
+        box-shadow: inset 0 0 0 2px #d77752;
+        background: #fff0e8;
+      }
+
       .week-slot-btn,
       .week-create-btn {
         width: 100%;
@@ -680,6 +714,12 @@
         background: #eaf2ff;
       }
 
+      .week-teacher-cell[data-cell-booking-id],
+      .week-teacher-cell[data-cell-window-id],
+      .week-teacher-cell[data-cell-exception-id] {
+        cursor: pointer;
+      }
+
       .week-teacher-window {
         width: 100%;
         height: 100%;
@@ -722,6 +762,19 @@
         background: #d9f3de;
       }
 
+      .week-open-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.25;
+        color: #6e5b27;
+        background: #f8ecd2;
+      }
+
       .week-exception-chip {
         display: inline-flex;
         align-items: center;
@@ -733,6 +786,12 @@
         line-height: 1.25;
         color: #983c3c;
         background: #ffdede;
+      }
+
+      #teacherCellDetailBody {
+        display: grid;
+        gap: 6px;
+        line-height: 1.45;
       }
 
       .month-table {
@@ -842,6 +901,17 @@
         gap: 10px;
       }
 
+      .slot-row .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .slot-row .actions button {
+        white-space: nowrap;
+      }
+
       .slot-summary {
         border: 1px solid #d5e2f2;
         background: #f5f9ff;
@@ -944,6 +1014,15 @@
         border: 1px solid #edf2f8;
         border-radius: 10px;
         -webkit-overflow-scrolling: touch;
+      }
+
+      .list-pagination {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: wrap;
       }
 
       table {
@@ -1176,6 +1255,7 @@
       @media (max-width: 1080px) {
         .auth-layout,
         .calendar-shell,
+        .grid.four,
         .grid.three,
         .stats {
           grid-template-columns: 1fr;
@@ -1246,6 +1326,10 @@
 
         .grid.two {
           grid-template-columns: 1fr;
+        }
+
+        .grid.four {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
         .stats {
@@ -1339,6 +1423,10 @@
           gap: 8px;
         }
 
+        .calendar-toolbar .hint {
+          grid-column: 1 / -1;
+        }
+
         .calendar-toolbar .month-label {
           min-width: 0;
           width: 100%;
@@ -1356,6 +1444,17 @@
         .calendar-shell {
           margin-top: 10px;
           gap: 10px;
+        }
+
+        .calendar-mobile-tools {
+          display: grid;
+          gap: 8px;
+          margin-bottom: 12px;
+        }
+
+        .calendar-mobile-tools .actions {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
         .calendar-grid {
@@ -1399,6 +1498,21 @@
           padding: 2px 5px;
         }
 
+        .slot-row {
+          display: grid;
+          gap: 10px;
+        }
+
+        .slot-row .actions {
+          width: 100%;
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .slot-row .actions button {
+          width: 100%;
+        }
+
         .slot-item {
           display: grid;
           gap: 8px;
@@ -1418,6 +1532,10 @@
           gap: 8px;
         }
 
+        .list-pagination {
+          justify-content: flex-start;
+        }
+
         table {
           min-width: 780px;
         }
@@ -1435,6 +1553,10 @@
       }
 
       @media (max-width: 520px) {
+        .grid.four {
+          grid-template-columns: 1fr;
+        }
+
         .stats {
           grid-template-columns: 1fr;
         }
@@ -1446,6 +1568,10 @@
 
         .calendar-grid {
           max-height: min(54dvh, 460px);
+        }
+
+        .calendar-mobile-tools .actions {
+          grid-template-columns: 1fr;
         }
 
         .week-time-head,
@@ -1490,6 +1616,10 @@
       }
 
       body.session-ready #authPanel {
+        display: none !important;
+      }
+
+      body.session-ready .hero {
         display: none !important;
       }
 

@@ -5,6 +5,7 @@
 ## 1) 역할
 - Codex: 구현 마무리, 리팩토링, 회귀 위험 점검, 검수/테스트 자동화
 - Gemini: 빠른 초안 구현, 시나리오 확장, 아이디어 탐색
+- Claude Code: 큰 변경셋 맥락 파악, 문서 기반 후속 구현, 인수인계 이어받기
 
 ## 2) 기본 원칙
 - 기능 구현 후 반드시 재현 가능한 검증 명령을 남긴다.
@@ -12,9 +13,9 @@
 - 큰 변경은 `README.md` 또는 `docs/`에 사용 방법을 함께 갱신한다.
 
 ## 3) 일일 인수인계 루틴
-1. `bash "/Volumes/Extreme SSD/workspace/scripts/daily-handover.sh"`
+1. `bash "/Volumes/Extreme_SSD/workspace/scripts/daily-handover.sh"`
 2. 필요 시 스모크 테스트 실행
-   - `bash "/Volumes/Extreme SSD/workspace/scripts/smoke-test-api.sh"`
+   - `bash "/Volumes/Extreme_SSD/workspace/scripts/smoke-test-api.sh"`
 3. 생성/갱신된 `docs/handover-YYYY-MM-DD.md`에 아래 항목 보강
    - 오늘 완료 작업
    - 검증 결과
@@ -30,6 +31,8 @@
 - 재현 스크립트 또는 테스트 명령이 남아 있는가
 
 ## 5) 협업 인수인계 파일 규칙
-- Gemini 전용 메모: `/Volumes/Extreme SSD/workspace/GEMINI.md`
-- Codex 전용 메모: `/Volumes/Extreme SSD/workspace/CODEX.md`
-- 일일 로그: `/Volumes/Extreme SSD/workspace/docs/handover-YYYY-MM-DD.md`
+- Gemini 전용 메모: `/Volumes/Extreme_SSD/workspace/GEMINI.md`
+- Codex 전용 메모: `/Volumes/Extreme_SSD/workspace/CODEX.md`
+- Claude Code 전용 메모: `/Volumes/Extreme_SSD/workspace/CLAUDE.md`
+- 협업 운영안: `/Volumes/Extreme_SSD/workspace/docs/ai-collaboration-playbook-2026-04-02.md`
+- 일일 로그: `/Volumes/Extreme_SSD/workspace/docs/handover-YYYY-MM-DD.md`

@@ -69,9 +69,9 @@ AI를 잘 쓰는 핵심은 기술 지식보다 **요청하는 방식**에 가깝
 이 템플릿만으로도 AI 협업의 결과가 훨씬 안정적이다.
 
 ## 8) 관련 자료
-- UI/UX 점검표: `/Volumes/Extreme SSD/workspace/docs/ui-qa-checklist-2026-03-23.md`
-- 디자인 검수 주의사항: `/Volumes/Extreme SSD/workspace/docs/gemini-design-review-notes-2026-03-23.md`
-- 화면 스냅샷: `/Volumes/Extreme SSD/workspace/docs/regression-snapshots/2026-03-23`
+- UI/UX 점검표: `/Volumes/Extreme_SSD/workspace/docs/ui-qa-checklist-2026-03-23.md`
+- 디자인 검수 주의사항: `/Volumes/Extreme_SSD/workspace/docs/gemini-design-review-notes-2026-03-23.md`
+- 화면 스냅샷: `/Volumes/Extreme_SSD/workspace/docs/regression-snapshots/2026-03-23`
 
 ---
 

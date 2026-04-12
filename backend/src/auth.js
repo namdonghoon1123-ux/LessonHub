@@ -50,6 +50,55 @@ async function isRevokedToken(tokenId) {
   }
 }
 
+async function resolveUserForAuth(userId) {
+  if (!Number.isInteger(Number(userId))) {
+    return null;
+  }
+  try {
+    const result = await query(
+      `
+        SELECT id, role, email, is_active
+        FROM users
+        WHERE id = $1
+        LIMIT 1
+      `,
+      [userId]
+    );
+    if (result.rowCount === 0) {
+      return null;
+    }
+    const row = result.rows[0];
+    return {
+      id: Number(row.id),
+      role: row.role,
+      email: row.email,
+      isActive: row.is_active === true,
+    };
+  } catch (err) {
+    if (err?.code === '42703') {
+      // Older schema without users.is_active.
+      const fallback = await query(
+        `
+          SELECT id, role, email
+          FROM users
+          WHERE id = $1
+          LIMIT 1
+        `,
+        [userId]
+      );
+      if (fallback.rowCount === 0) return null;
+      const row = fallback.rows[0];
+      return {
+        id: Number(row.id),
+        role: row.role,
+        email: row.email,
+        isActive: true,
+      };
+    }
+    throw err;
+  }
+}
+
 async function revokeAccessToken(authContext) {
   if (!authContext?.tokenId) {
     return;
@@ -87,10 +136,14 @@ async function requireAuth(req, res, next) {
     if (await isRevokedToken(payload.jti || null)) {
       return res.status(401).json({ error: 'unauthorized' });
     }
+    const user = await resolveUserForAuth(Number(payload.sub));
+    if (!user || !user.isActive) {
+      return res.status(401).json({ error: 'unauthorized' });
+    }
     req.auth = {
-      userId: Number(payload.sub),
-      role: payload.role,
-      email: payload.email,
+      userId: user.id,
+      role: user.role,
+      email: user.email,
       token,
       tokenId: payload.jti || null,
       expiresAtEpochSec: Number.isInteger(payload.exp) ? payload.exp : null,
@@ -113,10 +166,15 @@ async function optionalAuth(req, res, next) {
       req.auth = null;
       return next();
     }
+    const user = await resolveUserForAuth(Number(payload.sub));
+    if (!user || !user.isActive) {
+      req.auth = null;
+      return next();
+    }
     req.auth = {
-      userId: Number(payload.sub),
-      role: payload.role,
-      email: payload.email,
+      userId: user.id,
+      role: user.role,
+      email: user.email,
       token,
       tokenId: payload.jti || null,
       expiresAtEpochSec: Number.isInteger(payload.exp) ? payload.exp : null,

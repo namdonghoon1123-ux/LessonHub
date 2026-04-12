@@ -24,6 +24,7 @@
         <div class="top-links">
           <a href="/index.html">역할 선택</a>
           <a href="/student-login.html">학생 로그인</a>
+          <a href="/power-admin.html">파워관리자</a>
           <a href="/guide.html">사용자 설명서</a>
         </div>
       </nav>
@@ -45,8 +46,13 @@
         </div>
       </section>
 
-      <section class="panel auth-layout fade-up delay-2">
-        <article class="subpanel">
+      <section class="panel fade-up delay-2">
+        <div class="auth-view-toggle" role="tablist" aria-label="인증 화면 선택">
+          <button type="button" class="auth-view-tab active" data-auth-view-tab="login" aria-selected="true">로그인</button>
+          <button type="button" class="auth-view-tab" data-auth-view-tab="register" aria-selected="false">회원가입</button>
+        </div>
+        <div id="authLayout" class="auth-layout">
+          <article class="subpanel" data-auth-view="login">
           <h3>로그인</h3>
           <form id="loginForm" class="grid">
             <div class="grid two">
@@ -58,6 +64,9 @@
               <button id="presetBtn" type="button">프리셋</button>
               <button id="healthBtn" type="button">헬스체크</button>
             </div>
+            <div class="actions">
+              <button type="button" data-switch-auth-view="register">회원가입으로 이동</button>
+            </div>
           </form>
 
           <h3 style="margin-top: 2px">간편 로그인</h3>
@@ -67,50 +76,54 @@
             <button type="button" data-social-provider="NAVER">Naver로 시작</button>
           </div>
           <p id="socialStatus" class="hint"></p>
-        </article>
+          </article>
 
-        <article class="subpanel">
+          <article class="subpanel" data-auth-view="register">
           <h3 id="registerTitle">선생님 회원가입</h3>
-          <div><span id="registerRoleBadge" class="badge">역할 고정: TEACHER</span></div>
           <form id="registerForm" class="grid">
             <div class="grid two">
-              <label>아이디 <input name="login_id" placeholder="teacher01" required /></label>
-              <label>휴대폰번호 <input name="phone" placeholder="01012345678" required /></label>
+              <label>아이디 <input name="login_id" autocomplete="username" required /></label>
+              <label>휴대폰번호 <input name="phone" autocomplete="tel" inputmode="numeric" required /></label>
             </div>
-            <label>이름 <input name="name" placeholder="홍길동" required /></label>
-            <label>비밀번호 <input name="password" type="password" required /></label>
-            <div class="grid two">
-              <label>표시 이름 <input name="display_name" placeholder="Teacher Kim" /></label>
-              <label>시간대
-                <select name="timezone">
-                  <option value="Asia/Seoul">Asia/Seoul</option>
-                  <option value="UTC">UTC</option>
-                </select>
-              </label>
-            </div>
-            <div class="grid two">
-              <label>기본 수업시간(분)
-                <select name="lesson_duration_min">
-                  <option value="30">30</option>
-                  <option value="50">50</option>
-                  <option value="60" selected>60</option>
-                  <option value="90">90</option>
-                </select>
-              </label>
-              <label>취소 컷오프(시간) <input name="cancel_cutoff_hours" type="number" min="0" max="336" value="6" /></label>
-            </div>
-            <div class="grid two">
-              <label>예약 가능 기간(일) <input name="booking_window_days" type="number" min="1" max="365" value="30" /></label>
-              <label>학생 취소 마감 시각(전날 시) <input name="student_cancel_day_before_hour" type="number" min="0" max="23" value="21" /></label>
-            </div>
-            <label>학생 공지 <textarea name="student_notice" placeholder="수업 10분 전 입장 부탁드립니다."></textarea></label>
-            <label>프로필 소개 <textarea name="bio" placeholder="전문 분야, 경력, 수업 스타일"></textarea></label>
+            <label>이름 <input name="name" autocomplete="name" required /></label>
+            <label>비밀번호 <input name="password" type="password" autocomplete="new-password" required /></label>
+            <label>비밀번호 확인 <input name="password_confirm" type="password" autocomplete="new-password" required /></label>
             <div class="actions">
               <button id="registerBtn" class="primary" type="submit">선생님 회원가입</button>
+              <button type="button" data-switch-auth-view="login">로그인으로 이동</button>
               <button id="logoutBtn" class="danger" type="button">로그아웃</button>
             </div>
           </form>
-        </article>
+          <article class="auth-recovery">
+            <h3>아이디/비밀번호 찾기</h3>
+            <form id="findLoginIdForm" class="grid">
+              <div class="grid two">
+                <label>이름 <input name="name" required /></label>
+                <label>휴대폰번호 <input name="phone" inputmode="numeric" required /></label>
+              </div>
+              <div class="actions">
+                <button id="findLoginIdBtn" type="submit">아이디 찾기</button>
+              </div>
+            </form>
+            <p id="findLoginIdResult" class="hint"></p>
+            <form id="resetPasswordForm" class="grid">
+              <div class="grid two">
+                <label>아이디 <input name="login_id" required /></label>
+                <label>이름 <input name="name" required /></label>
+              </div>
+              <div class="grid two">
+                <label>휴대폰번호 <input name="phone" inputmode="numeric" required /></label>
+                <label>새 비밀번호 <input name="new_password" type="password" required /></label>
+              </div>
+              <label>새 비밀번호 확인 <input name="new_password_confirm" type="password" required /></label>
+              <div class="actions">
+                <button id="resetPasswordBtn" type="submit" class="primary">비밀번호 재설정</button>
+              </div>
+            </form>
+            <p id="resetPasswordResult" class="hint"></p>
+          </article>
+          </article>
+        </div>
       </section>
 
       <section class="panel fade-up delay-3" id="debugPanel">

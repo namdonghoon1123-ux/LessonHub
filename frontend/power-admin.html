@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LessonHub 파워관리자 콘솔</title>
+    <link rel="icon" type="image/png" href="/lessonhub-logo.png" />
+    <link rel="apple-touch-icon" href="/lessonhub-logo.png" />
+    <link rel="stylesheet" href="/lessonhub-brand.css" />
+    <link rel="stylesheet" href="/lesson-booking-app.css" />
+  </head>
+  <body>
+    <main class="wrap">
+      <nav class="topbar reveal" aria-label="상단 메뉴">
+        <a class="brand-lockup brand-lockup--compact" href="/index.html" aria-label="LessonHub 홈">
+          <span class="lh-logo lh-logo--sm" aria-hidden="true">
+            <img src="/lessonhub-logo.png" alt="" />
+          </span>
+          <span class="brand-lockup__text">
+            <strong class="brand-lockup__name">LessonHub</strong>
+            <small class="brand-lockup__sub">파워관리자 콘솔</small>
+          </span>
+        </a>
+        <div class="top-links">
+          <a href="/index.html">로그인 선택</a>
+          <a href="/teacher.html">선생님</a>
+          <a href="/student.html">학생</a>
+          <a href="/guide.html">사용자 설명서</a>
+          <button id="adminLogoutBtn" type="button">로그아웃</button>
+        </div>
+      </nav>
+
+      <section class="panel reveal">
+        <div class="table-head">
+          <h2 style="margin: 0">파워관리자 콘솔</h2>
+        </div>
+        <div id="adminAuthStatus" class="status">로그인되지 않았습니다.</div>
+      </section>
+
+      <section id="adminLoginPanel" class="panel reveal">
+        <div class="panel-title">
+          <h2>관리자 로그인</h2>
+          <p>관리자 계정 정보는 로컬 개발 환경에서 직접 확인해 입력합니다.</p>
+        </div>
+        <form id="adminLoginForm" class="grid">
+          <div class="grid two">
+            <label>아이디 <input name="login_id" autocomplete="username" required /></label>
+            <label>비밀번호 <input name="password" type="password" autocomplete="current-password" required /></label>
+          </div>
+          <div class="actions">
+            <button id="adminQuickFillBtn" type="button">기본값 자동입력</button>
+            <button id="adminQuickLoginBtn" type="button">빠른 로그인</button>
+            <button type="submit" class="primary">로그인</button>
+          </div>
+          <p class="hint">관리자 계정 정보는 문서나 화면에 직접 남기지 않습니다.</p>
+        </form>
+      </section>
+
+      <section id="adminConsolePanel" class="panel hidden reveal">
+        <div class="workspace-layout">
+          <aside class="workspace-nav">
+            <strong>관리자 메뉴</strong>
+            <a href="/power-admin.html" data-admin-section-link="overview">개요</a>
+            <a href="/power-admin-users.html" data-admin-section-link="users">계정관리</a>
+            <a href="/power-admin-links.html" data-admin-section-link="links">학생-선생 연결</a>
+            <a href="/power-admin-activity.html" data-admin-section-link="activity">운영로그</a>
+            <a href="/power-admin-notes.html" data-admin-section-link="notes">패치노트</a>
+            <a href="/power-admin-policy.html" data-admin-section-link="policy">권한정책</a>
+          </aside>
+
+          <div class="workspace-content">
+            <section id="adminOverviewSection">
+              <div class="stats">
+                <article class="stat-card">
+                  <strong id="summaryTotalUsers">0</strong>
+                  <span>전체 계정</span>
+                </article>
+                <article class="stat-card">
+                  <strong id="summaryTeacherUsers">0</strong>
+                  <span>선생님 계정</span>
+                </article>
+                <article class="stat-card">
+                  <strong id="summaryStudentUsers">0</strong>
+                  <span>학생 계정</span>
+                </article>
+                <article class="stat-card">
+                  <strong id="summaryPowerAdmins">0</strong>
+                  <span>파워관리자</span>
+                </article>
+              </div>
+              <p id="summaryDeactivatedHint" class="hint" style="margin: 0 0 10px 0">비활성 계정: 0</p>
+              <div class="stats" style="margin-top: 10px">
+                <article class="stat-card">
+                  <strong id="summaryPendingBookings">0</strong>
+                  <span>승인대기 예약</span>
+                </article>
+                <article class="stat-card">
+                  <strong id="summaryBookedBookings">0</strong>
+                  <span>예약확정</span>
+                </article>
+                <article class="stat-card">
+                  <strong id="summaryCompletedBookings">0</strong>
+                  <span>완료</span>
+                </article>
+                <article class="stat-card">
+                  <strong id="summaryCanceledBookings">0</strong>
+                  <span>취소</span>
+                </article>
+              </div>
+              <div class="actions" style="margin-top: 8px">
+                <button id="adminSummaryRefreshBtn" type="button">요약 새로고침</button>
+              </div>
+            </section>
+
+            <section id="adminUsersSection" class="hidden">
+              <article class="table-card">
+                <div class="table-head">
+                  <h3>계정 조회/삭제</h3>
+                  <button id="adminUsersRefreshBtn" type="button">새로고침</button>
+                </div>
+                <div class="grid four compact-grid">
+                  <label>역할
+                    <select id="adminUsersRoleFilter">
+                      <option value="">전체</option>
+                      <option value="POWER_ADMIN">POWER_ADMIN</option>
+                      <option value="TEACHER">TEACHER</option>
+                      <option value="STUDENT">STUDENT</option>
+                    </select>
+                  </label>
+                  <label>검색
+                    <input id="adminUsersQuery" placeholder="ID / 아이디 / 이름 / 전화번호" />
+                  </label>
+                  <div class="grid" style="align-self: end; gap: 6px">
+                    <strong style="font-size: 13px; color: #6f8097">표시 옵션</strong>
+                    <label style="display: inline-flex; align-items: center; gap: 6px; min-height: 42px">
+                      <input id="adminUsersIncludeInactive" type="checkbox" style="width: auto" />
+                      비활성 계정 포함
+                    </label>
+                  </div>
+                  <div class="actions" style="align-self: end">
+                    <button id="adminUsersSearchBtn" type="button" class="primary">조회</button>
+                    <button id="adminUsersResetBtn" type="button">초기화</button>
+                  </div>
+                </div>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">역할</th>
+                        <th scope="col">상태</th>
+                        <th scope="col">아이디</th>
+                        <th scope="col">이름</th>
+                        <th scope="col">전화번호</th>
+                        <th scope="col">담당선생님</th>
+                        <th scope="col">생성일</th>
+                        <th scope="col">비활성일</th>
+                        <th scope="col">동작</th>
+                      </tr>
+                    </thead>
+                    <tbody id="adminUsersBody"></tbody>
+                  </table>
+                </div>
+              </article>
+
+              <article class="subpanel" style="margin-top: 12px">
+                <h3>계정 생성</h3>
+                <form id="adminCreateUserForm" class="grid">
+                  <div class="grid two">
+                    <label>역할
+                      <select name="role" required>
+                        <option value="STUDENT" selected>STUDENT</option>
+                        <option value="TEACHER">TEACHER</option>
+                        <option value="POWER_ADMIN">POWER_ADMIN</option>
+                      </select>
+                    </label>
+                    <label>아이디 <input name="login_id" required /></label>
+                  </div>
+                  <div class="grid two">
+                    <label>이름 <input name="name" required /></label>
+                    <label>휴대폰번호(선택) <input name="phone" inputmode="numeric" /></label>
+                  </div>
+                  <label>초기 비밀번호 <input name="password" type="password" placeholder="8자 이상" required /></label>
+                  <div class="actions">
+                    <button id="adminCreateUserBtn" type="submit" class="primary">계정 생성</button>
+                  </div>
+                </form>
+              </article>
+            </section>
+
+            <section id="adminLinksSection" class="hidden">
+              <article class="subpanel">
+                <h3>학생-선생 연결 변경</h3>
+                <form id="adminAssignTeacherForm" class="grid">
+                  <div class="grid three compact-grid">
+                    <label>학생 ID
+                      <input name="student_user_id" placeholder="예: 12" required />
+                    </label>
+                    <label>선생님 ID(해제 시 비움)
+                      <input name="teacher_user_id" placeholder="예: 1" />
+                    </label>
+                    <label>선생님 아이디(선택)
+                      <input name="teacher_login_id" placeholder="예: teacher01" />
+                    </label>
+                  </div>
+                  <div class="actions">
+                    <button id="adminAssignTeacherBtn" type="submit" class="primary">연결 저장</button>
+                    <button id="adminClearTeacherBtn" type="button">연결 해제</button>
+                  </div>
+                </form>
+              </article>
+
+              <div class="grid two" style="margin-top: 12px">
+                <article class="table-card">
+                  <div class="table-head">
+                    <h3>학생 목록</h3>
+                    <button id="adminStudentsRefreshBtn" type="button">새로고침</button>
+                  </div>
+                  <div class="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th scope="col">ID</th>
+                          <th scope="col">아이디</th>
+                          <th scope="col">이름</th>
+                          <th scope="col">담당선생님</th>
+                          <th scope="col">동작</th>
+                        </tr>
+                      </thead>
+                      <tbody id="adminStudentsBody"></tbody>
+                    </table>
+                  </div>
+                </article>
+                <article class="table-card">
+                  <div class="table-head">
+                    <h3>선생님 목록</h3>
+                    <button id="adminTeachersRefreshBtn" type="button">새로고침</button>
+                  </div>
+                  <div class="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th scope="col">ID</th>
+                          <th scope="col">아이디</th>
+                          <th scope="col">이름</th>
+                          <th scope="col">동작</th>
+                        </tr>
+                      </thead>
+                      <tbody id="adminTeachersBody"></tbody>
+                    </table>
+                  </div>
+                </article>
+              </div>
+            </section>
+
+            <section id="adminActivitySection" class="hidden">
+              <article class="table-card">
+                <div class="table-head">
+                  <h3>최근 운영 로그</h3>
+                  <button id="adminActivityRefreshBtn" type="button">새로고침</button>
+                </div>
+                <p class="hint">최근 계정 생성/예약 상태 변동을 시간순으로 확인합니다.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">시각</th>
+                        <th scope="col">유형</th>
+                        <th scope="col">대상</th>
+                        <th scope="col">요약</th>
+                      </tr>
+                    </thead>
+                    <tbody id="adminActivityBody"></tbody>
+                  </table>
+                </div>
+              </article>
+            </section>
+
+            <section id="adminNotesSection" class="hidden">
+              <article class="subpanel" style="margin-bottom: 12px">
+                <div class="table-head">
+                  <h3>패치노트 등록</h3>
+                  <button id="adminNotesRefreshBtn" type="button">새로고침</button>
+                </div>
+                <p class="hint" style="margin: 0">
+                  요청사항/처리결과/주의사항을 남겨두면 다른 AI(Claude 등)와 협업할 때 인수인계가 쉬워집니다.
+                </p>
+                <form id="adminPatchNoteForm" class="grid" style="margin-top: 8px">
+                  <label>제목
+                    <input name="title" maxlength="140" placeholder="예: 2026-03-30 교사 캘린더 슬롯 누락 수정" required />
+                  </label>
+                  <label>내용
+                    <textarea name="body" rows="4" placeholder="요청 배경, 수정 파일/함수, 검증 방법, 남은 이슈" required></textarea>
+                  </label>
+                  <div class="actions">
+                    <button id="adminPatchNoteCreateBtn" type="submit" class="primary">패치노트 등록</button>
+                  </div>
+                </form>
+              </article>
+              <article class="table-card">
+                <div class="table-head">
+                  <h3>최근 패치노트</h3>
+                </div>
+                <div id="adminPatchNotesList" class="history-list"></div>
+              </article>
+            </section>
+
+            <section id="adminPolicySection" class="hidden">
+              <article class="subpanel">
+                <div class="table-head">
+                  <h3>권한 분리 정책</h3>
+                  <button id="adminPolicyRefreshBtn" type="button">새로고침</button>
+                </div>
+                <p id="adminPolicyTimezoneHint" class="hint">서비스 기준 시간대: -</p>
+                <div id="adminPolicyCards" class="grid three compact-grid"></div>
+              </article>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+    <div id="adminToastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+    <script src="/power-admin-app.js?v=20260330-1"></script>
+  </body>
+</html>

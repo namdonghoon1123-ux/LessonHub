@@ -25,7 +25,7 @@ const publicBookingLimiter = createPublicRateLimit({
       : 60,
 });
 
-const LOCAL_TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/;
+const LOCAL_TIME_REGEX = /^(?:([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?|24:00(?::00)?)$/;
 const LOCAL_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const PIN4_REGEX = /^\d{4}$/;
 const GUEST_PUBLIC_ACCESS_DAYS =
@@ -49,6 +49,7 @@ const GUEST_CANCEL_REASON_REQUIRED = appConfig?.guest?.cancelReasonRequired !== 
 const REQUIRE_TEACHER_PRIVATE_COMMENT_ON_COMPLETE =
   appConfig?.booking?.comments?.requireTeacherPrivateOnComplete !== false;
 const REQUIRE_STUDENT_COMMENT_ON_COMPLETE = appConfig?.booking?.comments?.requireStudentCommentOnComplete !== false;
+const SERVICE_TIMEZONE = 'Asia/Seoul';
 const DEFAULT_STUDENT_CANCEL_DAY_BEFORE_HOUR =
   Number.isInteger(Number(appConfig?.booking?.studentCancelDayBeforeHourLocal)) &&
   Number(appConfig.booking.studentCancelDayBeforeHourLocal) >= 0 &&
@@ -122,6 +123,9 @@ function localTimeToMinutes(timeText) {
   if (!Number.isInteger(hours) || !Number.isInteger(minutes)) {
     return null;
   }
+  if (hours === 24 && minutes === 0) {
+    return 24 * 60;
+  }
   return hours * 60 + minutes;
 }
 
@@ -176,6 +180,13 @@ function parseNonNegativeInt(value) {
   return parsed;
 }
 
+function parseBooleanFlag(value) {
+  const text = String(value ?? '')
+    .trim()
+    .toLowerCase();
+  return ['1', 'true', 'yes', 'y', 'on'].includes(text);
+}
+
 function parseDateTime(value) {
   const text = String(value || '').trim();
   if (!text) {
@@ -216,6 +227,22 @@ function parsePhoneNormalized(value) {
   return normalized;
 }
 
+function parseRole(value) {
+  const role = String(value || '').trim().toUpperCase();
+  if (!['TEACHER', 'STUDENT'].includes(role)) {
+    return '';
+  }
+  return role;
+}
+
+function parseAdminRole(value) {
+  const role = String(value || '').trim().toUpperCase();
+  if (!['TEACHER', 'STUDENT', 'POWER_ADMIN'].includes(role)) {
+    return '';
+  }
+  return role;
+}
+
 function parsePin4(value) {
   const text = String(value || '').trim();
   if (!PIN4_REGEX.test(text)) {
@@ -241,6 +268,11 @@ function createTempStudentLoginId(teacherUserId) {
 
 function createTempStudentPassword() {
   return randomBytes(8).toString('base64url').slice(0, 12);
+}
+
+function createDeactivatedLoginId(userId) {
+  const suffix = randomBytes(6).toString('hex');
+  return `deleted_u${String(userId || 'x')}_${Date.now()}_${suffix}`.slice(0, 120);
 }
 
 function buildPublicManageUrl(req, bookingId, token) {
@@ -289,13 +321,25 @@ function requireStudent(req, res, next) {
   return next();
 }
 
+function requirePowerAdmin(req, res, next) {
+  if (req.auth?.role !== 'POWER_ADMIN') {
+    return res.status(403).json({ error: 'forbidden' });
+  }
+  return next();
+}
+
 async function getAssignedTeacherUserIdForStudent(studentUserId) {
   const result = await query(
     `
-      SELECT assigned_teacher_user_id
-      FROM users
-      WHERE id = $1
-        AND role = 'STUDENT'
+      SELECT t.id AS assigned_teacher_user_id
+      FROM users s
+      LEFT JOIN users t
+        ON t.id = s.assigned_teacher_user_id
+       AND t.role = 'TEACHER'
+       AND t.is_active = TRUE
+      WHERE s.id = $1
+        AND s.role = 'STUDENT'
+        AND s.is_active = TRUE
       LIMIT 1
     `,
     [studentUserId]
@@ -379,7 +423,7 @@ async function getTeacherProfileById(teacherUserId) {
       SELECT
         teacher_user_id,
         lesson_duration_min,
-        timezone,
+        $2::text AS timezone,
         cancel_cutoff_hours,
         booking_window_days,
         student_cancel_day_before_hour,
@@ -388,7 +432,7 @@ async function getTeacherProfileById(teacherUserId) {
       WHERE teacher_user_id = $1
       LIMIT 1
     `,
-    [teacherUserId]
+    [teacherUserId, SERVICE_TIMEZONE]
   );
   return result.rowCount > 0 ? result.rows[0] : null;
 }
@@ -670,7 +714,11 @@ async function resolveTeacherUserIdForBooking(inputTeacherUserId) {
   return { error: 'teacher_user_id is required when multiple teachers exist' };
 }
 
-async function getBookableSlotAt(teacherUserId, startAtIso, timezone) {
+async function getBookableSlotAt(teacherUserId, startAtIso, timezone, lessonDurationMin) {
+  const durationMin = parsePositiveInt(lessonDurationMin);
+  if (!durationMin || durationMin < 10 || durationMin > 180 || durationMin % 5 !== 0) {
+    return null;
+  }
   const result = await query(
     `
       WITH weekly_slots AS (
@@ -730,27 +778,34 @@ async function getBookableSlotAt(teacherUserId, startAtIso, timezone) {
           AND ota.is_active = TRUE
           AND ota.date_local = ($2::timestamptz AT TIME ZONE $3)::date
       ),
-      candidate_slots AS (
+      candidate_windows AS (
         SELECT start_at, end_at, lesson_title, source_priority FROM weekly_slots
         UNION ALL
         SELECT start_at, end_at, lesson_title, source_priority FROM one_time_slots
       ),
-      dedup_slots AS (
-        SELECT DISTINCT ON (start_at) start_at, end_at, lesson_title
-        FROM candidate_slots
-        ORDER BY start_at ASC, source_priority DESC, end_at DESC
+      matched_windows AS (
+        SELECT
+          c.lesson_title,
+          c.source_priority
+        FROM candidate_windows c
+        WHERE c.start_at <= $2::timestamptz
+          AND c.end_at >= ($2::timestamptz + make_interval(mins => $4::int))
+          AND c.end_at > c.start_at
+      ),
+      picked_window AS (
+        SELECT lesson_title
+        FROM matched_windows
+        ORDER BY source_priority DESC
+        LIMIT 1
       )
       SELECT
-        extract(epoch FROM (c.end_at - c.start_at))::int / 60 AS duration_min,
-        c.lesson_title
-      FROM dedup_slots c
-      WHERE c.start_at = $2::timestamptz
-        AND c.end_at > c.start_at
-        AND NOT EXISTS (
+        $4::int AS duration_min,
+        p.lesson_title
+      FROM picked_window p
+      WHERE NOT EXISTS (
           SELECT 1
           FROM bookings b
           WHERE b.teacher_user_id = $1
-            AND b.start_at = c.start_at
             AND (
               b.status IN ('PENDING', 'BOOKED')
               OR (
@@ -758,16 +813,18 @@ async function getBookableSlotAt(teacherUserId, startAtIso, timezone) {
                 AND (b.start_at + make_interval(mins => b.duration_min)) > NOW()
               )
             )
+            AND $2::timestamptz < (b.start_at + make_interval(mins => b.duration_min))
+            AND ($2::timestamptz + make_interval(mins => $4::int)) > b.start_at
         )
         AND NOT EXISTS (
           SELECT 1
           FROM availability_exceptions ex
           WHERE ex.teacher_user_id = $1
-            AND ex.date_local = (c.start_at AT TIME ZONE $3)::date
+            AND ex.date_local = ($2::timestamptz AT TIME ZONE $3)::date
             AND (
               (ex.start_time_local IS NULL AND ex.end_time_local IS NULL)
               OR (
-                c.start_at <
+                $2::timestamptz <
                   make_timestamptz(
                     extract(year FROM ex.date_local)::int,
                     extract(month FROM ex.date_local)::int,
@@ -778,7 +835,7 @@ async function getBookableSlotAt(teacherUserId, startAtIso, timezone) {
                     $3
                   )
                 AND
-                c.end_at >
+                ($2::timestamptz + make_interval(mins => $4::int)) >
                   make_timestamptz(
                     extract(year FROM ex.date_local)::int,
                     extract(month FROM ex.date_local)::int,
@@ -791,9 +848,16 @@ async function getBookableSlotAt(teacherUserId, startAtIso, timezone) {
               )
             )
         )
+        AND $2::timestamptz >= NOW()
+        AND NOT EXISTS (
+          SELECT 1 FROM users u
+          JOIN teacher_profiles tp ON tp.teacher_user_id = u.id
+          WHERE u.id = $1
+            AND ($2::timestamptz > NOW() + make_interval(days => tp.booking_window_days))
+        )
       LIMIT 1
     `,
-    [teacherUserId, startAtIso, timezone]
+    [teacherUserId, startAtIso, timezone, durationMin]
   );
   return result.rowCount > 0 ? result.rows[0] : null;
 }
@@ -812,11 +876,13 @@ function listSocialProviders() {
       provider: 'GOOGLE',
       enabled: Boolean(String(process.env.OAUTH_GOOGLE_CLIENT_ID || '').trim()),
       setup_required: !String(process.env.OAUTH_GOOGLE_CLIENT_ID || '').trim(),
+      implemented: false,
     },
     {
       provider: 'NAVER',
       enabled: Boolean(String(process.env.OAUTH_NAVER_CLIENT_ID || '').trim()),
       setup_required: !String(process.env.OAUTH_NAVER_CLIENT_ID || '').trim(),
+      implemented: false,
     },
   ];
 }
@@ -845,13 +911,25 @@ app.post('/api/v1/auth/social/:provider/start', async (req, res) => {
 app.post('/api/v1/auth/register', async (req, res) => {
   try {
     const loginId = String(req.body?.login_id ?? req.body?.email ?? '').trim().toLowerCase();
-    const phoneNormalized = parsePhoneNormalized(req.body?.phone);
+    const phoneRaw = String(req.body?.phone ?? '').trim();
+    const phoneNormalized = parsePhoneNormalized(phoneRaw);
     const password = String(req.body?.password || '');
     const name = String(req.body?.name || '').trim();
     const role = String(req.body?.role || '').trim().toUpperCase();
 
-    if (!loginId || !password || !name || !role || !phoneNormalized) {
-      return res.status(400).json({ error: 'login_id, phone, password, name, role are required' });
+    const missingRequired = [];
+    if (!loginId) missingRequired.push('login_id');
+    if (!phoneRaw) missingRequired.push('phone');
+    if (!password) missingRequired.push('password');
+    if (!name) missingRequired.push('name');
+    if (!role) missingRequired.push('role');
+    if (missingRequired.length > 0) {
+      const label = missingRequired.length === 1 ? 'is required' : 'are required';
+      return res.status(400).json({ error: `${missingRequired.join(', ')} ${label}` });
+    }
+
+    if (!phoneNormalized) {
+      return res.status(400).json({ error: 'phone is invalid' });
     }
 
     if (!['TEACHER', 'STUDENT'].includes(role)) {
@@ -860,9 +938,12 @@ app.post('/api/v1/auth/register', async (req, res) => {
     if (loginId.length < 3 || loginId.length > 60) {
       return res.status(400).json({ error: 'login_id must be 3~60 characters' });
     }
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'password must be at least 8 characters' });
+    }
 
     let teacherLessonDurationMin = 60;
-    let teacherTimezone = 'Asia/Seoul';
+    let teacherTimezone = SERVICE_TIMEZONE;
     let teacherCancelCutoffHours = 6;
     let teacherBookingWindowDays = 30;
     let teacherStudentCancelDayBeforeHour = DEFAULT_STUDENT_CANCEL_DAY_BEFORE_HOUR;
@@ -880,13 +961,6 @@ app.post('/api/v1/auth/register', async (req, res) => {
           teacherLessonDurationMin % 5 !== 0
         ) {
           return res.status(400).json({ error: 'lesson_duration_min must be 10~180 and divisible by 5' });
-        }
-      }
-
-      if (req.body?.timezone !== undefined) {
-        teacherTimezone = parseTimeZone(req.body.timezone);
-        if (!teacherTimezone) {
-          return res.status(400).json({ error: 'timezone must be a valid IANA timezone (e.g. Asia/Seoul)' });
         }
       }
 
@@ -998,6 +1072,100 @@ app.post('/api/v1/auth/register', async (req, res) => {
   }
 });
 
+app.post('/api/v1/auth/recover/login-id', async (req, res) => {
+  try {
+    const name = String(req.body?.name || '').trim();
+    const phoneRaw = String(req.body?.phone || '').trim();
+    const phoneNormalized = parsePhoneNormalized(phoneRaw);
+    const role = parseRole(req.body?.role);
+    if (!name || !phoneRaw) {
+      return res.status(400).json({ error: 'name, phone are required' });
+    }
+    if (!phoneNormalized) {
+      return res.status(400).json({ error: 'phone is invalid' });
+    }
+    const found = await query(
+      `
+        SELECT email AS login_id, role
+        FROM users
+        WHERE name = $1
+          AND phone_normalized = $2
+          AND role IN ('TEACHER', 'STUDENT')
+          AND is_active = TRUE
+          AND ($3::text = '' OR role = $3)
+        ORDER BY created_at DESC
+        LIMIT 1
+      `,
+      [name, phoneNormalized, role]
+    );
+    if (found.rowCount === 0) {
+      return res.status(404).json({ error: 'recovery_user_not_found' });
+    }
+    const row = found.rows[0];
+    return res.json({
+      login_id: row.login_id,
+      role: row.role,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
+app.post('/api/v1/auth/recover/password', async (req, res) => {
+  try {
+    const loginId = String(req.body?.login_id ?? req.body?.email ?? '').trim().toLowerCase();
+    const name = String(req.body?.name || '').trim();
+    const phoneRaw = String(req.body?.phone || '').trim();
+    const phoneNormalized = parsePhoneNormalized(phoneRaw);
+    const newPassword = String(req.body?.new_password || '');
+    const role = parseRole(req.body?.role);
+
+    if (!loginId || !name || !phoneRaw || !newPassword) {
+      return res.status(400).json({ error: 'login_id, name, phone, new_password are required' });
+    }
+    if (!phoneNormalized) {
+      return res.status(400).json({ error: 'phone is invalid' });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'new_password must be at least 8 characters' });
+    }
+
+    const found = await query(
+      `
+        SELECT id
+        FROM users
+        WHERE email = $1
+          AND name = $2
+          AND phone_normalized = $3
+          AND role IN ('TEACHER', 'STUDENT')
+          AND is_active = TRUE
+          AND ($4::text = '' OR role = $4)
+        LIMIT 1
+      `,
+      [loginId, name, phoneNormalized, role]
+    );
+    if (found.rowCount === 0) {
+      return res.status(404).json({ error: 'recovery_user_not_found' });
+    }
+
+    const nextHash = await bcrypt.hash(newPassword, 10);
+    await query(
+      `
+        UPDATE users
+        SET password_hash = $2,
+            updated_at = NOW()
+        WHERE id = $1
+      `,
+      [found.rows[0].id, nextHash]
+    );
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
 app.post('/api/v1/auth/login', async (req, res) => {
   try {
     const loginId = String(req.body?.login_id ?? req.body?.email ?? req.body?.id ?? '').trim().toLowerCase();
@@ -1010,7 +1178,8 @@ app.post('/api/v1/auth/login', async (req, res) => {
     const userResult = await query(
       `
         SELECT ${PUBLIC_USER_COLUMNS},
-               password_hash
+               password_hash,
+               is_active
         FROM users
         WHERE email = $1
         LIMIT 1
@@ -1023,6 +1192,9 @@ app.post('/api/v1/auth/login', async (req, res) => {
     }
 
     const user = userResult.rows[0];
+    if (user.is_active !== true) {
+      return res.status(403).json({ error: 'account_deactivated' });
+    }
     const matched = await bcrypt.compare(password, user.password_hash);
     if (!matched) {
       return res.status(401).json({ error: 'invalid_credentials' });
@@ -1053,6 +1225,7 @@ app.get('/api/v1/auth/me', requireAuth, async (req, res) => {
         SELECT ${PUBLIC_USER_COLUMNS}
         FROM users
         WHERE id = $1
+          AND is_active = TRUE
       `,
       [req.auth.userId]
     );
@@ -1075,6 +1248,7 @@ app.get('/api/v1/teachers/me/students', requireAuth, requireTeacher, async (req,
         SELECT ${PUBLIC_USER_COLUMNS}
         FROM users
         WHERE role = 'STUDENT'
+          AND is_active = TRUE
           AND assigned_teacher_user_id = $1
         ORDER BY created_at DESC, id DESC
       `,
@@ -1082,6 +1256,93 @@ app.get('/api/v1/teachers/me/students', requireAuth, requireTeacher, async (req,
     );
     return res.json({
       items: result.rows.map((row) => toPublicUser(row)),
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
+app.patch('/api/v1/teachers/me/students/assign', requireAuth, requireTeacher, async (req, res) => {
+  try {
+    const studentUserIdInput = parsePositiveInt(req.body?.student_user_id);
+    const studentLoginIdInput = String(req.body?.student_login_id || '')
+      .trim()
+      .toLowerCase();
+    const studentNameInput = String(req.body?.student_name || '')
+      .trim()
+      .toLowerCase();
+    const studentQueryInput = String(req.body?.student_query || '')
+      .trim()
+      .toLowerCase();
+    if (!studentUserIdInput && !studentLoginIdInput && !studentNameInput && !studentQueryInput) {
+      return res
+        .status(400)
+        .json({ error: 'student_user_id, student_login_id, student_name, or student_query is required' });
+    }
+
+    const foundStudents = await query(
+      `
+        SELECT id, email AS login_id, name
+        FROM users
+        WHERE role = 'STUDENT'
+          AND is_active = TRUE
+          AND (
+            ($1::bigint IS NOT NULL AND id = $1)
+            OR ($2::text <> '' AND email = $2)
+            OR ($3::text <> '' AND LOWER(name) = $3)
+            OR (
+              $4::text <> ''
+              AND (
+                CAST(id AS text) = $4
+                OR LOWER(email) LIKE '%' || $4 || '%'
+                OR LOWER(name) LIKE '%' || $4 || '%'
+              )
+            )
+          )
+        ORDER BY
+          CASE
+            WHEN ($1::bigint IS NOT NULL AND id = $1) THEN 0
+            WHEN ($2::text <> '' AND LOWER(email) = $2) THEN 1
+            WHEN ($3::text <> '' AND LOWER(name) = $3) THEN 2
+            WHEN ($4::text <> '' AND CAST(id AS text) = $4) THEN 3
+            ELSE 4
+          END,
+          id ASC
+        LIMIT 6
+      `,
+      [studentUserIdInput || null, studentLoginIdInput, studentNameInput, studentQueryInput]
+    );
+    if (foundStudents.rowCount === 0) {
+      return res.status(404).json({ error: 'student_not_found' });
+    }
+    if (!studentUserIdInput && !studentLoginIdInput && foundStudents.rowCount > 1) {
+      return res.status(409).json({
+        error: 'student_ambiguous',
+        candidates: foundStudents.rows.slice(0, 5),
+      });
+    }
+    const targetStudent = foundStudents.rows[0];
+
+    const updated = await query(
+      `
+        UPDATE users
+        SET assigned_teacher_user_id = $2,
+            updated_at = NOW()
+        WHERE id = $1
+          AND role = 'STUDENT'
+          AND is_active = TRUE
+        RETURNING ${PUBLIC_USER_COLUMNS}
+      `,
+      [targetStudent.id, req.auth.userId]
+    );
+    if (updated.rowCount === 0) {
+      return res.status(404).json({ error: 'student_not_found' });
+    }
+
+    return res.json({
+      user: toPublicUser(updated.rows[0]),
+      student: targetStudent,
     });
   } catch (err) {
     console.error(err);
@@ -1181,6 +1442,7 @@ app.post('/api/v1/students/me/upgrade', requireAuth, requireStudent, async (req,
         FROM users
         WHERE id = $1
           AND role = 'STUDENT'
+          AND is_active = TRUE
         LIMIT 1
       `,
       [req.auth.userId]
@@ -1226,6 +1488,7 @@ app.post('/api/v1/students/me/upgrade', requireAuth, requireStudent, async (req,
             updated_at = NOW()
         WHERE id = $1
           AND role = 'STUDENT'
+          AND is_active = TRUE
         RETURNING ${PUBLIC_USER_COLUMNS}
       `,
       [req.auth.userId, loginId, phoneNormalized, passwordHash, name]
@@ -1288,6 +1551,7 @@ app.patch('/api/v1/users/me/profile', requireAuth, async (req, res) => {
             phone_normalized = COALESCE($3::text, phone_normalized),
             updated_at = NOW()
         WHERE id = $1
+          AND is_active = TRUE
         RETURNING ${PUBLIC_USER_COLUMNS}
       `,
       [req.auth.userId, hasName ? nextName : null, hasPhone ? nextPhone : null]
@@ -1317,6 +1581,7 @@ app.patch('/api/v1/users/me/password', requireAuth, async (req, res) => {
         SELECT id, password_hash
         FROM users
         WHERE id = $1
+          AND is_active = TRUE
         LIMIT 1
       `,
       [req.auth.userId]
@@ -1347,32 +1612,658 @@ app.patch('/api/v1/users/me/password', requireAuth, async (req, res) => {
   }
 });
 
+app.get('/api/v1/admin/summary', requireAuth, requirePowerAdmin, async (req, res) => {
+  try {
+    const usersResult = await query(
+      `
+        SELECT
+          COUNT(*) FILTER (WHERE is_active = TRUE)::int AS total_users,
+          COUNT(*) FILTER (WHERE role = 'TEACHER' AND is_active = TRUE)::int AS teacher_count,
+          COUNT(*) FILTER (WHERE role = 'STUDENT' AND is_active = TRUE)::int AS student_count,
+          COUNT(*) FILTER (WHERE role = 'POWER_ADMIN' AND is_active = TRUE)::int AS power_admin_count,
+          COUNT(*) FILTER (WHERE is_active = FALSE)::int AS deactivated_count
+        FROM users
+      `
+    );
+    const bookingsResult = await query(
+      `
+        SELECT
+          COUNT(*)::int AS total_bookings,
+          COUNT(*) FILTER (WHERE status = 'PENDING')::int AS pending_count,
+          COUNT(*) FILTER (WHERE status = 'BOOKED')::int AS booked_count,
+          COUNT(*) FILTER (WHERE status = 'COMPLETED')::int AS completed_count,
+          COUNT(*) FILTER (WHERE status IN ('CANCELED_BY_STUDENT', 'CANCELED_BY_TEACHER'))::int AS canceled_count
+        FROM bookings
+      `
+    );
+    return res.json({
+      users: usersResult.rows[0] || {},
+      bookings: bookingsResult.rows[0] || {},
+      service_timezone: SERVICE_TIMEZONE,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
+app.get('/api/v1/admin/activity', requireAuth, requirePowerAdmin, async (req, res) => {
+  try {
+    const limit = Math.min(200, Math.max(1, parsePositiveInt(req.query?.limit) || 80));
+    const result = await query(
+      `
+        WITH recent_users AS (
+          SELECT
+            u.created_at AS occurred_at,
+            'USER_CREATED'::text AS type,
+            u.id AS user_id,
+            u.role AS role,
+            u.email AS login_id,
+            NULL::bigint AS booking_id,
+            NULL::text AS status,
+            NULL::text AS student_login_id,
+            NULL::text AS teacher_login_id
+          FROM users u
+          ORDER BY u.created_at DESC, u.id DESC
+          LIMIT $1::int
+        ),
+        recent_bookings AS (
+          SELECT
+            b.updated_at AS occurred_at,
+            'BOOKING_UPDATED'::text AS type,
+            NULL::bigint AS user_id,
+            NULL::text AS role,
+            NULL::text AS login_id,
+            b.id AS booking_id,
+            b.status AS status,
+            COALESCE(su.email, gs.phone_normalized, '-') AS student_login_id,
+            tu.email AS teacher_login_id
+          FROM bookings b
+          JOIN users tu ON tu.id = b.teacher_user_id
+          LEFT JOIN users su ON su.id = b.student_user_id
+          LEFT JOIN guest_students gs ON gs.id = b.guest_student_id
+          ORDER BY b.updated_at DESC, b.id DESC
+          LIMIT $1::int
+        )
+        SELECT
+          occurred_at,
+          type,
+          user_id,
+          role,
+          login_id,
+          booking_id,
+          status,
+          student_login_id,
+          teacher_login_id
+        FROM (
+          SELECT * FROM recent_users
+          UNION ALL
+          SELECT * FROM recent_bookings
+        ) merged
+        ORDER BY occurred_at DESC
+        LIMIT $2::int
+      `,
+      [limit, limit]
+    );
+    return res.json({ items: result.rows || [] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
+app.get('/api/v1/admin/patch-notes', requireAuth, requirePowerAdmin, async (req, res) => {
+  try {
+    const limit = Math.min(200, Math.max(1, parsePositiveInt(req.query?.limit) || 80));
+    const result = await query(
+      `
+        SELECT
+          pn.id,
+          pn.title,
+          pn.body,
+          pn.created_by_user_id,
+          pn.created_at,
+          pn.updated_at,
+          u.email AS created_by_login_id,
+          u.name AS created_by_name
+        FROM admin_patch_notes pn
+        LEFT JOIN users u ON u.id = pn.created_by_user_id
+        ORDER BY pn.created_at DESC, pn.id DESC
+        LIMIT $1::int
+      `,
+      [limit]
+    );
+    return res.json({ items: result.rows || [] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
+app.post('/api/v1/admin/patch-notes', requireAuth, requirePowerAdmin, async (req, res) => {
+  try {
+    const title = String(req.body?.title || '').trim();
+    const body = String(req.body?.body || '').trim();
+    if (!title || !body) {
+      return res.status(400).json({ error: 'title and body are required' });
+    }
+    if (title.length > 140) {
+      return res.status(400).json({ error: 'title must be 140 characters or fewer' });
+    }
+    if (body.length > 8000) {
+      return res.status(400).json({ error: 'body must be 8000 characters or fewer' });
+    }
+    const inserted = await query(
+      `
+        INSERT INTO admin_patch_notes (title, body, created_by_user_id)
+        VALUES ($1, $2, $3)
+        RETURNING id, title, body, created_by_user_id, created_at, updated_at
+      `,
+      [title, body, req.auth.userId]
+    );
+    return res.status(201).json({ item: inserted.rows[0] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
+app.get('/api/v1/admin/policy', requireAuth, requirePowerAdmin, async (req, res) => {
+  try {
+    return res.json({
+      service_timezone: SERVICE_TIMEZONE,
+      roles: {
+        POWER_ADMIN: {
+          abilities: [
+            '계정 생성/삭제/비밀번호 재설정',
+            '학생-선생님 연결 배정/해제',
+            '운영 지표/로그 조회',
+            '패치노트 작성/조회',
+          ],
+        },
+        TEACHER: {
+          abilities: [
+            '시간표/예외 일정 관리',
+            '예약 승인/취소/완료 처리',
+            '학생 연결 및 임시 학생 계정 생성',
+          ],
+        },
+        STUDENT: {
+          abilities: [
+            '선생님 검색 및 담당 연결',
+            '예약 생성/취소',
+            '내 계정 및 비밀번호 관리',
+          ],
+        },
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
+app.get('/api/v1/admin/users', requireAuth, requirePowerAdmin, async (req, res) => {
+  try {
+    const role = parseAdminRole(req.query?.role);
+    const queryText = String(req.query?.q || '').trim().toLowerCase();
+    const includeInactive = parseBooleanFlag(req.query?.include_inactive);
+    const limit = Math.min(200, Math.max(1, parsePositiveInt(req.query?.limit) || 50));
+    const result = await query(
+      `
+        SELECT
+          u.id,
+          u.role,
+          u.email AS login_id,
+          u.phone_normalized AS phone,
+          u.name,
+          u.assigned_teacher_user_id,
+          u.account_tier,
+          u.temp_created_by_teacher_user_id,
+          u.upgraded_to_full_at,
+          u.is_active,
+          u.deactivated_at,
+          u.created_at,
+          u.updated_at,
+          t.email AS assigned_teacher_login_id,
+          COALESCE(NULLIF(tp.display_name, ''), t.name) AS assigned_teacher_name
+        FROM users u
+        LEFT JOIN users t ON t.id = u.assigned_teacher_user_id
+        LEFT JOIN teacher_profiles tp ON tp.teacher_user_id = t.id
+        WHERE ($1::text = '' OR u.role = $1)
+          AND (
+            $2::text = ''
+            OR CAST(u.id AS text) = $2
+            OR LOWER(u.email) LIKE '%' || $2 || '%'
+            OR LOWER(u.name) LIKE '%' || $2 || '%'
+            OR COALESCE(u.phone_normalized, '') LIKE '%' || $2 || '%'
+          )
+          AND ($4::boolean = TRUE OR u.is_active = TRUE)
+        ORDER BY u.created_at DESC, u.id DESC
+        LIMIT $3::int
+      `,
+      [role, queryText, limit, includeInactive]
+    );
+    return res.json({ items: result.rows || [] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
+app.post('/api/v1/admin/users', requireAuth, requirePowerAdmin, async (req, res) => {
+  try {
+    const loginId = String(req.body?.login_id ?? req.body?.email ?? '').trim().toLowerCase();
+    const role = parseAdminRole(req.body?.role);
+    const password = String(req.body?.password || '');
+    const name = String(req.body?.name || '').trim();
+    const phoneRaw = String(req.body?.phone ?? '').trim();
+    const phoneNormalized = phoneRaw ? parsePhoneNormalized(phoneRaw) : null;
+
+    if (!loginId || !role || !password || !name) {
+      return res.status(400).json({ error: 'login_id, role, password, name are required' });
+    }
+    if (loginId.length < 3 || loginId.length > 60) {
+      return res.status(400).json({ error: 'login_id must be 3~60 characters' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'password must be at least 8 characters' });
+    }
+    if (phoneRaw && !phoneNormalized) {
+      return res.status(400).json({ error: 'phone is invalid' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const created = await query(
+      `
+        INSERT INTO users (
+          role,
+          email,
+          phone_normalized,
+          password_hash,
+          name,
+          account_tier
+        )
+        VALUES ($1, $2, $3, $4, $5, 'FULL')
+        RETURNING ${PUBLIC_USER_COLUMNS}
+      `,
+      [role, loginId, phoneNormalized, passwordHash, name]
+    );
+    const user = created.rows[0];
+
+    if (role === 'TEACHER') {
+      await query(
+        `
+          INSERT INTO teacher_profiles (
+            teacher_user_id,
+            lesson_duration_min,
+            timezone,
+            cancel_cutoff_hours,
+            booking_window_days,
+            student_cancel_day_before_hour
+          )
+          VALUES ($1, 60, $2, 6, 30, $3)
+          ON CONFLICT (teacher_user_id) DO UPDATE
+            SET timezone = EXCLUDED.timezone,
+                updated_at = NOW()
+        `,
+        [user.id, SERVICE_TIMEZONE, DEFAULT_STUDENT_CANCEL_DAY_BEFORE_HOUR]
+      );
+    }
+
+    return res.status(201).json({ user: toPublicUser(user) });
+  } catch (err) {
+    if (err?.code === '23505') {
+      if (String(err?.constraint || '').includes('users_email')) {
+        return res.status(409).json({ error: 'login_id already exists' });
+      }
+      if (String(err?.constraint || '').includes('phone')) {
+        return res.status(409).json({ error: 'phone already exists' });
+      }
+    }
+    console.error(err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
+app.patch('/api/v1/admin/users/:id/password', requireAuth, requirePowerAdmin, async (req, res) => {
+  try {
+    const userId = parsePositiveInt(req.params.id);
+    const newPassword = String(req.body?.new_password || '');
+    if (!userId) {
+      return res.status(400).json({ error: 'invalid_user_id' });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'new_password must be at least 8 characters' });
+    }
+    const nextHash = await bcrypt.hash(newPassword, 10);
+    const updated = await query(
+      `
+        UPDATE users
+        SET password_hash = $2,
+            updated_at = NOW()
+        WHERE id = $1
+          AND is_active = TRUE
+        RETURNING id, role, email AS login_id
+      `,
+      [userId, nextHash]
+    );
+    if (updated.rowCount === 0) {
+      return res.status(404).json({ error: 'user_not_found' });
+    }
+    return res.json({ ok: true, item: updated.rows[0] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
+app.patch('/api/v1/admin/students/:id/teacher', requireAuth, requirePowerAdmin, async (req, res) => {
+  try {
+    const studentUserId = parsePositiveInt(req.params.id);
+    if (!studentUserId) {
+      return res.status(400).json({ error: 'invalid_student_user_id' });
+    }
+
+    const teacherUserIdInput = req.body?.teacher_user_id;
+    const teacherLoginIdInput = String(req.body?.teacher_login_id || '')
+      .trim()
+      .toLowerCase();
+    let teacherUserId = null;
+
+    if (
+      teacherUserIdInput !== undefined &&
+      teacherUserIdInput !== null &&
+      String(teacherUserIdInput).trim() !== ''
+    ) {
+      teacherUserId = parsePositiveInt(teacherUserIdInput);
+      if (!teacherUserId) {
+        return res.status(400).json({ error: 'teacher_user_id must be a positive integer' });
+      }
+    } else if (teacherLoginIdInput) {
+      const teacherByLogin = await query(
+        `
+          SELECT id
+          FROM users
+          WHERE email = $1
+            AND role = 'TEACHER'
+            AND is_active = TRUE
+          LIMIT 1
+        `,
+        [teacherLoginIdInput]
+      );
+      if (teacherByLogin.rowCount === 0) {
+        return res.status(404).json({ error: 'teacher_not_found' });
+      }
+      teacherUserId = Number(teacherByLogin.rows[0].id);
+    }
+
+    let teacher = null;
+    if (teacherUserId) {
+      const teacherResult = await query(
+        `
+          SELECT
+            u.id,
+            u.email AS login_id,
+            COALESCE(NULLIF(tp.display_name, ''), u.name) AS name
+          FROM users u
+          JOIN teacher_profiles tp ON tp.teacher_user_id = u.id
+          WHERE u.id = $1
+            AND u.role = 'TEACHER'
+            AND u.is_active = TRUE
+          LIMIT 1
+        `,
+        [teacherUserId]
+      );
+      if (teacherResult.rowCount === 0) {
+        return res.status(404).json({ error: 'teacher_not_found' });
+      }
+      teacher = teacherResult.rows[0];
+    }
+
+    const updated = await query(
+      `
+        UPDATE users
+        SET assigned_teacher_user_id = $2,
+            updated_at = NOW()
+        WHERE id = $1
+          AND role = 'STUDENT'
+          AND is_active = TRUE
+        RETURNING ${PUBLIC_USER_COLUMNS}
+      `,
+      [studentUserId, teacherUserId || null]
+    );
+    if (updated.rowCount === 0) {
+      return res.status(404).json({ error: 'student_not_found' });
+    }
+
+    return res.json({
+      user: toPublicUser(updated.rows[0]),
+      teacher: teacher
+        ? {
+            id: teacher.id,
+            login_id: teacher.login_id,
+            name: teacher.name,
+          }
+        : null,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
+app.delete('/api/v1/admin/users/:id', requireAuth, requirePowerAdmin, async (req, res) => {
+  try {
+    const userId = parsePositiveInt(req.params.id);
+    if (!userId) {
+      return res.status(400).json({ error: 'invalid_user_id' });
+    }
+    if (Number(userId) === Number(req.auth.userId)) {
+      return res.status(409).json({ error: 'cannot_delete_self' });
+    }
+
+    const found = await query(
+      `
+        SELECT id, role, email AS login_id, is_active
+        FROM users
+        WHERE id = $1
+        LIMIT 1
+      `,
+      [userId]
+    );
+    if (found.rowCount === 0) {
+      return res.status(404).json({ error: 'user_not_found' });
+    }
+    const target = found.rows[0];
+    if (target.is_active !== true) {
+      return res.status(409).json({ error: 'user_already_deactivated' });
+    }
+
+    if (target.role === 'POWER_ADMIN') {
+      const adminCount = await query(
+        `
+          SELECT COUNT(*)::int AS count
+          FROM users
+          WHERE role = 'POWER_ADMIN'
+            AND is_active = TRUE
+        `
+      );
+      if (Number(adminCount.rows[0]?.count || 0) <= 1) {
+        return res.status(409).json({ error: 'cannot_delete_last_power_admin' });
+      }
+    }
+
+    const deactivatedLoginId = createDeactivatedLoginId(userId);
+    const replacementPasswordHash = await bcrypt.hash(randomBytes(24).toString('hex'), 10);
+
+    await query('BEGIN');
+    try {
+      if (target.role === 'TEACHER') {
+        await query(
+          `
+            UPDATE users
+            SET assigned_teacher_user_id = NULL,
+                updated_at = NOW()
+            WHERE assigned_teacher_user_id = $1
+          `,
+          [userId]
+        );
+      }
+      await query(
+        `
+          UPDATE users
+          SET temp_created_by_teacher_user_id = NULL,
+              updated_at = NOW()
+          WHERE temp_created_by_teacher_user_id = $1
+        `,
+        [userId]
+      );
+
+      const deactivated = await query(
+        `
+          UPDATE users
+          SET is_active = FALSE,
+              deactivated_at = NOW(),
+              deactivated_reason = 'admin_deleted',
+              email = $2,
+              phone_normalized = NULL,
+              password_hash = $3,
+              name = CASE
+                WHEN name LIKE '%(deleted)%' THEN name
+                ELSE name || ' (deleted)'
+              END,
+              updated_at = NOW()
+          WHERE id = $1
+            AND is_active = TRUE
+          RETURNING id, role, email AS login_id, deactivated_at
+        `,
+        [userId, deactivatedLoginId, replacementPasswordHash]
+      );
+      if (deactivated.rowCount === 0) {
+        await query('ROLLBACK');
+        return res.status(409).json({ error: 'user_already_deactivated' });
+      }
+      await query('COMMIT');
+
+      return res.json({
+        ok: true,
+        deactivated: {
+          id: target.id,
+          role: target.role,
+          previous_login_id: target.login_id,
+          deactivated_login_id: deactivated.rows[0].login_id,
+          deactivated_at: deactivated.rows[0].deactivated_at,
+        },
+      });
+    } catch (txErr) {
+      await query('ROLLBACK');
+      throw txErr;
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
+app.get('/api/v1/students/me/teachers/search', requireAuth, requireStudent, async (req, res) => {
+  try {
+    const queryText = String(req.query?.q || '').trim().toLowerCase();
+    const rows = await query(
+      `
+        SELECT
+          u.id,
+          COALESCE(NULLIF(tp.display_name, ''), u.name) AS name,
+          u.email AS login_id
+        FROM users u
+        JOIN teacher_profiles tp ON tp.teacher_user_id = u.id
+        WHERE u.role = 'TEACHER'
+          AND u.is_active = TRUE
+          AND (
+            $1::text = ''
+            OR CAST(u.id AS text) = $1
+            OR LOWER(u.email) LIKE '%' || $1 || '%'
+            OR LOWER(u.name) LIKE '%' || $1 || '%'
+            OR LOWER(COALESCE(tp.display_name, '')) LIKE '%' || $1 || '%'
+          )
+        ORDER BY
+          CASE
+            WHEN CAST(u.id AS text) = $1 THEN 0
+            WHEN LOWER(u.email) = $1 THEN 1
+            WHEN LOWER(COALESCE(tp.display_name, '')) = $1 THEN 2
+            WHEN LOWER(u.name) = $1 THEN 3
+            ELSE 4
+          END,
+          u.id ASC
+        LIMIT 30
+      `,
+      [queryText]
+    );
+    return res.json({ items: rows.rows || [] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
 app.patch('/api/v1/students/me/teacher', requireAuth, requireStudent, async (req, res) => {
   try {
     const teacherUserIdInput = parsePositiveInt(req.body?.teacher_user_id);
     const teacherLoginIdInput = String(req.body?.teacher_login_id || '')
       .trim()
       .toLowerCase();
-    if (!teacherUserIdInput && !teacherLoginIdInput) {
-      return res.status(400).json({ error: 'teacher_user_id or teacher_login_id is required' });
+    const teacherNameInput = String(req.body?.teacher_name || '')
+      .trim()
+      .toLowerCase();
+    const teacherQueryInput = String(req.body?.teacher_query || '')
+      .trim()
+      .toLowerCase();
+    if (!teacherUserIdInput && !teacherLoginIdInput && !teacherNameInput && !teacherQueryInput) {
+      return res.status(400).json({ error: 'teacher_user_id, teacher_login_id, teacher_name, or teacher_query is required' });
     }
 
     const teacherResult = await query(
       `
-        SELECT id, role, email, name
-        FROM users
-        WHERE role = 'TEACHER'
+        SELECT
+          u.id,
+          u.role,
+          u.email,
+          COALESCE(NULLIF(tp.display_name, ''), u.name) AS name
+        FROM users u
+        JOIN teacher_profiles tp ON tp.teacher_user_id = u.id
+        WHERE u.role = 'TEACHER'
+          AND u.is_active = TRUE
           AND (
-            ($1::bigint IS NOT NULL AND id = $1)
-            OR ($2::text <> '' AND email = $2)
+            ($1::bigint IS NOT NULL AND u.id = $1)
+            OR ($2::text <> '' AND LOWER(u.email) = $2)
+            OR ($3::text <> '' AND LOWER(COALESCE(tp.display_name, u.name)) = $3)
+            OR (
+              $4::text <> ''
+              AND (
+                CAST(u.id AS text) = $4
+                OR LOWER(u.email) LIKE '%' || $4 || '%'
+                OR LOWER(u.name) LIKE '%' || $4 || '%'
+                OR LOWER(COALESCE(tp.display_name, '')) LIKE '%' || $4 || '%'
+              )
+            )
           )
-        ORDER BY id ASC
-        LIMIT 1
+        ORDER BY u.id ASC
+        LIMIT 6
       `,
-      [teacherUserIdInput || null, teacherLoginIdInput]
+      [teacherUserIdInput || null, teacherLoginIdInput, teacherNameInput, teacherQueryInput]
     );
     if (teacherResult.rowCount === 0) {
       return res.status(404).json({ error: 'teacher_not_found' });
+    }
+    if (!teacherUserIdInput && !teacherLoginIdInput && teacherResult.rowCount > 1) {
+      return res.status(409).json({
+        error: 'teacher_ambiguous',
+        candidates: teacherResult.rows.slice(0, 5).map((row) => ({
+          id: row.id,
+          login_id: row.email,
+          name: row.name,
+        })),
+      });
     }
     const teacher = teacherResult.rows[0];
 
@@ -1462,7 +2353,7 @@ app.get('/api/v1/teachers/me/profile', requireAuth, requireTeacher, async (req, 
         SELECT
           teacher_user_id,
           lesson_duration_min,
-          timezone,
+          $2::text AS timezone,
           cancel_cutoff_hours,
           booking_window_days,
           student_cancel_day_before_hour,
@@ -1474,7 +2365,7 @@ app.get('/api/v1/teachers/me/profile', requireAuth, requireTeacher, async (req, 
         WHERE teacher_user_id = $1
         LIMIT 1
       `,
-      [req.auth.userId]
+      [req.auth.userId, SERVICE_TIMEZONE]
     );
 
     if (result.rowCount === 0) {
@@ -1493,7 +2384,6 @@ app.patch('/api/v1/teachers/me/profile', requireAuth, requireTeacher, async (req
     const hasLessonDuration = req.body?.lesson_duration_min !== undefined;
     const hasCancelCutoff = req.body?.cancel_cutoff_hours !== undefined;
     const hasBookingWindow = req.body?.booking_window_days !== undefined;
-    const hasTimezone = req.body?.timezone !== undefined;
     const hasStudentCancelDeadline = req.body?.student_cancel_day_before_hour !== undefined;
     const hasStudentNotice = req.body?.student_notice !== undefined;
     const hasDisplayName = req.body?.display_name !== undefined;
@@ -1503,7 +2393,6 @@ app.patch('/api/v1/teachers/me/profile', requireAuth, requireTeacher, async (req
       !hasLessonDuration &&
       !hasCancelCutoff &&
       !hasBookingWindow &&
-      !hasTimezone &&
       !hasStudentCancelDeadline &&
       !hasStudentNotice &&
       !hasDisplayName &&
@@ -1511,7 +2400,7 @@ app.patch('/api/v1/teachers/me/profile', requireAuth, requireTeacher, async (req
     ) {
       return res.status(400).json({
         error:
-          'at least one of lesson_duration_min, cancel_cutoff_hours, booking_window_days, timezone, student_cancel_day_before_hour, student_notice, display_name, bio is required',
+          'at least one of lesson_duration_min, cancel_cutoff_hours, booking_window_days, student_cancel_day_before_hour, student_notice, display_name, bio is required',
       });
     }
 
@@ -1536,14 +2425,6 @@ app.patch('/api/v1/teachers/me/profile', requireAuth, requireTeacher, async (req
       bookingWindowDays = parsePositiveInt(req.body.booking_window_days);
       if (!bookingWindowDays || bookingWindowDays > 365) {
         return res.status(400).json({ error: 'booking_window_days must be 1~365' });
-      }
-    }
-
-    let timezone = null;
-    if (hasTimezone) {
-      timezone = parseTimeZone(req.body.timezone);
-      if (!timezone) {
-        return res.status(400).json({ error: 'timezone must be a valid IANA timezone (e.g. Asia/Seoul)' });
       }
     }
 
@@ -1585,7 +2466,7 @@ app.patch('/api/v1/teachers/me/profile', requireAuth, requireTeacher, async (req
         SET lesson_duration_min = COALESCE($2::int, lesson_duration_min),
             cancel_cutoff_hours = COALESCE($3::int, cancel_cutoff_hours),
             booking_window_days = COALESCE($4::int, booking_window_days),
-            timezone = COALESCE($5::text, timezone),
+            timezone = $5::text,
             student_cancel_day_before_hour = COALESCE($6::int, student_cancel_day_before_hour),
             student_notice = CASE
               WHEN $7::boolean THEN $8::text
@@ -1618,7 +2499,7 @@ app.patch('/api/v1/teachers/me/profile', requireAuth, requireTeacher, async (req
         lessonDurationMin,
         cancelCutoffHours,
         bookingWindowDays,
-        timezone,
+        SERVICE_TIMEZONE,
         studentCancelDayBeforeHour,
         hasStudentNotice,
         studentNotice,
@@ -2066,7 +2947,7 @@ app.get('/api/v1/teachers', optionalAuth, async (req, res) => {
           COALESCE(NULLIF(tp.display_name, ''), u.name) AS name,
           u.email,
           tp.lesson_duration_min,
-          tp.timezone,
+          $2::text AS timezone,
           tp.cancel_cutoff_hours,
           tp.booking_window_days,
           tp.student_cancel_day_before_hour,
@@ -2074,10 +2955,11 @@ app.get('/api/v1/teachers', optionalAuth, async (req, res) => {
           tp.bio
         FROM users u
         JOIN teacher_profiles tp ON tp.teacher_user_id = u.id
-        WHERE ($1::bigint IS NULL OR u.id = $1)
+        WHERE u.is_active = TRUE
+          AND ($1::bigint IS NULL OR u.id = $1)
         ORDER BY u.id ASC
       `,
-      [assignedTeacherId]
+      [assignedTeacherId, SERVICE_TIMEZONE]
     );
     const isAuthenticated = Boolean(req.auth?.userId);
     const items = (result.rows || []).map((row) => {
@@ -2200,34 +3082,49 @@ app.get('/api/v1/teachers/:teacherId/slots', optionalAuth, async (req, res) => {
             AND ota.date_local >= ($2::timestamptz AT TIME ZONE $4)::date
             AND ota.date_local <= ($3::timestamptz AT TIME ZONE $4)::date
         ),
-        raw_slots AS (
+        raw_windows AS (
           SELECT * FROM weekly_slots
           UNION ALL
           SELECT * FROM one_time_slots
         ),
+        expanded_slots AS (
+          SELECT
+            gs AS start_at,
+            gs + make_interval(mins => $6::int) AS end_at,
+            $6::int AS duration_min,
+            w.lesson_title,
+            w.lesson_note,
+            w.source_priority
+          FROM raw_windows w
+          CROSS JOIN LATERAL generate_series(
+            w.start_at,
+            w.end_at - make_interval(mins => $6::int),
+            make_interval(mins => $7::int)
+          ) gs
+          WHERE w.end_at > w.start_at
+        ),
         filtered_slots AS (
           SELECT
-            r.start_at,
-            r.end_at,
-            extract(epoch FROM (r.end_at - r.start_at))::int / 60 AS duration_min,
-            r.lesson_title,
-            r.lesson_note,
-            r.source_priority
-          FROM raw_slots r
-          WHERE r.start_at >= $2::timestamptz
-            AND r.start_at < $3::timestamptz
-            AND r.end_at > r.start_at
-            AND r.start_at >= NOW()
-            AND r.start_at <= NOW() + make_interval(days => $5::int)
+            s.start_at,
+            s.end_at,
+            s.duration_min,
+            s.lesson_title,
+            s.lesson_note,
+            s.source_priority
+          FROM expanded_slots s
+          WHERE s.start_at >= $2::timestamptz
+            AND s.start_at < $3::timestamptz
+            AND s.start_at >= NOW()
+            AND s.start_at <= NOW() + make_interval(days => $5::int)
             AND NOT EXISTS (
               SELECT 1
               FROM availability_exceptions ex
               WHERE ex.teacher_user_id = $1
-                AND ex.date_local = (r.start_at AT TIME ZONE $4)::date
+                AND ex.date_local = (s.start_at AT TIME ZONE $4)::date
                 AND (
                   (ex.start_time_local IS NULL AND ex.end_time_local IS NULL)
                   OR (
-                    r.start_at <
+                    s.start_at <
                       make_timestamptz(
                         extract(year FROM ex.date_local)::int,
                         extract(month FROM ex.date_local)::int,
@@ -2238,7 +3135,7 @@ app.get('/api/v1/teachers/:teacherId/slots', optionalAuth, async (req, res) => {
                         $4
                       )
                     AND
-                    r.end_at >
+                    s.end_at >
                       make_timestamptz(
                         extract(year FROM ex.date_local)::int,
                         extract(month FROM ex.date_local)::int,
@@ -2268,21 +3165,32 @@ app.get('/api/v1/teachers/:teacherId/slots', optionalAuth, async (req, res) => {
           d.duration_min,
           d.lesson_title,
           d.lesson_note,
-          (b.id IS NULL) AS is_available
+          NOT EXISTS (
+            SELECT 1
+            FROM bookings b
+            WHERE b.teacher_user_id = $1
+              AND (
+                b.status IN ('PENDING', 'BOOKED')
+                OR (
+                  b.status = 'COMPLETED'
+                  AND (b.start_at + make_interval(mins => b.duration_min)) > NOW()
+                )
+              )
+              AND d.start_at < (b.start_at + make_interval(mins => b.duration_min))
+              AND d.end_at > b.start_at
+          ) AS is_available
         FROM dedup_slots d
-        LEFT JOIN bookings b
-          ON b.teacher_user_id = $1
-         AND b.start_at = d.start_at
-         AND (
-           b.status IN ('PENDING', 'BOOKED')
-           OR (
-             b.status = 'COMPLETED'
-             AND (b.start_at + make_interval(mins => b.duration_min)) > NOW()
-           )
-         )
         ORDER BY d.start_at ASC
       `,
-      [teacherUserId, fromIso, toIso, profile.timezone, profile.booking_window_days]
+      [
+        teacherUserId,
+        fromIso,
+        toIso,
+        profile.timezone,
+        profile.booking_window_days,
+        profile.lesson_duration_min,
+        slotStepMin,
+      ]
     );
 
     return res.json({
@@ -2352,13 +3260,18 @@ app.post('/api/v1/bookings', requireAuth, requireStudent, async (req, res) => {
       return res.status(422).json({ error: 'start_at_exceeds_booking_window' });
     }
 
-    const bookableSlot = await getBookableSlotAt(teacherUserId, startAtIso, profile.timezone);
+    const bookableSlot = await getBookableSlotAt(
+      teacherUserId,
+      startAtIso,
+      profile.timezone,
+      profile.lesson_duration_min
+    );
     if (!bookableSlot) {
       return res.status(422).json({ error: 'slot_not_available' });
     }
     const slotDurationMin = Number(bookableSlot.duration_min);
-    if (!Number.isInteger(slotDurationMin) || slotDurationMin <= 0) {
-      return res.status(500).json({ error: 'invalid_slot_duration' });
+    if (!Number.isInteger(slotDurationMin) || slotDurationMin < 10 || slotDurationMin > 180 || slotDurationMin % 5 !== 0) {
+      return res.status(422).json({ error: 'slot_not_available' });
     }
     if (requestedDurationMin && requestedDurationMin !== slotDurationMin) {
       return res.status(422).json({ error: 'duration_min_mismatch' });
@@ -2460,13 +3373,18 @@ app.post('/api/v1/public/bookings', publicBookingLimiter, async (req, res) => {
       return res.status(422).json({ error: 'start_at_exceeds_booking_window' });
     }
 
-    const bookableSlot = await getBookableSlotAt(teacherUserId, startAtIso, profile.timezone);
+    const bookableSlot = await getBookableSlotAt(
+      teacherUserId,
+      startAtIso,
+      profile.timezone,
+      profile.lesson_duration_min
+    );
     if (!bookableSlot) {
       return res.status(422).json({ error: 'slot_not_available' });
     }
     const slotDurationMin = Number(bookableSlot.duration_min);
-    if (!Number.isInteger(slotDurationMin) || slotDurationMin <= 0) {
-      return res.status(500).json({ error: 'invalid_slot_duration' });
+    if (!Number.isInteger(slotDurationMin) || slotDurationMin < 10 || slotDurationMin > 180 || slotDurationMin % 5 !== 0) {
+      return res.status(422).json({ error: 'slot_not_available' });
     }
     if (requestedDurationMin && requestedDurationMin !== slotDurationMin) {
       return res.status(422).json({ error: 'duration_min_mismatch' });
@@ -2878,13 +3796,18 @@ app.post('/api/v1/teachers/me/bookings', requireAuth, requireTeacher, async (req
       return res.status(404).json({ error: 'teacher_not_found' });
     }
 
-    const bookableSlot = await getBookableSlotAt(req.auth.userId, startAtIso, profile.timezone);
+    const bookableSlot = await getBookableSlotAt(
+      req.auth.userId,
+      startAtIso,
+      profile.timezone,
+      profile.lesson_duration_min
+    );
     if (!bookableSlot) {
       return res.status(422).json({ error: 'slot_not_available' });
     }
     const slotDurationMin = Number(bookableSlot.duration_min);
-    if (!Number.isInteger(slotDurationMin) || slotDurationMin <= 0) {
-      return res.status(500).json({ error: 'invalid_slot_duration' });
+    if (!Number.isInteger(slotDurationMin) || slotDurationMin < 10 || slotDurationMin > 180 || slotDurationMin % 5 !== 0) {
+      return res.status(422).json({ error: 'slot_not_available' });
     }
 
     const studentUserIdInput = parsePositiveInt(req.body?.student_user_id);
@@ -2900,6 +3823,7 @@ app.post('/api/v1/teachers/me/bookings', requireAuth, requireTeacher, async (req
         SELECT id, email, name
         FROM users
         WHERE role = 'STUDENT'
+          AND is_active = TRUE
           AND (
             ($1::bigint IS NOT NULL AND id = $1)
             OR ($2::text <> '' AND email = $2)

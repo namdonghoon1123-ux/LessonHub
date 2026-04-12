@@ -29,27 +29,27 @@ docker compose up --build -d
 ```
 
 ## 3) 동작 확인
-- 로그인: `http://localhost:8080/index.html`
-- 학생 통합 대시보드: `http://localhost:8080/student.html`
-- 학생 캘린더: `http://localhost:8080/student-calendar.html`
-- 학생 예약 목록: `http://localhost:8080/student-bookings.html`
-- 선생님 통합 대시보드: `http://localhost:8080/teacher.html`
-- 선생님 캘린더: `http://localhost:8080/teacher-calendar.html`
-- 선생님 시간표/예외 관리: `http://localhost:8080/teacher-manage.html`
-- 선생님 예약 관리: `http://localhost:8080/teacher-bookings.html`
-- 사용자 설명서: `http://localhost:8080/guide.html`
+- 로그인: `http://localhost:18080/index.html`
+- 학생 통합 대시보드: `http://localhost:18080/student.html`
+- 학생 캘린더: `http://localhost:18080/student-calendar.html`
+- 학생 예약 목록: `http://localhost:18080/student-bookings.html`
+- 선생님 통합 대시보드: `http://localhost:18080/teacher.html`
+- 선생님 캘린더: `http://localhost:18080/teacher-calendar.html`
+- 선생님 시간표/예외 관리: `http://localhost:18080/teacher-manage.html`
+- 선생님 예약 관리: `http://localhost:18080/teacher-bookings.html`
+- 사용자 설명서: `http://localhost:18080/guide.html`
 - 백엔드 헬스체크: `http://localhost:4000/health`
-- 프론트 프록시 헬스체크: `http://localhost:8080/api/health`
+- 프론트 프록시 헬스체크: `http://localhost:18080/api/health`
 
 ## 선생님 불가 일정(휴무/차단) 설정 방법
 - 캘린더 방식(권장)
-  1. `http://localhost:8080/teacher-calendar.html` 접속
+  1. `http://localhost:18080/teacher-calendar.html` 접속
   2. 상단 `생성 모드`를 `불가 시간/휴무`로 변경
   3. 캘린더에서 날짜/시간을 15분 단위로 드래그
   4. 뜨는 모달에서 날짜, 시간(또는 `종일 차단`), 사유를 입력 후 저장
   5. 저장 즉시 선생님 캘린더에 `불가`로 표시되고 학생 슬롯에서 제외
 - 기존 폼 방식
-  - `http://localhost:8080/teacher-manage.html`의 `예외(Exceptions)` 섹션에서 날짜/시간/사유를 직접 등록/삭제
+  - `http://localhost:18080/teacher-manage.html`의 `예외(Exceptions)` 섹션에서 날짜/시간/사유를 직접 등록/삭제
 
 ## 4) 마이그레이션 / 시드
 ```bash
@@ -102,17 +102,21 @@ docker compose down
 시드 사용자
 - `teacher@example.com` (TEACHER)
 - `student@example.com` (STUDENT)
-  - 비밀번호는 로컬 개발 환경에서 직접 설정하거나 시드 정책에 맞춰 확인한다.
+- `poweradmin` (POWER_ADMIN)
+- 비밀번호는 로컬 개발 환경에서 직접 설정하거나 확인한다.
 
 ## 참고
 - 인증은 JWT 기반 무상태(Stateless) 액세스 토큰 방식입니다.
-- 프론트(`http://localhost:8080`)는 로그인 role에 따라 선생님/학생 화면이 분리됩니다.
+- 프론트(`http://localhost:18080`)는 로그인 role에 따라 선생님/학생 화면이 분리됩니다.
 - 학생 화면은 월간 캘린더 기반으로 슬롯을 조회하고 바로 예약/취소할 수 있습니다.
 
 ## AI 협업 문서 운영
 - Gemini 메모: `GEMINI.md`
 - Codex 메모: `CODEX.md`
+- Claude Code 메모: `CLAUDE.md`
 - 일일 인수인계: `docs/handover-YYYY-MM-DD.md`
+- 서비스/AI 구조 요약: `docs/ai-handover-2026-03-30.md`
+- AI 협업 운영안: `docs/ai-collaboration-playbook-2026-04-02.md`
 - UI 리디자인 기록: `docs/ui-redesign-2026-02-24.md`
 - UI/UX QA 체크리스트: `docs/ui-qa-checklist-2026-03-23.md`
 - Gemini 디자인 검수 주의사항: `docs/gemini-design-review-notes-2026-03-23.md`
@@ -121,10 +125,10 @@ docker compose down
 
 매일 인수인계 스냅샷 생성:
 ```bash
-bash "/Volumes/Extreme SSD/workspace/scripts/daily-handover.sh"
+bash "/Volumes/Extreme_SSD/workspace/scripts/daily-handover.sh"
 ```
 
 스모크 테스트까지 포함해 기록:
 ```bash
-RUN_SMOKE=1 bash "/Volumes/Extreme SSD/workspace/scripts/daily-handover.sh"
+RUN_SMOKE=1 bash "/Volumes/Extreme_SSD/workspace/scripts/daily-handover.sh"
 ```
