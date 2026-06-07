@@ -154,3 +154,79 @@ html, body {
     font-size: 16px;
   }
 }
+
+/* ────────────────────────────────────────────────────────────
+ * Toast — alert() 대체. window.lhToast(msg, tone) 으로 호출
+ * tone: 'info' (기본) · 'success' · 'warn' · 'error'
+ * ──────────────────────────────────────────────────────────── */
+.lh-toast-stack {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  max-width: min(420px, 90vw);
+}
+
+.lh-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--lh-surface);
+  border: 1px solid var(--lh-line);
+  border-left-width: 3px;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(217, 84, 58, 0.12);
+  color: var(--lh-ink);
+  font-size: 13.5px;
+  line-height: 1.45;
+  animation: lh-toast-in 200ms ease-out;
+}
+
+.lh-toast--info    { border-left-color: var(--lh-sub); }
+.lh-toast--success { border-left-color: var(--lh-success-fg); background: var(--lh-success-bg); }
+.lh-toast--warn    { border-left-color: var(--lh-coral); background: var(--lh-coral-tint); }
+.lh-toast--error   { border-left-color: var(--lh-rose); background: var(--lh-rose-tint); color: var(--lh-rose); font-weight: 600; }
+
+.lh-toast__body { flex: 1; min-width: 0; word-break: break-word; }
+
+.lh-toast__close {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--lh-muted);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0 2px;
+  font-family: inherit;
+}
+
+.lh-toast__close:hover { color: var(--lh-coral-deep); }
+
+.lh-toast--leaving {
+  animation: lh-toast-out 180ms ease-in forwards;
+}
+
+@keyframes lh-toast-in {
+  from { transform: translateX(20px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes lh-toast-out {
+  to { transform: translateX(20px); opacity: 0; }
+}
+
+@media (max-width: 480px) {
+  .lh-toast-stack {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    max-width: none;
+  }
+}

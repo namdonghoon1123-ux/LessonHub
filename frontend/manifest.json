@@ -1,0 +1,32 @@
+{
+  "name": "LessonHub — 레슨 예약",
+  "short_name": "LessonHub",
+  "description": "피아노·요가·과외·코칭을 위한 1:1 레슨 예약 도구",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FBF3EE",
+  "theme_color": "#EC6A4C",
+  "lang": "ko",
+  "dir": "ltr",
+  "categories": ["education", "productivity", "business"],
+  "icons": [
+    {
+      "src": "/lessonhub-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "학생 로그인",
+      "url": "/student-login.html"
+    },
+    {
+      "name": "선생님 로그인",
+      "url": "/teacher-login.html"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /power-admin*
+Disallow: /app.html
+
+Sitemap: /sitemap.xml
