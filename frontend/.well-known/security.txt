@@ -1,0 +1,8 @@
+# LessonHub Security Policy
+# 보안 취약점을 발견하셨다면 아래 절차로 알려 주세요.
+
+Contact: mailto:security@example.com
+Preferred-Languages: ko, en
+Expires: 2027-12-31T23:59:59.000Z
+Canonical: /.well-known/security.txt
+Policy: https://github.com/namdonghoon1123-ux/LessonHub/blob/main/docs/security.md

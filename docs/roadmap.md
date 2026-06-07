@@ -27,6 +27,15 @@
 ### 데모 데이터
 - [x] `scripts/supabase-demo-data.sql` — admin/admin123 + teacher123/student123 + 시간표/예약 데모
 
+### 배포 fix + 사용성/보안/PWA (커밋 `b65dcf3`)
+- [x] 404 라우팅 해결 (api/[...path].js Vercel catchall)
+- [x] 보안 헤더 (CSP-lite, X-Frame-Options, Referrer-Policy, Permissions-Policy)
+- [x] Toast 알림 시스템 (`lessonhub-toast.js` + window.alert 자동 오버라이드)
+- [x] PWA manifest + theme-color (#EC6A4C) + Apple meta
+- [x] robots.txt + sitemap.xml
+- [x] 커스텀 404 페이지 (Coral Blush)
+- [x] `.well-known/security.txt`
+
 ---
 
 ## 🟥 Phase 1 — 배포 직후 (1주 안에 마무리)
