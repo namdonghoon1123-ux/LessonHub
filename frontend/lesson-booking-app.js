@@ -2156,9 +2156,77 @@
         const activeOneTime = (state.teacherOneTimeAvailability || []).filter((row) => row.is_active);
         const activeTeacherBookings = state.teacherActiveBookings || [];
 
+        // 오늘 수업 (Coral Blush 명세 — 첫 카드 강조)
+        const now = new Date();
+        let todayCount = 0;
+        try {
+          const todayKey = toDateKeyFromDate(now);
+          todayCount = activeTeacherBookings.filter((b) => {
+            try {
+              return toDateKeyFromDate(new Date(b.start_at)) === todayKey;
+            } catch (_) {
+              return false;
+            }
+          }).length;
+        } catch (_) {
+          /* noop */
+        }
+        const teacherTodayCount = document.getElementById('teacherTodayCount');
+        if (teacherTodayCount) teacherTodayCount.textContent = String(todayCount);
+
         teacherAvailCount.textContent = String(activeWeekly.length + activeOneTime.length);
         teacherExceptionCount.textContent = String((state.teacherExceptions || []).length);
         teacherActiveBookingCount.textContent = String(activeTeacherBookings.length);
+
+        // 알림 2칸 — 임시 학생 정식 전환 대기 + 이번 주 예외
+        try {
+          const pendingTemp = (state.teacherStudents || []).filter(
+            (s) => String(s?.account_tier || '').toUpperCase() === 'TEMP'
+          );
+          let exceptionsThisWeek = 0;
+          try {
+            const weekStart = startOfWeek(now);
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 7);
+            exceptionsThisWeek = (state.teacherExceptions || []).filter((e) => {
+              const raw = e?.date_local || e?.date || '';
+              if (!raw) return false;
+              const ed = new Date(`${raw}T00:00:00`);
+              return ed >= weekStart && ed < weekEnd;
+            }).length;
+          } catch (_) {
+            /* noop */
+          }
+
+          const noticesEl = document.getElementById('teacherNotices');
+          const pendingCard = document.getElementById('teacherPendingNoticeCard');
+          const pendingText = document.getElementById('teacherPendingNoticeText');
+          const holidayCard = document.getElementById('teacherHolidayNoticeCard');
+          const holidayText = document.getElementById('teacherHolidayNoticeText');
+
+          let hasAny = false;
+          if (pendingCard && pendingText) {
+            if (pendingTemp.length > 0) {
+              pendingCard.hidden = false;
+              pendingText.textContent = `${pendingTemp.length}명의 임시 학생 계정이 정식 전환 대기 중`;
+              hasAny = true;
+            } else {
+              pendingCard.hidden = true;
+            }
+          }
+          if (holidayCard && holidayText) {
+            if (exceptionsThisWeek > 0) {
+              holidayCard.hidden = false;
+              holidayText.textContent = `이번 주 ${exceptionsThisWeek}건의 예외/휴무가 등록되어 있습니다`;
+              hasAny = true;
+            } else {
+              holidayCard.hidden = true;
+            }
+          }
+          if (noticesEl) noticesEl.hidden = !hasAny;
+        } catch (_) {
+          /* noop */
+        }
       }
 
       function buildWeekDays(cursorDate) {
@@ -2429,6 +2497,13 @@
               ['PENDING', 'BOOKED'].includes(String(booking.status || ''))
           );
           const canCancelMyBooking = Boolean(activeMyBooking);
+          if (canCancelMyBooking) {
+            row.classList.add('mine');
+          }
+          const slotStartMs = Date.parse(slot.start_at);
+          if (Number.isFinite(slotStartMs) && slotStartMs < Date.now() && !canCancelMyBooking) {
+            row.classList.add('past');
+          }
           if (isInvitedSlot) {
             row.style.outline = '2px solid #D9543A';
             row.style.outlineOffset = '2px';

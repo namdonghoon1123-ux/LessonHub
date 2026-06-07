@@ -445,23 +445,103 @@
         margin-bottom: 12px;
       }
 
+      .stats--four {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
       .stat-card {
         border: 1px solid #F0E1D9;
         border-radius: 14px;
-        background: linear-gradient(160deg, #fff, #FBF3EE);
-        padding: 11px;
+        background: #FFFFFF;
+        padding: 13px 14px;
         display: grid;
         gap: 4px;
+        position: relative;
+      }
+
+      .stats--four .stat-card + .stat-card::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 13px;
+        bottom: 13px;
+        width: 1px;
+        background: var(--line-soft, #F7ECE5);
       }
 
       .stat-card strong {
-        font-size: 23px;
+        font-size: 22px;
+        font-weight: 700;
         letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .stat-card--accent strong {
+        color: #D9543A;
       }
 
       .stat-card span {
         font-size: 12px;
         color: var(--muted);
+      }
+
+      /* 알림 2칸 (선생님 주간 운영 명세) */
+      .notices {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .notice {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #FFFFFF;
+        padding: 11px 13px;
+        display: grid;
+        gap: 4px;
+      }
+
+      .notice strong {
+        font-size: 13px;
+        color: var(--text);
+      }
+
+      .notice p {
+        margin: 0;
+        font-size: 13px;
+        color: var(--sub);
+      }
+
+      .notice a {
+        margin-top: 2px;
+        font-size: 12px;
+        color: #D9543A;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .notice--rose {
+        background: #F8E2E8;
+        border-color: #EFC4D0;
+      }
+
+      .notice--rose strong {
+        color: #D45C79;
+      }
+
+      .notice--rose p {
+        color: #D45C79;
+      }
+
+      @media (max-width: 760px) {
+        .stats--four {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .notices {
+          grid-template-columns: 1fr;
+        }
       }
 
       .meta-strip {
@@ -1094,6 +1174,96 @@
         background: #FBE6DD;
         border-color: #F0E1D9;
         color: #7A635E;
+      }
+
+      /* README 명세 — 역할 칩 색상: 학생=coral / 선생님=rose / 관리자=green */
+      .status-STUDENT {
+        background: #FBE6DD;
+        border-color: #FBE6DD;
+        color: #D9543A;
+      }
+
+      .status-TEACHER {
+        background: #F8E2E8;
+        border-color: #F8E2E8;
+        color: #D45C79;
+      }
+
+      .status-POWER_ADMIN {
+        background: #E7F2EC;
+        border-color: #E7F2EC;
+        color: #3E9A6F;
+      }
+
+      /* 일시정지 (paused) */
+      .status-paused,
+      .status-PAUSED {
+        background: #F7ECE5;
+        border-color: #F7ECE5;
+        color: #B6A39C;
+      }
+
+      /* 관리자 테이블 헤더 (README: 헤더 행 lineSoft 배경) */
+      .table-card thead tr {
+        background: #F7ECE5;
+      }
+
+      .table-card thead th {
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #7A635E;
+        text-align: left;
+        letter-spacing: 0.2px;
+        padding: 9px 12px;
+        border-bottom: 1px solid #F0E1D9;
+      }
+
+      .table-card tbody td {
+        padding: 9px 12px;
+        font-size: 13px;
+        color: #3B2A29;
+        border-bottom: 1px solid #F7ECE5;
+      }
+
+      /* 필터 칩 (관리자 사용자 필터 명세) */
+      .filter-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 8px 0 12px;
+      }
+
+      .filter-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 30px;
+        padding: 0 12px;
+        border: 1px solid #F0E1D9;
+        border-radius: 999px;
+        background: #FFFFFF;
+        color: #7A635E;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .filter-chip[aria-selected="true"],
+      .filter-chip.is-active {
+        background: #FBE6DD;
+        border-color: #F4C3B3;
+        color: #D9543A;
+      }
+
+      .filter-chip .count {
+        color: #B6A39C;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .filter-chip[aria-selected="true"] .count,
+      .filter-chip.is-active .count {
+        color: #D9543A;
       }
 
       .status-NO_SHOW {

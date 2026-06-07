@@ -311,18 +311,34 @@
           </aside>
 
           <div class="workspace-content">
-            <div class="stats">
-              <article class="stat-card">
-                <strong id="teacherAvailCount">0</strong>
-                <span>활성 수업 블럭 수</span>
-              </article>
-              <article class="stat-card">
-                <strong id="teacherExceptionCount">0</strong>
-                <span>등록된 예외 수</span>
+            <div class="stats stats--four">
+              <article class="stat-card stat-card--accent">
+                <strong id="teacherTodayCount">0</strong>
+                <span>오늘 수업</span>
               </article>
               <article class="stat-card">
                 <strong id="teacherActiveBookingCount">0</strong>
-                <span>진행 중 예약 수</span>
+                <span>이번 주 예약</span>
+              </article>
+              <article class="stat-card">
+                <strong id="teacherAvailCount">0</strong>
+                <span>열어둔 빈 슬롯</span>
+              </article>
+              <article class="stat-card">
+                <strong id="teacherExceptionCount">0</strong>
+                <span>예외 · 휴무</span>
+              </article>
+            </div>
+
+            <div class="notices" id="teacherNotices" hidden>
+              <article class="notice notice--rose" id="teacherPendingNoticeCard" hidden>
+                <strong>연결 요청 대기</strong>
+                <p id="teacherPendingNoticeText">대기 중인 학생 연결 요청이 없습니다.</p>
+                <a href="#" data-jump="settings">확인 →</a>
+              </article>
+              <article class="notice" id="teacherHolidayNoticeCard" hidden>
+                <strong>이번 주 예외</strong>
+                <p id="teacherHolidayNoticeText">등록된 예외가 없습니다.</p>
               </article>
             </div>
 
