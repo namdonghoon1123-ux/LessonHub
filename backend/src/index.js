@@ -4268,6 +4268,131 @@ app.post('/api/v1/bookings/:id/cancel', requireAuth, async (req, res) => {
   }
 });
 
+// ────────────────────────────────────────────────────────────
+// 공개 프로필: 비로그인 사용자에게 선생님 소개 노출
+// GET /api/v1/public/teachers/:slug
+// ────────────────────────────────────────────────────────────
+app.get('/api/v1/public/teachers/:slug', async (req, res) => {
+  try {
+    const slug = String(req.params.slug || '').trim().toLowerCase();
+    if (!slug || slug.length < 3 || slug.length > 40 || !/^[a-z0-9][a-z0-9-]+[a-z0-9]$/.test(slug)) {
+      return res.status(400).json({ error: 'invalid_slug' });
+    }
+
+    const result = await query(
+      `
+        SELECT
+          u.id AS teacher_user_id,
+          u.name AS teacher_name,
+          tp.display_name,
+          tp.bio,
+          tp.lesson_duration_min,
+          tp.timezone,
+          tp.cancel_cutoff_hours,
+          tp.booking_window_days,
+          tp.student_cancel_day_before_hour,
+          tp.student_notice,
+          tp.public_slug
+        FROM teacher_profiles tp
+        JOIN users u ON u.id = tp.teacher_user_id
+        WHERE tp.public_slug = $1
+          AND u.is_active = TRUE
+          AND u.role = 'TEACHER'
+        LIMIT 1
+      `,
+      [slug]
+    );
+
+    if (!result.rowCount) {
+      return res.status(404).json({ error: 'teacher_not_found' });
+    }
+
+    const row = result.rows[0];
+
+    // 이번 주 빈 슬롯 개수 (대략적 카운트, 정확한 슬롯은 로그인 후)
+    const weekStart = new Date();
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+
+    let openSlotsThisWeek = 0;
+    try {
+      const cnt = await query(
+        `
+          SELECT count(DISTINCT wa.id)::int AS n
+          FROM weekly_availabilities wa
+          WHERE wa.teacher_user_id = $1 AND wa.is_active = TRUE
+        `,
+        [row.teacher_user_id]
+      );
+      openSlotsThisWeek = cnt.rows[0]?.n || 0;
+    } catch (_) {
+      /* noop */
+    }
+
+    return res.json({
+      teacher: {
+        slug: row.public_slug,
+        name: row.teacher_name,
+        display_name: row.display_name,
+        bio: row.bio,
+        lesson_duration_min: row.lesson_duration_min,
+        timezone: row.timezone,
+        cancel_cutoff_hours: row.cancel_cutoff_hours,
+        booking_window_days: row.booking_window_days,
+        student_cancel_day_before_hour: row.student_cancel_day_before_hour,
+        student_notice: row.student_notice,
+      },
+      stats: {
+        weekly_blocks_active: openSlotsThisWeek,
+      },
+    });
+  } catch (err) {
+    console.error('public teacher profile error', err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
+// 자기 선생 프로필의 slug 갱신 (선생 본인만)
+app.patch('/api/v1/teachers/me/profile/slug', requireAuth, requireTeacher, async (req, res) => {
+  try {
+    const rawSlug = String(req.body?.public_slug ?? '').trim().toLowerCase();
+    const slug = rawSlug || null;
+
+    if (slug !== null) {
+      if (slug.length < 3 || slug.length > 40 || !/^[a-z0-9][a-z0-9-]+[a-z0-9]$/.test(slug)) {
+        return res.status(400).json({ error: 'invalid_slug_format' });
+      }
+      const conflict = await query(
+        `SELECT teacher_user_id FROM teacher_profiles WHERE public_slug = $1 AND teacher_user_id <> $2`,
+        [slug, req.auth.userId]
+      );
+      if (conflict.rowCount > 0) {
+        return res.status(409).json({ error: 'slug_already_taken' });
+      }
+    }
+
+    const updated = await query(
+      `
+        UPDATE teacher_profiles
+        SET public_slug = $2, updated_at = NOW()
+        WHERE teacher_user_id = $1
+        RETURNING teacher_user_id, public_slug
+      `,
+      [req.auth.userId, slug]
+    );
+
+    if (!updated.rowCount) {
+      return res.status(404).json({ error: 'teacher_profile_not_found' });
+    }
+
+    return res.json({ slug: updated.rows[0].public_slug });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
 function startServer(listenPort = port) {
   const server = app.listen(listenPort, () => {
     console.log(`backend listening on port ${listenPort}`);

@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LessonHub — 선생님 프로필</title>
+    <meta name="description" content="LessonHub 에서 선생님을 만나고 1:1 레슨을 예약하세요." />
+    <link rel="icon" type="image/png" href="/lessonhub-logo.png" />
+    <link rel="apple-touch-icon" href="/lessonhub-logo.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#EC6A4C" />
+    <meta property="og:type" content="profile" />
+    <meta property="og:title" content="LessonHub — 선생님 프로필" />
+    <meta property="og:description" content="레슨 가능한 시간을 보고 예약하세요" />
+    <meta property="og:image" content="/lessonhub-logo.png" />
+    <link rel="stylesheet" href="/lessonhub-brand.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--lh-bg);
+        color: var(--lh-ink);
+        font-family: var(--lh-font);
+      }
+      .pp-shell {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .pp-topbar {
+        background: var(--lh-surface);
+        border-bottom: 1px solid var(--lh-line);
+        padding: 14px 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+      }
+      .pp-topbar::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, var(--lh-coral), var(--lh-pink));
+      }
+      .pp-main {
+        flex: 1;
+        max-width: 720px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 32px 24px 64px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+      .pp-hero {
+        background: var(--lh-grad);
+        color: #fff;
+        border-radius: 18px;
+        padding: 36px 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        position: relative;
+        overflow: hidden;
+      }
+      .pp-hero::after {
+        content: "";
+        position: absolute;
+        right: -90px;
+        top: -90px;
+        width: 280px;
+        height: 280px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.12);
+      }
+      .pp-hero h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: -0.6px;
+        position: relative;
+        z-index: 1;
+      }
+      .pp-hero p {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.92);
+        position: relative;
+        z-index: 1;
+      }
+      .pp-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        position: relative;
+        z-index: 1;
+      }
+      .pp-badge {
+        background: rgba(255, 255, 255, 0.18);
+        padding: 5px 12px;
+        border-radius: 999px;
+        font-size: 12.5px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+      .pp-card {
+        background: var(--lh-surface);
+        border: 1px solid var(--lh-line);
+        border-radius: 14px;
+        padding: 20px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .pp-card h2 {
+        margin: 0;
+        font-size: 16.5px;
+        font-weight: 700;
+        letter-spacing: -0.2px;
+      }
+      .pp-card p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--lh-sub);
+      }
+      .pp-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .pp-btn {
+        display: block;
+        text-align: center;
+        text-decoration: none;
+        padding: 14px 18px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 15px;
+      }
+      .pp-btn--primary {
+        background: var(--lh-coral);
+        color: #fff;
+      }
+      .pp-btn--secondary {
+        background: var(--lh-surface);
+        border: 1.5px solid var(--lh-line);
+        color: var(--lh-sub);
+      }
+      .pp-policy {
+        font-size: 12.5px;
+        color: var(--lh-muted);
+        line-height: 1.55;
+      }
+      .pp-policy strong {
+        color: var(--lh-sub);
+      }
+      .pp-loading {
+        text-align: center;
+        color: var(--lh-muted);
+        padding: 48px 16px;
+      }
+      .pp-error {
+        text-align: center;
+        padding: 48px 16px;
+        color: var(--lh-rose);
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="pp-shell">
+      <div class="pp-topbar">
+        <span class="auth-shell__brand-logo" style="width: 28px; height: 28px; font-size: 14px; border-radius: 9px;">L</span>
+        <strong style="font-size: 16px; font-weight: 700;">LessonHub</strong>
+      </div>
+      <main class="pp-main" id="profile-body">
+        <div class="pp-loading">선생님 프로필을 불러오는 중…</div>
+      </main>
+    </div>
+    <script src="/lessonhub-toast.js"></script>
+    <script>
+      (() => {
+        const params = new URLSearchParams(location.search);
+        const slug = (params.get('t') || params.get('slug') || '').trim().toLowerCase();
+        const body = document.getElementById('profile-body');
+
+        function escapeHtml(s) {
+          return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+          }[c]));
+        }
+
+        if (!slug) {
+          body.innerHTML = '<div class="pp-error">잘못된 주소입니다. URL 끝에 ?t=<slug> 또는 /t/&lt;slug&gt; 가 필요합니다.</div>';
+          return;
+        }
+
+        fetch(`/api/v1/public/teachers/${encodeURIComponent(slug)}`)
+          .then((r) => {
+            if (r.status === 404) throw new Error('해당 선생님을 찾을 수 없습니다');
+            if (!r.ok) throw new Error('서버 오류 — 잠시 후 다시 시도해 주세요');
+            return r.json();
+          })
+          .then((data) => {
+            const t = data.teacher || {};
+            const stats = data.stats || {};
+            const displayName = t.display_name || t.name || '선생님';
+            const bio = t.bio || '';
+            const cancelHours = Number(t.cancel_cutoff_hours) || 0;
+            const duration = Number(t.lesson_duration_min) || 60;
+
+            body.innerHTML = `
+              <section class="pp-hero">
+                <h1>${escapeHtml(displayName)}</h1>
+                ${bio ? `<p>${escapeHtml(bio)}</p>` : ''}
+                <div class="pp-badges">
+                  <span class="pp-badge">🕓 ${escapeHtml(t.timezone || 'Asia/Seoul')}</span>
+                  <span class="pp-badge">${duration}분 / 회</span>
+                  ${stats.weekly_blocks_active > 0 ? `<span class="pp-badge">주 ${stats.weekly_blocks_active}개 시간대 운영</span>` : ''}
+                </div>
+              </section>
+
+              <section class="pp-card">
+                <h2>이 선생님께 예약하기</h2>
+                <p>학생 계정으로 로그인하면 예약 가능한 시간을 직접 선택할 수 있어요.</p>
+                <div class="pp-actions">
+                  <a class="pp-btn pp-btn--primary" href="/student-login.html">학생으로 시작하기</a>
+                  <a class="pp-btn pp-btn--secondary" href="/index.html">다른 역할로 시작</a>
+                </div>
+              </section>
+
+              <section class="pp-card">
+                <h2>운영 안내</h2>
+                <p class="pp-policy">
+                  <strong>1회 수업 시간</strong>: ${duration}분<br />
+                  <strong>예약 가능 기간</strong>: 오늘부터 ${escapeHtml(String(t.booking_window_days || 30))}일 이내<br />
+                  <strong>취소 정책</strong>: 수업 ${cancelHours}시간 전까지 가능<br />
+                  ${t.student_notice ? `<strong>선생님 안내</strong>: ${escapeHtml(t.student_notice)}` : ''}
+                </p>
+              </section>
+            `;
+            document.title = `${displayName} · LessonHub`;
+          })
+          .catch((err) => {
+            body.innerHTML = `<div class="pp-error">${escapeHtml(err.message || '문제가 발생했습니다')}</div>`;
+          });
+      })();
+    </script>
+  </body>
+</html>

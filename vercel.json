@@ -11,6 +11,9 @@
       "includeFiles": "backend/**"
     }
   },
+  "rewrites": [
+    { "source": "/t/:slug", "destination": "/p.html?t=:slug" }
+  ],
   "headers": [
     {
       "source": "/(.*)\\.html",
