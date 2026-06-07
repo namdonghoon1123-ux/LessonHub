@@ -22,9 +22,20 @@ LessonHub 를 Docker 로컬 스택에서 Vercel(호스팅 · 서버리스) + Sup
 3. DB 비밀번호 안전한 곳에 보관
 
 ### 1-2. 스키마 적용
+
+#### Option A (추천) — 통합 SQL 한 번에 실행
+프로젝트에 `scripts/supabase-bootstrap.sql` (마이그레이션 001~017 + 시드 통합본) 이 포함되어 있다. 이 파일 전체를 **Supabase 대시보드 → SQL Editor** 에 붙여넣고 Run.
+
+또는 `psql`:
+```bash
+export SUPABASE_DB_URL="postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres"
+psql "$SUPABASE_DB_URL" -f scripts/supabase-bootstrap.sql
+```
+
+#### Option B — 마이그레이션 파일 개별 실행
 SQL Editor 에서 `db/migrations/001~017` 을 순서대로 실행, 그 다음 `db/seeds/001_seed.sql`.
 
-또는 `psql` 로 일괄:
+또는 `psql` 반복문:
 ```bash
 export SUPABASE_DB_URL="postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres"
 for f in db/migrations/*.sql; do psql "$SUPABASE_DB_URL" -f "$f"; done
