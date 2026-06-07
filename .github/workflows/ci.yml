@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  syntax-check:
+    name: Syntax check (JS + SQL)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install root deps (for Vercel function)
+        run: npm install --omit=dev
+
+      - name: Backend deps
+        run: |
+          cd backend && npm install --omit=dev
+
+      - name: JS — node --check (backend)
+        run: |
+          node --check backend/src/index.js
+          node --check backend/src/auth.js
+          node --check backend/src/db.js
+          node --check backend/src/config.js
+
+      - name: JS — node --check (frontend)
+        run: |
+          for f in frontend/*.js; do
+            node --check "$f" && echo "OK  $f" || (echo "FAIL $f" && exit 1)
+          done
+
+      - name: JS — node --check (Vercel function)
+        run: node --check "api/[...path].js"
+
+      - name: SQL — basic format check
+        run: |
+          for f in db/migrations/*.sql db/seeds/*.sql; do
+            # 빈 파일 또는 BOM 없는 UTF-8 확인
+            if [ ! -s "$f" ]; then
+              echo "❌ Empty migration: $f"
+              exit 1
+            fi
+            echo "OK  $f"
+          done
+
+      - name: JSON — vercel.json + manifest.json + package.json
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('vercel.json', 'utf8')); console.log('OK  vercel.json')"
+          node -e "JSON.parse(require('fs').readFileSync('package.json', 'utf8')); console.log('OK  package.json')"
+          node -e "JSON.parse(require('fs').readFileSync('frontend/manifest.json', 'utf8')); console.log('OK  manifest.json')"
+          node -e "JSON.parse(require('fs').readFileSync('backend/package.json', 'utf8')); console.log('OK  backend/package.json')"
+          node -e "JSON.parse(require('fs').readFileSync('backend/config/app.config.json', 'utf8')); console.log('OK  backend/config/app.config.json')"
+
+  backend-test:
+    name: Backend integration tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: lesson_user
+          POSTGRES_PASSWORD: lesson_pass
+          POSTGRES_DB: lesson_booking
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://lesson_user:lesson_pass@localhost:5432/lesson_booking
+      JWT_SECRET: ci-test-secret-not-for-prod
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install backend deps
+        run: cd backend && npm install
+
+      - name: Run migrations
+        run: cd backend && npm run migrate
+
+      - name: Run tests
+        run: cd backend && npm test
