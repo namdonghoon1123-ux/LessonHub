@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LessonHub — 일시적인 오류</title>
+    <link rel="icon" type="image/png" href="/lessonhub-logo.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#EC6A4C" />
+    <link rel="stylesheet" href="/lessonhub-brand.css" />
+    <style>
+      .err-shell {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 24px;
+        text-align: center;
+        gap: 24px;
+        background: var(--lh-bg);
+      }
+      .err-card {
+        max-width: 460px;
+        background: var(--lh-surface);
+        border: 1px solid var(--lh-line);
+        border-left: 3px solid var(--lh-rose);
+        border-radius: 18px;
+        padding: 36px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .err-code {
+        font-size: 56px;
+        font-weight: 800;
+        letter-spacing: -2px;
+        color: var(--lh-rose);
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+      }
+      .err-title { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.4px; color: var(--lh-ink); }
+      .err-sub { margin: 0; font-size: 14px; color: var(--lh-sub); line-height: 1.55; }
+      .err-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+      .err-btn { display: block; text-align: center; text-decoration: none; padding: 12px 16px; border-radius: 12px; font-weight: 700; font-size: 14px; }
+      .err-btn--primary { background: var(--lh-coral); color: #fff; }
+      .err-btn--secondary { background: var(--lh-surface); border: 1.5px solid var(--lh-line); color: var(--lh-sub); }
+    </style>
+  </head>
+  <body>
+    <main class="err-shell">
+      <div class="err-card">
+        <div class="err-code">500</div>
+        <h1 class="err-title">일시적인 서버 오류</h1>
+        <p class="err-sub">서버가 응답하지 못했습니다. 잠시 후 다시 시도해 주세요. 문제가 계속되면 관리자에게 알려 주세요.</p>
+        <div class="err-actions">
+          <button class="err-btn err-btn--primary" type="button" onclick="location.reload()">다시 시도</button>
+          <a class="err-btn err-btn--secondary" href="/index.html">홈으로</a>
+        </div>
+      </div>
+    </main>
+    <script src="/lessonhub-toast.js"></script>
+  </body>
+</html>

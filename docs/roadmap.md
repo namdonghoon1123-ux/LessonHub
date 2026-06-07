@@ -29,12 +29,22 @@
 
 ### 배포 fix + 사용성/보안/PWA (커밋 `b65dcf3`)
 - [x] 404 라우팅 해결 (api/[...path].js Vercel catchall)
-- [x] 보안 헤더 (CSP-lite, X-Frame-Options, Referrer-Policy, Permissions-Policy)
+- [x] 보안 헤더 (HSTS, CSP-lite, X-Frame-Options, Referrer-Policy, Permissions-Policy)
 - [x] Toast 알림 시스템 (`lessonhub-toast.js` + window.alert 자동 오버라이드)
 - [x] PWA manifest + theme-color (#EC6A4C) + Apple meta
 - [x] robots.txt + sitemap.xml
-- [x] 커스텀 404 페이지 (Coral Blush)
+- [x] 커스텀 404 / 500 페이지 (Coral Blush)
 - [x] `.well-known/security.txt`
+
+### 공개 프로필 + Audit log + UI (커밋 `dc76006` ~ `2badf3a`)
+- [x] 공개 프로필 페이지 `/t/<slug>` (선생님 마케팅용 외부 공유 URL)
+- [x] Audit log 테이블 + 5종 hook + 조회 endpoint
+- [x] 강화된 health check (DB ping, latency, uptime)
+- [x] 선생님 settings 에서 공개 slug 활성화/중단/URL 복사 UI
+
+### CI / 운영 (커밋 `8e7f5f5`)
+- [x] GitHub Actions CI — JS syntax + SQL + JSON 검증 + 백엔드 통합 테스트 (postgres service)
+- [x] CHANGELOG.md (Keep a Changelog 형식)
 
 ---
 
