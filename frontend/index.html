@@ -3,76 +3,57 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LessonHub 로그인 선택</title>
+    <title>LessonHub — 로그인 선택</title>
     <link rel="icon" type="image/png" href="/lessonhub-logo.png" />
     <link rel="apple-touch-icon" href="/lessonhub-logo.png" />
     <link rel="stylesheet" href="/lessonhub-brand.css" />
     <link rel="stylesheet" href="/lessonhub-auth.css" />
   </head>
   <body>
-    <main class="wrap">
-      <nav class="topbar fade-up" aria-label="상단 메뉴">
-        <a class="brand-lockup brand-lockup--compact" href="/index.html" aria-label="LessonHub 홈">
-          <span class="lh-logo lh-logo--sm" aria-hidden="true">
-            <img src="/lessonhub-logo.png" alt="" />
-          </span>
-          <span class="brand-lockup__text">
-            <strong class="brand-lockup__name">LessonHub</strong>
-            <small class="brand-lockup__sub">개인 레슨 예약 플랫폼</small>
-          </span>
-        </a>
-        <div class="top-links">
-          <a href="/teacher-login.html">선생님 로그인</a>
-          <a href="/student-login.html">학생 로그인</a>
-          <a href="/power-admin.html">파워관리자</a>
-          <a href="/guide.html">사용자 설명서</a>
+    <main class="auth-shell">
+      <aside class="auth-shell__brand" aria-hidden="true">
+        <div class="auth-shell__brand-top">
+          <span class="auth-shell__brand-logo">L</span>
+          <span class="auth-shell__brand-name">LessonHub</span>
         </div>
-      </nav>
-
-      <section class="panel hero-panel fade-up delay-1">
-        <div class="hero-lockup">
-          <span class="lh-logo lh-logo--lg" aria-hidden="true">
-            <img src="/lessonhub-logo.png" alt="" />
-          </span>
-          <div class="hero-copy">
-            <h1>부드럽고 선명한 레슨 예약 경험</h1>
-            <p>LessonHub는 학생과 선생님이 같은 흐름 안에서, 예약과 운영을 가장 단순한 동선으로 처리하도록 설계되었습니다.</p>
-          </div>
+        <div>
+          <h1 class="auth-shell__brand-headline">레슨 예약,
+이제 한 곳에서
+간단하게.</h1>
+          <p class="auth-shell__brand-sub">선생님과 학생이 같은 흐름에서, 예약과 운영을 가장 단순한 동선으로 처리합니다.</p>
         </div>
-        <div class="hero-badges">
-          <span>역할별 로그인 분리</span>
-          <span>임시 학생계정 지원</span>
-          <span>모바일/데스크탑 최적화</span>
+        <div class="auth-shell__brand-foot">피아노 · 요가 · 과외 · 코칭을 위한 1:1 예약 도구</div>
+      </aside>
+
+      <section class="auth-shell__pane">
+        <div class="auth-shell__form">
+          <div class="auth-shell__form-head">
+            <h2>어떤 역할로 시작할까요?</h2>
+            <p>로그인할 화면을 선택해 주세요.</p>
+          </div>
+
+          <nav class="role-grid" aria-label="역할 선택">
+            <a class="role-card" href="/teacher-login.html">
+              <h2>선생님으로 시작</h2>
+              <p>시간표 관리, 예약 승인, 학생 계정 생성을 한 화면에서 운영합니다.</p>
+              <span class="role-card__cta">선생님 로그인 →</span>
+            </a>
+
+            <a class="role-card" href="/student-login.html">
+              <h2>학생으로 시작</h2>
+              <p>담당 선생님을 연결하고 예약 가능한 슬롯만 빠르게 확인합니다.</p>
+              <span class="role-card__cta">학생 로그인 →</span>
+            </a>
+
+            <a class="role-card" href="/power-admin.html">
+              <h2>파워관리자</h2>
+              <p>계정/연결/패치노트 운영을 위한 관리자 콘솔로 이동합니다.</p>
+              <span class="role-card__cta">관리자 콘솔 →</span>
+            </a>
+          </nav>
+
+          <p class="hint" data-test-account-hint hidden>로컬 개발 환경에서는 <code>runtime-config.js</code> 의 플래그를 켜서 테스트 계정 힌트를 볼 수 있습니다.</p>
         </div>
-      </section>
-
-      <section class="role-grid fade-up delay-2">
-        <article class="role-card">
-          <h2>선생님으로 시작</h2>
-          <p>시간표 관리, 예약 승인, 학생 계정 생성을 한 화면에서 운영할 수 있습니다.</p>
-          <div class="actions">
-            <a class="btn primary" href="/teacher-login.html">선생님 로그인으로 이동</a>
-          </div>
-          <p class="hint" data-test-account-hint>테스트 계정: <code>teacher@example.com</code> / 비밀번호는 로컬에서 직접 설정</p>
-        </article>
-
-        <article class="role-card">
-          <h2>학생으로 시작</h2>
-          <p>선생님 연결 후 예약 가능한 슬롯만 빠르게 확인하고 신청할 수 있습니다.</p>
-          <div class="actions">
-            <a class="btn primary" href="/student-login.html">학생 로그인으로 이동</a>
-          </div>
-          <p class="hint" data-test-account-hint>테스트 계정: <code>student@example.com</code> / 비밀번호는 로컬에서 직접 설정</p>
-        </article>
-
-        <article class="role-card">
-          <h2>파워관리자</h2>
-          <p>계정 생성/삭제, 비밀번호 재설정, 학생-선생 연결을 운영 관점에서 빠르게 관리합니다.</p>
-          <div class="actions">
-            <a class="btn primary" href="/power-admin.html">파워관리자 콘솔로 이동</a>
-          </div>
-          <p class="hint" data-test-account-hint>관리자 계정 정보는 로컬 개발 환경에서 직접 설정</p>
-        </article>
       </section>
     </main>
 
@@ -83,7 +64,7 @@
           window.LH_RUNTIME_CONFIG && typeof window.LH_RUNTIME_CONFIG === 'object'
             ? window.LH_RUNTIME_CONFIG
             : {};
-        const showHints = typeof config.showTestAccountHints === 'boolean' ? config.showTestAccountHints : true;
+        const showHints = Boolean(config.showTestAccountHints);
         document.querySelectorAll('[data-test-account-hint]').forEach((el) => {
           el.hidden = !showHints;
         });

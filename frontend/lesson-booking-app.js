@@ -2430,7 +2430,7 @@
           );
           const canCancelMyBooking = Boolean(activeMyBooking);
           if (isInvitedSlot) {
-            row.style.outline = '2px solid #4b7ec3';
+            row.style.outline = '2px solid #D9543A';
             row.style.outlineOffset = '2px';
           }
 

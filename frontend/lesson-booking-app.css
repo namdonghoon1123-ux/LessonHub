@@ -1,19 +1,27 @@
+      /* Coral Blush · 워크스페이스 토큰 (lessonhub-brand.css 의 --lh-* 와 매핑) */
       :root {
-        --bg: #FFF8E1;
-        --bg-soft: #FFFCF3;
-        --panel: #fffef9;
-        --panel-strong: #3d2c38;
-        --line: #ebdccf;
-        --line-strong: #ddc8b5;
-        --text: #3a2a38;
-        --muted: #766676;
-        --brand: #e1bee7;
-        --brand-soft: #f7ebfa;
-        --accent: #ffab91;
-        --ok: #2f8f6f;
-        --warn: #a56453;
-        --danger: #b55659;
-        --shadow: 0 20px 52px rgba(106, 64, 92, 0.14);
+        --bg: #FBF3EE;
+        --bg-soft: #F7ECE5;
+        --panel: #FFFFFF;
+        --panel-strong: #3B2A29;
+        --line: #F0E1D9;
+        --line-strong: #F4C3B3;
+        --text: #3B2A29;
+        --sub: #7A635E;
+        --muted: #B6A39C;
+        --brand: #EC6A4C;
+        --brand-deep: #D9543A;
+        --brand-soft: #FBE6DD;
+        --brand-border: #F4C3B3;
+        --accent: #F2899B;
+        --rose: #D45C79;
+        --rose-soft: #F8E2E8;
+        --ok: #3E9A6F;
+        --ok-soft: #E7F2EC;
+        --warn: #D9543A;
+        --warn-soft: #FBE6DD;
+        --danger: #D45C79;
+        --shadow: 0 8px 24px rgba(217, 84, 58, 0.10);
         --touch-min: 44px;
         --safe-bottom: env(safe-area-inset-bottom, 0px);
       }
@@ -26,11 +34,8 @@
         margin: 0;
         min-height: 100vh;
         color: var(--text);
-        font-family: "Pretendard", "Inter", "IBM Plex Sans KR", "Apple SD Gothic Neo", sans-serif;
-        background:
-          radial-gradient(circle at 8% -18%, rgba(225, 190, 231, 0.58) 0%, rgba(225, 190, 231, 0) 40%),
-          radial-gradient(circle at 100% -16%, rgba(255, 171, 145, 0.4) 0%, rgba(255, 171, 145, 0) 42%),
-          linear-gradient(165deg, var(--bg) 0%, var(--bg-soft) 52%, #fff9ef 100%);
+        font-family: var(--lh-font, "Pretendard Variable", Pretendard, -apple-system, sans-serif);
+        background: var(--bg);
         overscroll-behavior-y: contain;
       }
 
@@ -80,7 +85,7 @@
         line-height: 1;
         min-height: 40px;
         text-decoration: none;
-        color: #5e4e62;
+        color: #7A635E;
         background: rgba(255, 255, 255, 0.88);
         border: 1px solid var(--line);
         border-radius: 999px;
@@ -90,12 +95,12 @@
       }
 
       .top-links a:hover {
-        border-color: #d8b8d7;
+        border-color: #F4C3B3;
         transform: translateY(-1px);
       }
 
       .top-links a.is-active {
-        background: linear-gradient(118deg, #e1bee7, #ffab91);
+        background: linear-gradient(118deg, #EC6A4C, #F2899B);
         color: #fff;
         border-color: transparent;
       }
@@ -110,7 +115,7 @@
         justify-content: center;
         border: 1px solid #f3ccc1;
         background: #fff2f0;
-        color: #ae584c;
+        color: #D9543A;
         border-radius: 999px;
         padding: 7px 12px;
         line-height: 1;
@@ -164,7 +169,7 @@
         border-radius: 999px;
         padding: 7px 12px;
         font-size: 12px;
-        color: #6d5a70;
+        color: #7A635E;
         font-weight: 700;
       }
 
@@ -277,7 +282,7 @@
         border: 1px solid var(--line);
         border-radius: 999px;
         background: rgba(255, 255, 255, 0.9);
-        color: #5f4f63;
+        color: #7A635E;
         padding: 8px 14px;
         min-height: 40px;
         cursor: pointer;
@@ -298,7 +303,7 @@
       input:focus-visible,
       select:focus-visible,
       textarea:focus-visible {
-        outline: 2px solid #d897cc;
+        outline: 2px solid #D9543A;
         outline-offset: 2px;
       }
 
@@ -308,21 +313,21 @@
       }
 
       button.primary {
-        background: linear-gradient(118deg, #e1bee7, #ffab91);
+        background: linear-gradient(118deg, #EC6A4C, #F2899B);
         color: #fff;
         border-color: transparent;
       }
 
       button.warn {
         background: #fff4ec;
-        border-color: #f1d3b3;
+        border-color: #F4C3B3;
         color: var(--warn);
       }
 
       button.danger {
         background: #fff2f0;
         border-color: #f3ccc1;
-        color: #ae584c;
+        color: #D9543A;
       }
 
       button:disabled {
@@ -364,7 +369,7 @@
         gap: 6px;
         width: fit-content;
         border-radius: 999px;
-        background: linear-gradient(118deg, #d69fe2, #f3a58f);
+        background: linear-gradient(118deg, #EC6A4C, #F2899B);
         color: #fff;
         font-weight: 700;
         font-size: 12px;
@@ -387,9 +392,9 @@
       }
 
       .workspace-nav {
-        border: 1px solid #d7e1ef;
+        border: 1px solid #F0E1D9;
         border-radius: 12px;
-        background: #f8fbff;
+        background: #FBF3EE;
         padding: 10px;
         display: grid;
         gap: 6px;
@@ -400,14 +405,14 @@
 
       .workspace-nav strong {
         font-size: 13px;
-        color: #284868;
+        color: #3B2A29;
       }
 
       .workspace-nav a {
         text-decoration: none;
-        border: 1px solid #d3deea;
+        border: 1px solid #F0E1D9;
         background: #fff;
-        color: #2c4967;
+        color: #3B2A29;
         border-radius: 10px;
         padding: 8px 10px;
         font-size: 13px;
@@ -415,8 +420,8 @@
       }
 
       .workspace-nav a.active {
-        border-color: #1363df;
-        background: linear-gradient(180deg, #3674ef, #2563eb);
+        border-color: #D9543A;
+        background: linear-gradient(180deg, #D9543A, #D9543A);
         color: #fff;
       }
 
@@ -429,7 +434,7 @@
         padding-left: 18px;
         display: grid;
         gap: 6px;
-        color: #3e5873;
+        color: #7A635E;
         font-size: 13px;
       }
 
@@ -441,9 +446,9 @@
       }
 
       .stat-card {
-        border: 1px solid #d6e1ef;
+        border: 1px solid #F0E1D9;
         border-radius: 14px;
-        background: linear-gradient(160deg, #fff, #f7fbff);
+        background: linear-gradient(160deg, #fff, #FBF3EE);
         padding: 11px;
         display: grid;
         gap: 4px;
@@ -460,9 +465,9 @@
       }
 
       .meta-strip {
-        border: 1px solid #d5e2f2;
+        border: 1px solid #F0E1D9;
         border-radius: 12px;
-        background: #f4f8ff;
+        background: #FBF3EE;
         padding: 10px;
         display: flex;
         flex-wrap: wrap;
@@ -476,17 +481,17 @@
         gap: 6px;
         border-radius: 999px;
         background: #fff;
-        border: 1px solid #d6e2ef;
+        border: 1px solid #F0E1D9;
         padding: 5px 9px;
         font-size: 12px;
-        color: #37516d;
+        color: #7A635E;
         font-weight: 600;
       }
 
       .calendar-toolbar {
-        border: 1px solid #d7e2ef;
+        border: 1px solid #F0E1D9;
         border-radius: 14px;
-        background: #fbfdff;
+        background: #FBF3EE;
         padding: 10px;
         display: flex;
         justify-content: space-between;
@@ -537,7 +542,7 @@
 
       .calendar-card,
       .slot-card {
-        border: 1px solid #d7e2f0;
+        border: 1px solid #F0E1D9;
         border-radius: 14px;
         background: #fff;
         padding: 12px;
@@ -558,7 +563,7 @@
       }
 
       .calendar-grid {
-        border: 1px solid #d7e2f0;
+        border: 1px solid #F0E1D9;
         border-radius: 10px;
         overflow: auto;
         max-height: 660px;
@@ -575,42 +580,42 @@
 
       .week-table th,
       .week-table td {
-        border: 1px solid #edf2f8;
+        border: 1px solid #F7ECE5;
         padding: 0;
         vertical-align: top;
       }
 
       .week-time-head {
         width: 64px;
-        background: #f6f9fe;
+        background: #FBF3EE;
         color: var(--muted);
         font-size: 11px;
         font-weight: 700;
       }
 
       .week-day-head {
-        background: #f6f9fe;
+        background: #FBF3EE;
         text-align: center;
         font-size: 11px;
         line-height: 1.3;
         padding: 6px 2px;
-        color: #38536f;
+        color: #7A635E;
       }
 
       .week-day-head strong {
         display: block;
-        color: #183b61;
+        color: #3B2A29;
         font-size: 12px;
       }
 
       .week-day-head.holiday strong {
-        color: #b32424;
+        color: #D45C79;
       }
 
       .holiday-caption {
         display: block;
         margin-top: 2px;
-        color: #b32424;
+        color: #D45C79;
         font-size: 10px;
         line-height: 1.2;
       }
@@ -618,9 +623,9 @@
       .week-time {
         width: 64px;
         font-size: 11px;
-        color: #6f8298;
+        color: #B6A39C;
         text-align: center;
-        background: #fbfdff;
+        background: #FBF3EE;
         padding-top: 3px;
       }
 
@@ -632,36 +637,36 @@
       }
 
       .week-cell.selected {
-        background: #eef5ff;
+        background: #FBE6DD;
       }
 
       .week-cell.past {
-        background: #f9fbfd;
+        background: #FBF3EE;
       }
 
       .week-cell.has-available {
-        background: #f6fff9;
+        background: #E7F2EC;
       }
 
       .week-cell.has-booked {
-        background: #f3f7fc;
+        background: #FBF3EE;
       }
 
       .week-cell.holiday {
-        background: #fff9f0;
+        background: #FBF3EE;
       }
 
       .week-cell.drag-range {
-        background: #e6f0ff;
+        background: #FBE6DD;
       }
 
       .week-cell.drag-anchor {
-        box-shadow: inset 0 0 0 2px #4b7ec3;
+        box-shadow: inset 0 0 0 2px #D9543A;
       }
 
       .week-cell.touch-anchor {
-        box-shadow: inset 0 0 0 2px #d77752;
-        background: #fff0e8;
+        box-shadow: inset 0 0 0 2px #D9543A;
+        background: #FBE6DD;
       }
 
       .week-slot-btn,
@@ -681,17 +686,17 @@
       }
 
       .week-slot-btn.available {
-        color: #0f7d55;
-        background: #dff7ea;
+        color: #3E9A6F;
+        background: #E7F2EC;
       }
 
       .week-slot-btn.booked {
-        color: #7c8da0;
-        background: #eef3f8;
+        color: #B6A39C;
+        background: #FBF3EE;
       }
 
       .week-create-btn {
-        color: #6c8098;
+        color: #B6A39C;
         background: transparent;
         opacity: 0;
         cursor: pointer;
@@ -699,19 +704,19 @@
 
       .week-cell:hover .week-create-btn {
         opacity: 1;
-        background: #edf4ff;
+        background: #FBE6DD;
       }
 
       .week-teacher-cell.has-window {
-        background: #fff8ec;
+        background: #FBE6DD;
       }
 
       .week-teacher-cell.has-exception {
-        background: #fff2f2;
+        background: #F8E2E8;
       }
 
       .week-teacher-cell.has-booking {
-        background: #eaf2ff;
+        background: #FBE6DD;
       }
 
       .week-teacher-cell[data-cell-booking-id],
@@ -730,8 +735,8 @@
         font-size: 11px;
         font-weight: 700;
         line-height: 1.25;
-        color: #9f5a1d;
-        background: #ffe8c9;
+        color: #D9543A;
+        background: #FBE6DD;
         box-shadow: none;
         transform: none;
       }
@@ -745,8 +750,8 @@
         font-size: 11px;
         font-weight: 700;
         line-height: 1.25;
-        color: #325e95;
-        background: #e4efff;
+        color: #7A635E;
+        background: #FBE6DD;
       }
 
       .week-one-time-window {
@@ -758,8 +763,8 @@
         font-size: 11px;
         font-weight: 700;
         line-height: 1.25;
-        color: #1f5f1a;
-        background: #d9f3de;
+        color: #3E9A6F;
+        background: #E7F2EC;
       }
 
       .week-open-chip {
@@ -771,8 +776,8 @@
         font-size: 11px;
         font-weight: 700;
         line-height: 1.25;
-        color: #6e5b27;
-        background: #f8ecd2;
+        color: #D9543A;
+        background: #FBE6DD;
       }
 
       .week-exception-chip {
@@ -784,8 +789,8 @@
         font-size: 11px;
         font-weight: 700;
         line-height: 1.25;
-        color: #983c3c;
-        background: #ffdede;
+        color: #D45C79;
+        background: #F8E2E8;
       }
 
       #teacherCellDetailBody {
@@ -802,15 +807,15 @@
 
       .month-table th,
       .month-table td {
-        border: 1px solid #edf2f8;
+        border: 1px solid #F7ECE5;
         vertical-align: top;
       }
 
       .month-day-head {
-        background: #f6f9fe;
+        background: #FBF3EE;
         text-align: center;
         font-size: 12px;
-        color: #38536f;
+        color: #7A635E;
         padding: 8px 4px;
       }
 
@@ -822,28 +827,28 @@
       }
 
       .month-cell.out-month {
-        background: #fafcff;
-        color: #9baac0;
+        background: #FBF3EE;
+        color: #B6A39C;
       }
 
       .month-cell.today {
-        box-shadow: inset 0 0 0 2px #4b7ec3;
+        box-shadow: inset 0 0 0 2px #D9543A;
       }
 
       .month-cell.selected {
-        background: #edf4ff;
+        background: #FBE6DD;
       }
 
       .month-cell.has-available {
-        background: #f4fff7;
+        background: #E7F2EC;
       }
 
       .month-cell.has-booked {
-        border-color: #d6e2f4;
+        border-color: #F0E1D9;
       }
 
       .month-cell.has-my-booking .month-date {
-        color: #0f7d55;
+        color: #3E9A6F;
       }
 
       .month-date {
@@ -853,7 +858,7 @@
       }
 
       .month-holiday {
-        color: #b32424;
+        color: #D45C79;
         font-size: 11px;
         margin-bottom: 4px;
       }
@@ -871,18 +876,18 @@
       }
 
       .month-metrics .metric.open {
-        background: #dff7ea;
-        color: #0f7d55;
+        background: #E7F2EC;
+        color: #3E9A6F;
       }
 
       .month-metrics .metric.close {
-        background: #e6eef9;
-        color: #3c5f8a;
+        background: #FBE6DD;
+        color: #7A635E;
       }
 
       .month-metrics .metric.mine {
-        background: #fff2df;
-        color: #a45e1e;
+        background: #FBE6DD;
+        color: #D9543A;
       }
 
       .slot-list {
@@ -891,7 +896,7 @@
       }
 
       .slot-row {
-        border: 1px solid #d5e0eb;
+        border: 1px solid #F0E1D9;
         border-radius: 10px;
         background: #fff;
         padding: 10px;
@@ -913,17 +918,17 @@
       }
 
       .slot-summary {
-        border: 1px solid #d5e2f2;
-        background: #f5f9ff;
+        border: 1px solid #F0E1D9;
+        background: #FBF3EE;
         border-radius: 10px;
         padding: 8px 10px;
         font-size: 12px;
-        color: #35516d;
+        color: #7A635E;
         margin-bottom: 10px;
       }
 
       .slot-item {
-        border: 1px solid #d5e0eb;
+        border: 1px solid #F0E1D9;
         border-radius: 11px;
         background: #fff;
         padding: 10px;
@@ -934,13 +939,13 @@
       }
 
       .slot-item:not(.booked) {
-        border-color: #b9d5c8;
-        background: #f6fff9;
+        border-color: #E7F2EC;
+        background: #E7F2EC;
       }
 
       .slot-item.booked {
-        background: #f3f6fa;
-        color: #75859a;
+        background: #FBF3EE;
+        color: #B6A39C;
       }
 
       .slot-item strong {
@@ -954,7 +959,7 @@
 
       .table-card {
         margin-top: 14px;
-        border: 1px solid #d7e1ef;
+        border: 1px solid #F0E1D9;
         border-radius: 14px;
         background: #fff;
         padding: 10px;
@@ -966,9 +971,9 @@
       }
 
       .history-card {
-        border: 1px solid #d8e2ef;
+        border: 1px solid #F0E1D9;
         border-radius: 12px;
-        background: #fbfdff;
+        background: #FBF3EE;
         padding: 10px;
         display: grid;
         gap: 8px;
@@ -984,7 +989,7 @@
       .history-title {
         font-size: 14px;
         font-weight: 700;
-        color: #1a3d66;
+        color: #7A635E;
       }
 
       .history-meta {
@@ -992,7 +997,7 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 6px 10px;
         font-size: 12px;
-        color: #365371;
+        color: #7A635E;
       }
 
       .history-actions {
@@ -1011,7 +1016,7 @@
 
       .table-wrap {
         overflow-x: auto;
-        border: 1px solid #edf2f8;
+        border: 1px solid #F7ECE5;
         border-radius: 10px;
         -webkit-overflow-scrolling: touch;
       }
@@ -1032,7 +1037,7 @@
 
       th,
       td {
-        border-top: 1px solid #edf2f8;
+        border-top: 1px solid #F7ECE5;
         text-align: left;
         padding: 8px 4px;
         font-size: 13px;
@@ -1045,11 +1050,11 @@
       }
 
       tbody tr:nth-child(even) {
-        background: #fbfdff;
+        background: #FBF3EE;
       }
 
       tbody tr:hover {
-        background: #f1f7ff;
+        background: #FBF3EE;
       }
 
       .status-badge {
@@ -1066,35 +1071,35 @@
       .status-BOOKED,
       .status-AVAILABLE,
       .status-TRUE {
-        background: #e8f8f1;
-        border-color: #b9e3cd;
-        color: #0f7d55;
+        background: #E7F2EC;
+        border-color: #E7F2EC;
+        color: #3E9A6F;
       }
 
       .status-PENDING {
         background: #fff7e8;
-        border-color: #f1d5a8;
-        color: #9a5a12;
+        border-color: #F4C3B3;
+        color: #D9543A;
       }
 
       .status-CANCELED_BY_STUDENT,
       .status-CANCELED_BY_TEACHER,
       .status-FALSE {
         background: #fff0f0;
-        border-color: #f0c8c8;
-        color: #b73a3a;
+        border-color: #FBE6DD;
+        color: #D45C79;
       }
 
       .status-COMPLETED {
-        background: #ebf3ff;
-        border-color: #c8dafa;
-        color: #2f5f9c;
+        background: #FBE6DD;
+        border-color: #F0E1D9;
+        color: #7A635E;
       }
 
       .status-NO_SHOW {
         background: #fff4e8;
-        border-color: #f3d7b8;
-        color: #9f5a1d;
+        border-color: #F4C3B3;
+        color: #D9543A;
       }
 
       .toast-region {
@@ -1110,9 +1115,9 @@
 
       .toast {
         border-radius: 12px;
-        border: 1px solid #d3dff0;
+        border: 1px solid #F0E1D9;
         background: rgba(255, 255, 255, 0.94);
-        color: #1f3b5c;
+        color: #7A635E;
         box-shadow: 0 14px 30px rgba(14, 31, 53, 0.18);
         backdrop-filter: blur(10px);
         padding: 10px 12px;
@@ -1123,15 +1128,15 @@
       }
 
       .toast.success {
-        border-color: #bde0d1;
+        border-color: #E7F2EC;
         background: rgba(240, 255, 248, 0.95);
-        color: #116445;
+        color: #3E9A6F;
       }
 
       .toast.error {
-        border-color: #efcbcb;
+        border-color: #FBE6DD;
         background: rgba(255, 241, 241, 0.96);
-        color: #a03636;
+        color: #D45C79;
       }
 
       .toast.leave {
@@ -1144,9 +1149,9 @@
         position: fixed;
         z-index: 1200;
         pointer-events: none;
-        border: 1px solid #214a7b;
+        border: 1px solid #7A635E;
         background: rgba(16, 36, 58, 0.94);
-        color: #e8f0ff;
+        color: #FBE6DD;
         border-radius: 8px;
         padding: 6px 8px;
         font-size: 11px;
@@ -1170,7 +1175,7 @@
         max-height: min(90vh, 880px);
         overflow: auto;
         border-radius: 16px;
-        border: 1px solid #d0ddef;
+        border: 1px solid #F0E1D9;
         background: #fff;
         box-shadow: 0 24px 48px rgba(8, 18, 32, 0.28);
         padding: 14px;
@@ -1244,7 +1249,7 @@
         .table-wrap,
         .calendar-grid,
         .calendar-toolbar {
-          border-color: #7e97b4;
+          border-color: #B6A39C;
         }
 
         .status-badge {
@@ -1631,19 +1636,19 @@
       }
 
       .workspace-nav strong {
-        color: #6f5d72;
+        color: #7A635E;
       }
 
       .workspace-nav a {
         border: 1px solid var(--line);
         background: #fff;
-        color: #5f4f63;
+        color: #7A635E;
         border-radius: 14px;
       }
 
       .workspace-nav a.active {
         border-color: transparent;
-        background: linear-gradient(118deg, #e1bee7, #ffab91);
+        background: linear-gradient(118deg, #EC6A4C, #F2899B);
         color: #fff;
       }
 
@@ -1662,7 +1667,7 @@
       .meta-chip {
         border: 1px solid var(--line);
         background: #fff;
-        color: #6b5a6f;
+        color: #7A635E;
       }
 
       .calendar-toolbar {
@@ -1686,48 +1691,203 @@
       }
 
       thead th {
-        background: #fff8fc;
-        color: #6c5a70;
+        background: #FBF3EE;
+        color: #7A635E;
       }
 
       .week-time-head,
       .week-day-head,
       .week-time {
-        background: #fff8fc;
+        background: #FBF3EE;
       }
 
       .week-day-head strong {
-        color: #624f66;
+        color: #7A635E;
       }
 
       .week-cell.selected,
       .week-cell.drag-range {
-        background: #faeef7;
+        background: #FBE6DD;
       }
 
       .week-slot-btn.available {
-        color: #48755f;
-        background: #e7f8ef;
+        color: #3E9A6F;
+        background: #E7F2EC;
       }
 
       .week-slot-btn.booked {
-        color: #816b81;
-        background: #f4eff5;
+        color: #7A635E;
+        background: #FBE6DD;
       }
 
       .week-cell:hover .week-create-btn {
-        background: #fbeef8;
+        background: #FBE6DD;
       }
 
       .week-booked-chip {
-        color: #755d75;
-        background: #f5eefa;
+        color: #7A635E;
+        background: #FBE6DD;
       }
 
       .month-cell {
-        border-color: #f0e3d6;
+        border-color: #F0E1D9;
       }
 
       .month-cell.is-selected {
-        box-shadow: inset 0 0 0 2px #d9a6d9;
+        box-shadow: inset 0 0 0 2px #D9543A;
+      }
+
+      /* ────────────────────────────────────────────────────────────
+       * Coral Blush · README override (today highlight · 슬롯 칩 4상태)
+       * Source: design_handoff_lessonhub_coral_blush/README.md
+       * ──────────────────────────────────────────────────────────── */
+
+      /* Today 강조 — 월간/주간 캘린더 */
+      .month-cell.today {
+        box-shadow: inset 0 0 0 2px #F4C3B3, 0 0 0 3px #FBE6DD;
+        background: #FFFFFF;
+      }
+
+      .month-cell.today .month-date {
+        color: #D9543A;
+      }
+
+      .week-day-head.today,
+      .week-day-head.today strong {
+        background: #FBE6DD;
+        color: #D9543A;
+      }
+
+      /* 슬롯 칩 — open (예약 가능) */
+      .slot-item:not(.booked) {
+        border: 1.5px solid #F4C3B3;
+        background: #FFFFFF;
+        color: #D9543A;
+        font-weight: 700;
+        cursor: pointer;
+        border-radius: 7px;
+      }
+
+      .slot-item:not(.booked) strong {
+        color: #D9543A;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .slot-item:not(.booked):hover {
+        background: #FBE6DD;
+      }
+
+      /* 슬롯 칩 — full / mine (예약됨) */
+      .slot-item.booked {
+        border: 1px solid #F0E1D9;
+        background: #F7ECE5;
+        color: #B6A39C;
+        border-radius: 7px;
+      }
+
+      .slot-item.booked strong {
+        color: #B6A39C;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* 내 예약 (mine) — JS 가 .slot-item.mine 또는 .booked.mine 부여 시 */
+      .slot-item.mine {
+        background: #D45C79;
+        color: #FFFFFF;
+        border-color: #D45C79;
+      }
+
+      .slot-item.mine strong {
+        color: #FFFFFF;
+      }
+
+      /* 지난 시간 (past) */
+      .slot-item.past {
+        text-decoration: line-through;
+        color: #B6A39C;
+      }
+
+      /* 휴무 (off) — 대각선 해치 */
+      .slot-item.off,
+      .week-cell.holiday,
+      .week-teacher-cell.has-exception {
+        background: repeating-linear-gradient(
+          45deg,
+          #F4E8E1,
+          #F4E8E1 5px,
+          #FBF3EE 5px,
+          #FBF3EE 10px
+        );
+      }
+
+      /* 주간 그리드 chip — 의미별 일치 */
+      .week-slot-btn.available {
+        color: #D9543A;
+        background: #FFFFFF;
+        box-shadow: inset 0 0 0 1.5px #F4C3B3;
+      }
+
+      .week-slot-btn.booked {
+        color: #B6A39C;
+        background: #F7ECE5;
+      }
+
+      .week-booked-chip {
+        color: #FFFFFF;
+        background: #D45C79;
+      }
+
+      .week-one-time-window {
+        color: #D9543A;
+        background: #FBE6DD;
+      }
+
+      .week-open-chip {
+        color: #D9543A;
+        background: #FBE6DD;
+        box-shadow: inset 0 0 0 1.5px #F4C3B3;
+      }
+
+      .week-exception-chip {
+        color: #D45C79;
+        background: repeating-linear-gradient(
+          45deg,
+          #F4E8E1,
+          #F4E8E1 5px,
+          #FBF3EE 5px,
+          #FBF3EE 10px
+        );
+      }
+
+      .week-teacher-window {
+        color: #D9543A;
+        background: #FBE6DD;
+      }
+
+      /* 상단 nav 좌측 4px 코랄→핑크 그라데이션 액센트 */
+      .topbar {
+        position: relative;
+      }
+
+      .topbar::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, #EC6A4C, #F2899B);
+        border-top-left-radius: inherit;
+        border-bottom-left-radius: inherit;
+      }
+
+      /* 시간 숫자 tabular-nums (lessonhub-brand.css 의 .lh-tnum 와 동일) */
+      .calendar-grid .week-time,
+      .month-date,
+      .slot-item strong,
+      .slot-row strong,
+      .history-meta time,
+      .history-title time {
+        font-variant-numeric: tabular-nums;
+        font-feature-settings: "tnum";
       }

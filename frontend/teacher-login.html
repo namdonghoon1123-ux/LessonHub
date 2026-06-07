@@ -3,134 +3,126 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LessonHub 선생님 로그인</title>
+    <title>LessonHub — 선생님 로그인</title>
     <link rel="icon" type="image/png" href="/lessonhub-logo.png" />
     <link rel="apple-touch-icon" href="/lessonhub-logo.png" />
     <link rel="stylesheet" href="/lessonhub-brand.css" />
     <link rel="stylesheet" href="/lessonhub-auth.css" />
   </head>
   <body data-login-role="TEACHER">
-    <main class="wrap">
-      <nav class="topbar fade-up" aria-label="상단 메뉴">
-        <a class="brand-lockup brand-lockup--compact" href="/index.html" aria-label="LessonHub 홈">
-          <span class="lh-logo lh-logo--sm" aria-hidden="true">
-            <img src="/lessonhub-logo.png" alt="" />
-          </span>
-          <span class="brand-lockup__text">
-            <strong class="brand-lockup__name">LessonHub</strong>
-            <small class="brand-lockup__sub">선생님 전용 로그인</small>
-          </span>
-        </a>
-        <div class="top-links">
-          <a href="/index.html">역할 선택</a>
-          <a href="/student-login.html">학생 로그인</a>
-          <a href="/power-admin.html">파워관리자</a>
-          <a href="/guide.html">사용자 설명서</a>
+    <main class="auth-shell">
+      <aside class="auth-shell__brand" aria-hidden="true">
+        <div class="auth-shell__brand-top">
+          <span class="auth-shell__brand-logo">L</span>
+          <span class="auth-shell__brand-name">LessonHub</span>
         </div>
-      </nav>
+        <div>
+          <h1 class="auth-shell__brand-headline">레슨 예약,
+이제 한 곳에서
+간단하게.</h1>
+          <p class="auth-shell__brand-sub">시간표·예외·예약 승인을 한 화면에서 정돈된 순서로 운영합니다.</p>
+        </div>
+        <div class="auth-shell__brand-foot">피아노 · 요가 · 과외 · 코칭을 위한 1:1 예약 도구</div>
+      </aside>
 
-      <section class="panel hero-panel fade-up delay-1">
-        <div class="hero-lockup">
-          <span class="lh-logo lh-logo--md" aria-hidden="true">
-            <img src="/lessonhub-logo.png" alt="" />
-          </span>
-          <div class="hero-copy">
-            <h1 id="roleTitle">선생님 로그인</h1>
-            <p id="loginRouteHint">로그인 후 선생님 운영 화면으로 이동합니다.</p>
+      <section class="auth-shell__pane">
+        <div class="auth-shell__form">
+          <div class="auth-shell__form-head">
+            <h2 id="roleTitle">다시 오신 걸 환영해요</h2>
+            <p id="loginRouteHint">선생님 계정으로 로그인하면 운영 화면으로 이동합니다.</p>
           </div>
-        </div>
-        <div class="hero-badges">
-          <span>수업 시간표 관리</span>
-          <span>학생 임시계정 생성</span>
-          <span>예약 승인/완료 처리</span>
-        </div>
-      </section>
 
-      <section class="panel fade-up delay-2">
-        <div class="auth-view-toggle" role="tablist" aria-label="인증 화면 선택">
-          <button type="button" class="auth-view-tab active" data-auth-view-tab="login" aria-selected="true">로그인</button>
-          <button type="button" class="auth-view-tab" data-auth-view-tab="register" aria-selected="false">회원가입</button>
-        </div>
-        <div id="authLayout" class="auth-layout">
-          <article class="subpanel" data-auth-view="login">
-          <h3>로그인</h3>
-          <form id="loginForm" class="grid">
-            <div class="grid two">
-              <label>아이디 <input name="login_id" required /></label>
-              <label>비밀번호 <input name="password" type="password" required /></label>
-            </div>
-            <div class="actions">
-              <button class="primary" type="submit">로그인</button>
-              <button id="presetBtn" type="button">프리셋</button>
-              <button id="healthBtn" type="button">헬스체크</button>
-            </div>
-            <div class="actions">
-              <button type="button" data-switch-auth-view="register">회원가입으로 이동</button>
-            </div>
-          </form>
-
-          <h3 style="margin-top: 2px">간편 로그인</h3>
-          <p class="hint">Google / Naver 연동 상태를 자동 확인합니다.</p>
-          <div class="actions">
-            <button type="button" data-social-provider="GOOGLE">Google로 시작</button>
-            <button type="button" data-social-provider="NAVER">Naver로 시작</button>
+          <div class="auth-view-toggle" role="tablist" aria-label="인증 화면 선택">
+            <button type="button" class="auth-view-tab active" data-auth-view-tab="login" aria-selected="true">로그인</button>
+            <button type="button" class="auth-view-tab" data-auth-view-tab="register" aria-selected="false">회원가입</button>
           </div>
-          <p id="socialStatus" class="hint"></p>
-          </article>
 
-          <article class="subpanel" data-auth-view="register">
-          <h3 id="registerTitle">선생님 회원가입</h3>
-          <form id="registerForm" class="grid">
-            <div class="grid two">
-              <label>아이디 <input name="login_id" autocomplete="username" required /></label>
-              <label>휴대폰번호 <input name="phone" autocomplete="tel" inputmode="numeric" required /></label>
-            </div>
-            <label>이름 <input name="name" autocomplete="name" required /></label>
-            <label>비밀번호 <input name="password" type="password" autocomplete="new-password" required /></label>
-            <label>비밀번호 확인 <input name="password_confirm" type="password" autocomplete="new-password" required /></label>
-            <div class="actions">
-              <button id="registerBtn" class="primary" type="submit">선생님 회원가입</button>
-              <button type="button" data-switch-auth-view="login">로그인으로 이동</button>
-              <button id="logoutBtn" class="danger" type="button">로그아웃</button>
-            </div>
-          </form>
-          <article class="auth-recovery">
-            <h3>아이디/비밀번호 찾기</h3>
-            <form id="findLoginIdForm" class="grid">
-              <div class="grid two">
-                <label>이름 <input name="name" required /></label>
-                <label>휴대폰번호 <input name="phone" inputmode="numeric" required /></label>
-              </div>
+          <div id="authLayout" class="auth-layout">
+            <article class="subpanel" data-auth-view="login">
+              <form id="loginForm" class="grid">
+                <label>아이디
+                  <input name="login_id" autocomplete="username" required />
+                </label>
+                <label>비밀번호
+                  <input name="password" type="password" autocomplete="current-password" required />
+                </label>
+                <div class="actions">
+                  <button class="primary" type="submit">로그인</button>
+                </div>
+                <div class="actions" data-debug-actions>
+                  <button id="presetBtn" type="button">프리셋</button>
+                  <button id="healthBtn" type="button">헬스체크</button>
+                </div>
+              </form>
+
+              <div class="divider">또는</div>
+
               <div class="actions">
-                <button id="findLoginIdBtn" type="submit">아이디 찾기</button>
+                <button type="button" data-social-provider="GOOGLE">Google로 시작</button>
+                <button type="button" data-social-provider="NAVER">Naver로 시작</button>
               </div>
-            </form>
-            <p id="findLoginIdResult" class="hint"></p>
-            <form id="resetPasswordForm" class="grid">
-              <div class="grid two">
-                <label>아이디 <input name="login_id" required /></label>
-                <label>이름 <input name="name" required /></label>
-              </div>
-              <div class="grid two">
-                <label>휴대폰번호 <input name="phone" inputmode="numeric" required /></label>
-                <label>새 비밀번호 <input name="new_password" type="password" required /></label>
-              </div>
-              <label>새 비밀번호 확인 <input name="new_password_confirm" type="password" required /></label>
-              <div class="actions">
-                <button id="resetPasswordBtn" type="submit" class="primary">비밀번호 재설정</button>
-              </div>
-            </form>
-            <p id="resetPasswordResult" class="hint"></p>
-          </article>
-          </article>
+              <p id="socialStatus" class="hint"></p>
+
+              <p class="signup-link">처음이신가요? <button type="button" data-switch-auth-view="register">회원가입</button></p>
+            </article>
+
+            <article class="subpanel" data-auth-view="register">
+              <h3 id="registerTitle">선생님 회원가입</h3>
+              <form id="registerForm" class="grid">
+                <div class="grid two">
+                  <label>아이디 <input name="login_id" autocomplete="username" required /></label>
+                  <label>휴대폰번호 <input name="phone" autocomplete="tel" inputmode="numeric" required /></label>
+                </div>
+                <label>이름 <input name="name" autocomplete="name" required /></label>
+                <label>비밀번호 <input name="password" type="password" autocomplete="new-password" required /></label>
+                <label>비밀번호 확인 <input name="password_confirm" type="password" autocomplete="new-password" required /></label>
+                <div class="actions">
+                  <button id="registerBtn" class="primary" type="submit">선생님 회원가입</button>
+                </div>
+                <p class="signup-link">이미 계정이 있나요? <button type="button" data-switch-auth-view="login">로그인</button></p>
+                <div class="actions" data-debug-actions>
+                  <button id="logoutBtn" class="danger" type="button">로그아웃</button>
+                </div>
+              </form>
+
+              <article class="auth-recovery">
+                <h3>아이디/비밀번호 찾기</h3>
+                <form id="findLoginIdForm" class="grid">
+                  <div class="grid two">
+                    <label>이름 <input name="name" required /></label>
+                    <label>휴대폰번호 <input name="phone" inputmode="numeric" required /></label>
+                  </div>
+                  <div class="actions">
+                    <button id="findLoginIdBtn" type="submit">아이디 찾기</button>
+                  </div>
+                </form>
+                <p id="findLoginIdResult" class="hint"></p>
+                <form id="resetPasswordForm" class="grid">
+                  <div class="grid two">
+                    <label>아이디 <input name="login_id" required /></label>
+                    <label>이름 <input name="name" required /></label>
+                  </div>
+                  <div class="grid two">
+                    <label>휴대폰번호 <input name="phone" inputmode="numeric" required /></label>
+                    <label>새 비밀번호 <input name="new_password" type="password" required /></label>
+                  </div>
+                  <label>새 비밀번호 확인 <input name="new_password_confirm" type="password" required /></label>
+                  <div class="actions">
+                    <button id="resetPasswordBtn" type="submit" class="primary">비밀번호 재설정</button>
+                  </div>
+                </form>
+                <p id="resetPasswordResult" class="hint"></p>
+              </article>
+            </article>
+          </div>
+
+          <section id="debugPanel" hidden>
+            <div class="status" id="authStatus">로그인되지 않았습니다.</div>
+            <label id="tokenBoxRow">토큰 <input id="tokenBox" class="mono" readonly /></label>
+            <p class="hint" data-test-account-hint>테스트 계정: teacher@example.com / 비밀번호는 로컬에서 직접 설정</p>
+            <pre id="log"></pre>
+          </section>
         </div>
-      </section>
-
-      <section class="panel fade-up delay-3" id="debugPanel">
-        <div class="status" id="authStatus">로그인되지 않았습니다.</div>
-        <label id="tokenBoxRow">토큰 <input id="tokenBox" class="mono" readonly /></label>
-        <p class="hint" data-test-account-hint>테스트 계정: teacher@example.com / 비밀번호는 로컬에서 직접 설정</p>
-        <pre id="log"></pre>
       </section>
     </main>
 

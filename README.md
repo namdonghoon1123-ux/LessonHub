@@ -22,13 +22,43 @@
 ```bash
 cp .env.example .env
 ```
+- 빠르게 로컬 테스트만 할 때는 `./scripts/dev-stack.sh`가 `.env`가 없으면 `.env.example`를 자동으로 사용합니다.
+- 포트나 JWT/DB 값을 바꾸고 싶으면 `.env`를 만들어서 그 값을 우선 적용하면 됩니다.
 
-## 2) 서비스 전체 실행
+## 2) 빠른 기동 쉘
+```bash
+chmod +x ./scripts/dev-stack.sh
+./scripts/dev-stack.sh bootstrap
+```
+- `bootstrap`: 전체 스택 빌드/기동 후 `migrate`, `seed`까지 한 번에 실행
+- `up`: 코드 변경 반영까지 포함해 다시 빌드/기동
+- `start`: 이미 만들어진 컨테이너만 다시 시작
+- `stop`, `down`: 중지 / 중지+컨테이너 정리
+- `status`, `logs backend`, `logs db`: 상태/로그 확인
+- `db-shell`: PostgreSQL 컨테이너 안에서 `psql` 실행
+- `migrate`, `seed`, `test`: 백엔드 일회성 작업 실행
+- `reset --yes`: 로컬 DB 볼륨까지 삭제하고 완전 초기화
+
+자주 쓰는 예시:
+```bash
+./scripts/dev-stack.sh up
+./scripts/dev-stack.sh stop
+./scripts/dev-stack.sh down
+./scripts/dev-stack.sh status
+./scripts/dev-stack.sh logs backend
+./scripts/dev-stack.sh stop db
+./scripts/dev-stack.sh up db
+./scripts/dev-stack.sh db-shell
+./scripts/dev-stack.sh test
+./scripts/dev-stack.sh reset --yes
+```
+
+## 3) 서비스 전체 실행 (직접 compose 사용)
 ```bash
 docker compose up --build -d
 ```
 
-## 3) 동작 확인
+## 4) 동작 확인
 - 로그인: `http://localhost:18080/index.html`
 - 학생 통합 대시보드: `http://localhost:18080/student.html`
 - 학생 캘린더: `http://localhost:18080/student-calendar.html`
@@ -51,19 +81,19 @@ docker compose up --build -d
 - 기존 폼 방식
   - `http://localhost:18080/teacher-manage.html`의 `예외(Exceptions)` 섹션에서 날짜/시간/사유를 직접 등록/삭제
 
-## 4) 마이그레이션 / 시드
+## 5) 마이그레이션 / 시드
 ```bash
 docker compose run --rm backend npm run migrate
 docker compose run --rm backend npm run seed
 ```
 
-## 4-1) 백엔드 통합 테스트
+## 5-1) 백엔드 통합 테스트
 ```bash
 docker compose run --rm backend npm test
 ```
 - 주의: 테스트는 예약/시간표 관련 테이블을 초기화(`TRUNCATE ... RESTART IDENTITY`)합니다.
 
-## 5) 중지
+## 6) 중지
 ```bash
 docker compose down
 ```
