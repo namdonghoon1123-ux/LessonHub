@@ -61,6 +61,14 @@
 ### Migrated
 - Origin GitHub repo: `100sayung/myapp` → `namdonghoon1123-ux/LessonHub` (구 origin 은 `legacy` remote 로 보존)
 
+### Added — 마지막 라운드 (커밋 `3f8643b`)
+- Backend: `app.set('trust proxy', true)` — Vercel X-Forwarded-For 정확 처리
+- Backend: `GET /api/v1/version` — APP_VERSION + commit SHA + node_env 반환
+- Backend audit hook: `admin.patch_note.create`
+- Playwright E2E 기초 (`tests/` 디렉토리, Vercel 빌드 제외)
+  - 5개 테스트: 홈 역할 카드, 로그인 폼 렌더, 탭 전환, 404 폴백
+  - GitHub Actions `e2e-test` job — http-server + chromium
+
 ---
 
 ## 형식
