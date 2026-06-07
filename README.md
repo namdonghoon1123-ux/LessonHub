@@ -135,6 +135,22 @@ docker compose down
 - `poweradmin` (POWER_ADMIN)
 - 비밀번호는 로컬 개발 환경에서 직접 설정하거나 확인한다.
 
+## 배포 (Vercel + Supabase)
+
+로컬 Docker 외에 **Vercel(호스팅·서버리스) + Supabase(PostgreSQL)** 로 옮길 수 있는 구성이 포함되어 있습니다.
+
+- 프론트(`frontend/`): Vercel 정적 호스팅
+- 백엔드(`backend/src/index.js`): `api/index.js` wrapper 가 Vercel Serverless Function 으로 실행
+- DB: Supabase Postgres, 기존 마이그레이션 17개 + 시드 그대로 적용
+- 스케줄러(`setInterval` 백그라운드 2건): `db/migrations/017_pg_cron_schedulers.sql` 이 Supabase `pg_cron` 잡으로 변환
+
+빠른 시작:
+1. Supabase 프로젝트 생성 → SQL Editor 에 `scripts/supabase-bootstrap.sql` 통째로 붙여넣고 Run
+2. Vercel 에서 이 레포 import → 환경변수 `DATABASE_URL`(Supabase pooler URI, port 6543) · `JWT_SECRET` · `NODE_ENV=production` 등록
+3. Deploy
+
+상세 가이드: [`docs/deploy-vercel-supabase.md`](docs/deploy-vercel-supabase.md)
+
 ## 참고
 - 인증은 JWT 기반 무상태(Stateless) 액세스 토큰 방식입니다.
 - 프론트(`http://localhost:18080`)는 로그인 role에 따라 선생님/학생 화면이 분리됩니다.

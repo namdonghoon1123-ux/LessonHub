@@ -2322,6 +2322,7 @@
             const holidayName = state.holidaysByDate[dateKey] || '';
             const classes = ['week-day-head'];
             if (holidayName) classes.push('holiday');
+            if (isToday) classes.push('today');
             return `<th scope="col" class="${classes.join(' ')}"><strong>${WEEKDAY_LABELS[index]}${isToday ? ' · 오늘' : ''}</strong>${day.getMonth() + 1}/${day.getDate()}${holidayName ? `<span class="holiday-caption">${escapeHtml(holidayName)}</span>` : ''}</th>`;
           })
           .join('');
@@ -2940,6 +2941,7 @@
             const holidayName = state.holidaysByDate[dateKey] || '';
             const classes = ['week-day-head'];
             if (holidayName) classes.push('holiday');
+            if (isToday) classes.push('today');
             return `<th scope="col" class="${classes.join(' ')}"><strong>${WEEKDAY_LABELS[index]}${isToday ? ' · 오늘' : ''}</strong>${day.getMonth() + 1}/${day.getDate()}${holidayName ? `<span class="holiday-caption">${escapeHtml(holidayName)}</span>` : ''}</th>`;
           })
           .join('');
