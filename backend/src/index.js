@@ -12,7 +12,20 @@ const { appConfig, configPath } = loadAppConfig();
 const app = express();
 const port = process.env.PORT || 4000;
 
+// Vercel / 프록시 뒤에서 req.ip 가 X-Forwarded-For 첫 번째 값을 보도록
+// (audit log · rate limit 정확성). 'loopback,linklocal,uniquelocal' 도
+// 신뢰. Vercel 환경에선 'true' 가 가장 단순.
+app.set('trust proxy', true);
+
 app.use(express.json());
+
+// 버전 정보 — 배포 확인용
+const APP_VERSION = '0.2.0';
+const APP_BUILD =
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  process.env.GIT_COMMIT ||
+  process.env.COMMIT_SHA ||
+  'local-dev';
 
 const publicBookingLimiter = createPublicRateLimit({
   windowMs:
@@ -861,6 +874,16 @@ async function getBookableSlotAt(teacherUserId, startAtIso, timezone, lessonDura
   );
   return result.rowCount > 0 ? result.rows[0] : null;
 }
+
+app.get(['/api/version', '/api/v1/version'], (req, res) => {
+  res.json({
+    version: APP_VERSION,
+    build: APP_BUILD,
+    node_env: process.env.NODE_ENV || 'development',
+    service_timezone: 'Asia/Seoul',
+    now: new Date().toISOString(),
+  });
+});
 
 app.get(['/health', '/api/health', '/api/v1/health'], async (req, res) => {
   const startedAt = Date.now();
@@ -1776,6 +1799,13 @@ app.post('/api/v1/admin/patch-notes', requireAuth, requirePowerAdmin, async (req
       `,
       [title, body, req.auth.userId]
     );
+
+    auditLog(req, 'admin.patch_note.create', {
+      target_type: 'patch_note',
+      target_id: inserted.rows[0].id,
+      payload: { title: inserted.rows[0].title.slice(0, 80) },
+    });
+
     return res.status(201).json({ item: inserted.rows[0] });
   } catch (err) {
     console.error(err);

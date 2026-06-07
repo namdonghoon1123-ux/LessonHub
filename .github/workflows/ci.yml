@@ -60,6 +60,47 @@ jobs:
           node -e "JSON.parse(require('fs').readFileSync('backend/package.json', 'utf8')); console.log('OK  backend/package.json')"
           node -e "JSON.parse(require('fs').readFileSync('backend/config/app.config.json', 'utf8')); console.log('OK  backend/config/app.config.json')"
 
+  e2e-test:
+    name: Playwright E2E (frontend only)
+    runs-on: ubuntu-latest
+    needs: syntax-check
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install test deps
+        run: cd tests && npm install
+
+      - name: Install Playwright browsers
+        run: cd tests && npx playwright install --with-deps chromium
+
+      - name: Serve frontend (background)
+        run: |
+          cd frontend
+          npx --yes http-server -p 18080 -c-1 -s &
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            if curl -sf http://localhost:18080/index.html >/dev/null; then
+              echo "frontend up"; break
+            fi
+            sleep 1
+          done
+
+      - name: Run Playwright (no backend — landing/login/404 만)
+        env:
+          BASE_URL: http://localhost:18080
+        run: cd tests && npx playwright test --grep-invert "공개 프로필"
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: tests/playwright-report/
+          retention-days: 7
+
   backend-test:
     name: Backend integration tests
     runs-on: ubuntu-latest
