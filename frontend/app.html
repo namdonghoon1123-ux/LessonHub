@@ -676,6 +676,21 @@
                 </div>
                 <p class="hint">학생 취소는 수업 전날 설정 시각까지 허용됩니다. (예: 21시)</p>
               </article>
+              <article class="subpanel" data-teacher-settings-panel="profile" style="margin-top: 12px">
+                <h3>공개 프로필 페이지</h3>
+                <p class="hint" style="margin: 0 0 8px">학생/방문자가 로그인 없이 볼 수 있는 외부 공유 URL 입니다. SNS·블로그·명함에 사용하세요.</p>
+                <div class="grid">
+                  <label>공개 slug (영문/숫자/하이픈, 3~40자)
+                    <input id="teacherPublicSlug" placeholder="예: jiwon-piano" autocomplete="off" autocapitalize="off" />
+                  </label>
+                  <p class="hint" id="teacherPublicSlugUrl"></p>
+                  <div class="actions">
+                    <button id="teacherPublicSlugSaveBtn" type="button" class="primary">공개 페이지 활성화</button>
+                    <button id="teacherPublicSlugClearBtn" type="button">공개 중단</button>
+                    <button id="teacherPublicSlugCopyBtn" type="button">URL 복사</button>
+                  </div>
+                </div>
+              </article>
               <article class="subpanel" data-teacher-settings-panel="account" style="margin-top: 12px">
                 <h3>내 계정 관리</h3>
                 <div class="grid two">

@@ -2407,6 +2407,7 @@ app.get('/api/v1/teachers/me/profile', requireAuth, requireTeacher, async (req, 
           student_notice,
           display_name,
           bio,
+          public_slug,
           updated_at
         FROM teacher_profiles
         WHERE teacher_user_id = $1

@@ -906,6 +906,13 @@
           ? String(cancelHour)
           : '21';
         teacherProfileForm.elements.student_notice.value = String(profile.student_notice || '');
+
+        // 공개 프로필 slug
+        const slugInput = document.getElementById('teacherPublicSlug');
+        if (slugInput) {
+          slugInput.value = String(profile.public_slug || '');
+          slugInput.dispatchEvent(new Event('input'));
+        }
       }
 
       function renderLessonCatalog() {
@@ -4360,6 +4367,72 @@
 
       document.getElementById('teacherProfileRefreshBtn')?.addEventListener('click', () => {
         runAction('선생님 설정 다시불러오기', loadTeacherProfile);
+      });
+
+      // ── 공개 프로필 slug ─────────────────────────────────────────
+      const teacherPublicSlugInput = document.getElementById('teacherPublicSlug');
+      const teacherPublicSlugUrl = document.getElementById('teacherPublicSlugUrl');
+
+      function updatePublicSlugUrlDisplay() {
+        if (!teacherPublicSlugUrl) return;
+        const slug = String(teacherPublicSlugInput?.value || '').trim().toLowerCase();
+        if (!slug) {
+          teacherPublicSlugUrl.textContent = '아직 공개 페이지가 활성화되지 않았습니다.';
+          teacherPublicSlugUrl.style.color = '';
+          return;
+        }
+        const url = `${location.origin}/t/${slug}`;
+        teacherPublicSlugUrl.innerHTML = `현재 URL: <a href="${url}" target="_blank" rel="noopener" style="color:#D9543A;font-weight:700;">${url}</a>`;
+      }
+
+      teacherPublicSlugInput?.addEventListener('input', updatePublicSlugUrlDisplay);
+
+      document.getElementById('teacherPublicSlugSaveBtn')?.addEventListener('click', () => {
+        runAction('공개 페이지 활성화', async () => {
+          const raw = String(teacherPublicSlugInput?.value || '').trim().toLowerCase();
+          if (!raw) {
+            throw new Error('공개 slug 를 입력하세요. (예: jiwon-piano)');
+          }
+          if (!/^[a-z0-9][a-z0-9-]+[a-z0-9]$/.test(raw) || raw.length < 3 || raw.length > 40) {
+            throw new Error('형식 오류 — 영문 소문자/숫자/하이픈만, 3~40자, 양끝은 영문/숫자만.');
+          }
+          await api('/api/v1/teachers/me/profile/slug', {
+            method: 'PATCH',
+            auth: true,
+            body: { public_slug: raw },
+          });
+          if (teacherPublicSlugInput) teacherPublicSlugInput.value = raw;
+          updatePublicSlugUrlDisplay();
+          showToast('공개 페이지가 활성화되었습니다.', 'success');
+        });
+      });
+
+      document.getElementById('teacherPublicSlugClearBtn')?.addEventListener('click', () => {
+        runAction('공개 페이지 중단', async () => {
+          await api('/api/v1/teachers/me/profile/slug', {
+            method: 'PATCH',
+            auth: true,
+            body: { public_slug: '' },
+          });
+          if (teacherPublicSlugInput) teacherPublicSlugInput.value = '';
+          updatePublicSlugUrlDisplay();
+          showToast('공개 페이지가 비활성화되었습니다.', 'info');
+        });
+      });
+
+      document.getElementById('teacherPublicSlugCopyBtn')?.addEventListener('click', async () => {
+        const slug = String(teacherPublicSlugInput?.value || '').trim().toLowerCase();
+        if (!slug) {
+          showToast('먼저 공개 slug 를 저장하세요.', 'warn');
+          return;
+        }
+        const url = `${location.origin}/t/${slug}`;
+        try {
+          await navigator.clipboard.writeText(url);
+          showToast('URL 이 복사되었습니다: ' + url, 'success');
+        } catch (_) {
+          showToast('복사 실패 — 직접 선택 후 복사해 주세요: ' + url, 'warn');
+        }
       });
 
       document.getElementById('studentProfileSaveBtn')?.addEventListener('click', () => {
