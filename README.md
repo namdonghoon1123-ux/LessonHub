@@ -135,6 +135,40 @@ docker compose down
 - `poweradmin` (POWER_ADMIN)
 - 비밀번호는 로컬 개발 환경에서 직접 설정하거나 확인한다.
 
+## 데모 계정 (Vercel 배포 후 즉시 사용 가능)
+
+`scripts/supabase-demo-data.sql` 를 Supabase SQL Editor 에 붙여넣으면 다음 계정이 활성화됩니다:
+
+| 역할 | 로그인 ID | 비밀번호 | 진입 화면 |
+|---|---|---|---|
+| 파워관리자 | `admin` | `admin123` | `/power-admin.html` |
+| 선생님 | `teacher@example.com` | `teacher123` | `/teacher.html` |
+| 학생 | `student@example.com` | `student123` | `/student.html` |
+
+데모 데이터 포함:
+- 선생님 시간표 월~금 09-18시 + 토요일 주말 특강
+- 일요일 종일 휴무 예외
+- 예약 4건 (BOOKED 오늘 · PENDING 내일 · BOOKED +4일 · COMPLETED -7일 + 코멘트)
+- 패치노트 2건
+- 선생님 공개 프로필 slug: `/t/jiwon-piano`
+
+## 공개 프로필 페이지 (마케팅용)
+
+비로그인 사용자도 선생님 소개를 볼 수 있는 외부 공유 가능 URL:
+
+- `https://<your-domain>/t/<slug>` (예: `/t/jiwon-piano`)
+- 또는 `/p.html?t=<slug>`
+
+선생님이 SNS, 블로그, 명함 등에 공유 가능. API: `GET /api/v1/public/teachers/:slug` (인증 불필요).
+slug 설정/변경: `PATCH /api/v1/teachers/me/profile/slug` (선생 본인만).
+
+## 운영 (Audit log)
+
+POWER_ADMIN 액션은 `audit_logs` 테이블에 자동 기록됩니다.
+
+- 추적되는 액션: `admin.user.create`, `admin.user.delete`, `admin.user.password_reset`, `admin.student.teacher.assign`, `admin.student.teacher.clear`
+- 조회: `GET /api/v1/admin/audit-log?action=...&actor_email=...&limit=50&offset=0` (POWER_ADMIN 만)
+
 ## 배포 (Vercel + Supabase)
 
 로컬 Docker 외에 **Vercel(호스팅·서버리스) + Supabase(PostgreSQL)** 로 옮길 수 있는 구성이 포함되어 있습니다.
@@ -155,6 +189,10 @@ docker compose down
 - 인증은 JWT 기반 무상태(Stateless) 액세스 토큰 방식입니다.
 - 프론트(`http://localhost:18080`)는 로그인 role에 따라 선생님/학생 화면이 분리됩니다.
 - 학생 화면은 월간 캘린더 기반으로 슬롯을 조회하고 바로 예약/취소할 수 있습니다.
+- 디자인 언어: **Coral Blush** (코랄·핑크 주연 + 의미용 그린 1색, Pretendard 폰트). 토큰 정의: [`frontend/lessonhub-brand.css`](frontend/lessonhub-brand.css).
+- 알림: `window.alert()` 대신 우상단 toast (`frontend/lessonhub-toast.js` 자동 오버라이드).
+- 향후 작업 로드맵: [`docs/roadmap.md`](docs/roadmap.md)
+- 헬스체크: `GET /api/v1/health` (DB ping 포함, `uptime_ms` + `db.latency_ms` 반환)
 
 ## AI 협업 문서 운영
 - Gemini 메모: `GEMINI.md`

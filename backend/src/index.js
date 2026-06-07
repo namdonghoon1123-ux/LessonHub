@@ -862,10 +862,25 @@ async function getBookableSlotAt(teacherUserId, startAtIso, timezone, lessonDura
   return result.rowCount > 0 ? result.rows[0] : null;
 }
 
-app.get(['/health', '/api/health'], (req, res) => {
-  res.json({
-    ok: true,
+app.get(['/health', '/api/health', '/api/v1/health'], async (req, res) => {
+  const startedAt = Date.now();
+  let dbOk = false;
+  let dbLatencyMs = null;
+  try {
+    const dbStart = Date.now();
+    await query('SELECT 1');
+    dbLatencyMs = Date.now() - dbStart;
+    dbOk = true;
+  } catch (err) {
+    console.error('health check db failed', err?.message || String(err));
+  }
+  const status = dbOk ? 200 : 503;
+  res.status(status).json({
+    ok: dbOk,
     service: 'backend',
+    db: { ok: dbOk, latency_ms: dbLatencyMs },
+    uptime_ms: Math.round(process.uptime() * 1000),
+    response_ms: Date.now() - startedAt,
     now: new Date().toISOString(),
   });
 });
@@ -1911,6 +1926,12 @@ app.post('/api/v1/admin/users', requireAuth, requirePowerAdmin, async (req, res)
       );
     }
 
+    auditLog(req, 'admin.user.create', {
+      target_type: 'user',
+      target_id: user.id,
+      payload: { role: user.role, login_id: user.email },
+    });
+
     return res.status(201).json({ user: toPublicUser(user) });
   } catch (err) {
     if (err?.code === '23505') {
@@ -2043,6 +2064,15 @@ app.patch('/api/v1/admin/students/:id/teacher', requireAuth, requirePowerAdmin, 
     if (updated.rowCount === 0) {
       return res.status(404).json({ error: 'student_not_found' });
     }
+
+    auditLog(req, teacherUserId ? 'admin.student.teacher.assign' : 'admin.student.teacher.clear', {
+      target_type: 'user',
+      target_id: studentUserId,
+      payload: {
+        teacher_user_id: teacherUserId || null,
+        teacher_login_id: teacher?.login_id || null,
+      },
+    });
 
     return res.json({
       user: toPublicUser(updated.rows[0]),
