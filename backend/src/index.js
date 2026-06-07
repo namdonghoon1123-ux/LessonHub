@@ -1951,6 +1951,13 @@ app.patch('/api/v1/admin/users/:id/password', requireAuth, requirePowerAdmin, as
     if (updated.rowCount === 0) {
       return res.status(404).json({ error: 'user_not_found' });
     }
+
+    auditLog(req, 'admin.user.password_reset', {
+      target_type: 'user',
+      target_id: updated.rows[0].id,
+      payload: { target_role: updated.rows[0].role, target_login_id: updated.rows[0].login_id },
+    });
+
     return res.json({ ok: true, item: updated.rows[0] });
   } catch (err) {
     console.error(err);
@@ -2145,6 +2152,16 @@ app.delete('/api/v1/admin/users/:id', requireAuth, requirePowerAdmin, async (req
         return res.status(409).json({ error: 'user_already_deactivated' });
       }
       await query('COMMIT');
+
+      // audit log
+      auditLog(req, 'admin.user.delete', {
+        target_type: 'user',
+        target_id: target.id,
+        payload: {
+          target_role: target.role,
+          previous_login_id: target.login_id,
+        },
+      });
 
       return res.json({
         ok: true,
@@ -4349,6 +4366,82 @@ app.get('/api/v1/public/teachers/:slug', async (req, res) => {
     });
   } catch (err) {
     console.error('public teacher profile error', err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
+// ────────────────────────────────────────────────────────────
+// Audit log — 관리자 액션 추적
+// ────────────────────────────────────────────────────────────
+async function auditLog(req, action, opts = {}) {
+  try {
+    await query(
+      `
+        INSERT INTO audit_logs (
+          actor_user_id, actor_email, actor_role, action,
+          target_type, target_id, payload, ip_inet, user_agent
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NULLIF($8, '')::inet, $9)
+      `,
+      [
+        req?.auth?.userId || null,
+        req?.auth?.email || null,
+        req?.auth?.role || null,
+        String(action || 'unknown'),
+        opts.target_type || null,
+        Number.isFinite(Number(opts.target_id)) ? Number(opts.target_id) : null,
+        opts.payload ? JSON.stringify(opts.payload) : null,
+        String(req?.ip || '').replace(/^::ffff:/, '') || '',
+        String(req?.headers?.['user-agent'] || '').slice(0, 500),
+      ]
+    );
+  } catch (err) {
+    // audit log 실패가 비즈니스 로직을 깨면 안 됨 — 로그만 남기고 무시
+    console.error('audit_log_insert_failed', { action, err: err?.message || String(err) });
+  }
+}
+
+// 관리자만 조회 (POWER_ADMIN)
+app.get('/api/v1/admin/audit-log', requireAuth, requirePowerAdmin, async (req, res) => {
+  try {
+    const limit = Math.min(200, Math.max(1, Number.parseInt(req.query.limit, 10) || 50));
+    const offset = Math.max(0, Number.parseInt(req.query.offset, 10) || 0);
+    const action = String(req.query.action || '').trim() || null;
+    const actorEmail = String(req.query.actor_email || '').trim() || null;
+
+    const filters = ['1=1'];
+    const params = [];
+    if (action) {
+      params.push(`%${action}%`);
+      filters.push(`action ILIKE $${params.length}`);
+    }
+    if (actorEmail) {
+      params.push(`%${actorEmail}%`);
+      filters.push(`actor_email ILIKE $${params.length}`);
+    }
+
+    params.push(limit);
+    params.push(offset);
+
+    const result = await query(
+      `
+        SELECT id, actor_user_id, actor_email, actor_role, action,
+               target_type, target_id, payload, ip_inet::text AS ip,
+               user_agent, created_at
+        FROM audit_logs
+        WHERE ${filters.join(' AND ')}
+        ORDER BY created_at DESC, id DESC
+        LIMIT $${params.length - 1} OFFSET $${params.length}
+      `,
+      params
+    );
+
+    return res.json({
+      items: result.rows,
+      paging: { limit, offset, returned: result.rowCount },
+    });
+  } catch (err) {
+    console.error(err);
     return res.status(500).json({ error: 'internal_server_error' });
   }
 });

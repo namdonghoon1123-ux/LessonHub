@@ -1,11 +1,10 @@
 -- ============================================================
 -- LessonHub · Supabase bootstrap SQL (auto-generated)
 -- 
--- 사용법: 이 파일 전체를 Supabase 대시보드 → SQL Editor 에
---        붙여넣고 한 번에 실행하세요. 또는 psql 로:
---          psql "$SUPABASE_DB_URL" -f scripts/supabase-bootstrap.sql
+-- 사용법: Supabase 대시보드 → SQL Editor 에 통째로 붙여넣고 Run
+--        또는 psql "$SUPABASE_DB_URL" -f scripts/supabase-bootstrap.sql
 -- 
--- 포함: 마이그레이션 001~017 (pg_cron 포함) + 시드 001
+-- 포함: 마이그레이션 001~020 + 시드 001
 -- ============================================================
 
 -- ============================================================
@@ -554,6 +553,67 @@ END;
 $migration$;
 
 -- ============================================================
+-- db/migrations/019_teacher_public_profile.sql
+-- ============================================================
+-- 019: 선생님 공개 프로필용 slug 컬럼
+-- /t/<slug> 또는 /p.html?t=<slug> 로 비로그인 사용자에게 선생님 소개 노출
+
+ALTER TABLE teacher_profiles
+  ADD COLUMN IF NOT EXISTS public_slug TEXT;
+
+-- slug 는 unique 하되 NULL 허용 (공개 안 한 선생도 있을 수 있음)
+CREATE UNIQUE INDEX IF NOT EXISTS uq_teacher_profiles_public_slug
+  ON teacher_profiles (public_slug)
+  WHERE public_slug IS NOT NULL;
+
+-- 형식 제약: 영문 소문자, 숫자, 하이픈만 허용, 3-40 자
+ALTER TABLE teacher_profiles
+  DROP CONSTRAINT IF EXISTS teacher_profiles_public_slug_format_chk;
+
+ALTER TABLE teacher_profiles
+  ADD CONSTRAINT teacher_profiles_public_slug_format_chk
+    CHECK (public_slug IS NULL OR public_slug ~ '^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$');
+
+-- 데모 선생 slug 자동 부여
+UPDATE teacher_profiles
+SET public_slug = 'jiwon-piano',
+    updated_at = NOW()
+WHERE teacher_user_id = (SELECT id FROM users WHERE email = 'teacher@example.com' LIMIT 1)
+  AND public_slug IS NULL;
+
+-- ============================================================
+-- db/migrations/020_audit_logs.sql
+-- ============================================================
+-- 020: 관리자 액션 audit log
+-- 누가, 언제, 무엇을 변경했는지 추적. 운영 사고 대응 + 보안 감사용.
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id BIGSERIAL PRIMARY KEY,
+  actor_user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+  actor_email TEXT,
+  actor_role TEXT,
+  action TEXT NOT NULL,            -- 'admin.user.create', 'admin.user.delete', 'admin.password.reset', ...
+  target_type TEXT,                -- 'user', 'booking', 'teacher_profile', 'patch_note'
+  target_id BIGINT,
+  payload JSONB,                   -- 변경 전/후, 파라미터 일부
+  ip_inet INET,
+  user_agent TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_actor_created
+  ON audit_logs (actor_user_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action_created
+  ON audit_logs (action, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_target
+  ON audit_logs (target_type, target_id);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created
+  ON audit_logs (created_at DESC);
+
+-- ============================================================
 -- db/seeds/001_seed.sql
 -- ============================================================
 INSERT INTO users (role, email, password_hash, name)
@@ -592,3 +652,5 @@ WHERE student.email = 'student@example.com'
 -- SELECT id, email, role, account_tier, is_active FROM users ORDER BY id;
 -- SELECT jobname, schedule, active FROM cron.job ORDER BY jobid;
 -- SELECT count(*) FROM information_schema.tables WHERE table_schema='public';
+-- SELECT public_slug FROM teacher_profiles WHERE public_slug IS NOT NULL;
+-- SELECT count(*) FROM audit_logs;
