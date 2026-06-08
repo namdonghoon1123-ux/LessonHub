@@ -1,2408 +1,1750 @@
-      /* Coral Blush · 워크스페이스 토큰 (lessonhub-brand.css 의 --lh-* 와 매핑) */
-      :root {
-        --bg: #FBF3EE;
-        --bg-soft: #F7ECE5;
-        --panel: #FFFFFF;
-        --panel-strong: #3B2A29;
-        --line: #F0E1D9;
-        --line-strong: #F4C3B3;
-        --text: #3B2A29;
-        --sub: #7A635E;
-        --muted: #B6A39C;
-        --brand: #EC6A4C;
-        --brand-deep: #D9543A;
-        --brand-soft: #FBE6DD;
-        --brand-border: #F4C3B3;
-        --accent: #F2899B;
-        --rose: #D45C79;
-        --rose-soft: #F8E2E8;
-        --ok: #3E9A6F;
-        --ok-soft: #E7F2EC;
-        --warn: #D9543A;
-        --warn-soft: #FBE6DD;
-        --danger: #D45C79;
-        --shadow: 0 8px 24px rgba(217, 84, 58, 0.10);
-        --touch-min: 44px;
-        --safe-bottom: env(safe-area-inset-bottom, 0px);
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        min-height: 100vh;
-        color: var(--text);
-        font-family: var(--lh-font, "Pretendard Variable", Pretendard, -apple-system, sans-serif);
-        background: var(--bg);
-        overscroll-behavior-y: contain;
-      }
-
-      h1,
-      h2,
-      h3,
-      h4,
-      p {
-        margin: 0;
-      }
-
-      .wrap {
-        width: min(1320px, 94vw);
-        margin: 22px auto 46px;
-        display: grid;
-        gap: 14px;
-      }
-
-      /* ──────── 상단 네비 (시안 정확 매칭) ────────
-       * 흰 배경 + 하단 1px 라인 + 좌측 4px 그라데이션 액센트
-       * 활성 탭 = coralTint pill + coralDeep 텍스트 (그라데이션 X)
-       */
-      .topbar {
-        position: sticky;
-        top: 0;
-        z-index: 20;
-        height: 58px;
-        background: #FFFFFF;
-        border: none;
-        border-bottom: 1px solid var(--line);
-        border-radius: 0;
-        padding: 0 28px;
-        margin: -22px -3vw 14px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 26px;
-        align-items: center;
-        justify-content: flex-start;
-        box-shadow: none;
-        backdrop-filter: none;
-      }
-
-      .topbar::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 4px;
-        background: linear-gradient(180deg, #EC6A4C, #F2899B);
-      }
-
-      .topbar .brand-lockup {
-        margin-right: 4px;
-      }
-
-      .top-links {
-        display: inline-flex;
-        gap: 4px;
-        flex-wrap: wrap;
-        align-items: center;
-        flex: 1;
-      }
-
-      .top-links a {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        line-height: 1;
-        min-height: 34px;
-        text-decoration: none;
-        color: #B6A39C;
-        background: transparent;
-        border: none;
-        border-radius: 9px;
-        padding: 8px 13px;
-        font-size: 14px;
-        font-weight: 500;
-        letter-spacing: -0.2px;
-      }
-
-      .top-links a:hover {
-        background: #FBE6DD;
-        color: #D9543A;
-        transform: none;
-      }
-
-      .top-links a.is-active {
-        background: #FBE6DD;
-        color: #D9543A;
-        border: none;
-        font-weight: 700;
-      }
-
-      .top-links a.is-active:hover {
-        filter: brightness(0.98);
-      }
-
-      .top-links button {
-        display: none;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid #F4C3B3;
-        background: #FFFFFF;
-        color: #D9543A;
-        border-radius: 9px;
-        padding: 7px 12px;
-        line-height: 1;
-        min-height: 34px;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        margin-left: auto;
-      }
-
-      body.session-ready .top-links button {
-        display: inline-flex;
-        align-items: center;
-      }
-
-      .top-links button:hover {
-        background: #FBE6DD;
-      }
-
-      /* 우상단 역할 라벨 + 아바타 (role pill) */
-      .topbar-end {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        margin-left: auto;
-        font-size: 13px;
-        color: #B6A39C;
-      }
-
-      .topbar-end__role {
-        font-size: 13px;
-        color: #B6A39C;
-      }
-
-      .topbar-end__avatar {
-        width: 33px;
-        height: 33px;
-        border-radius: 50%;
-        background: #FBE6DD;
-        color: #D9543A;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 13px;
-      }
-
-      .hero {
-        border: 1px solid var(--line);
-        border-radius: 30px;
-        padding: 24px;
-        background:
-          linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 249, 240, 0.9)),
-          linear-gradient(180deg, #ffffff, #fffcf5);
-        box-shadow: var(--shadow);
-        display: grid;
-        gap: 12px;
-      }
-
-      .hero h1 {
-        font-size: clamp(20px, 2.4vw, 30px);
-        line-height: 1.15;
-        letter-spacing: -0.03em;
-      }
-
-      .hero p {
-        color: var(--muted);
-        max-width: 860px;
-      }
-
-      .hero-points {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-
-      .hero-points span {
-        background: rgba(255, 255, 255, 0.78);
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        padding: 7px 12px;
-        font-size: 12px;
-        color: #7A635E;
-        font-weight: 700;
-      }
-
-      /* ──────── Panel (시안: 흰 배경 + 라운드 14 + 미세 그림자) ──────── */
-      .panel {
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        background: #FFFFFF;
-        box-shadow: var(--lh-shadow-sm, 0 1px 3px rgba(59, 42, 41, 0.06));
-        padding: 24px 28px;
-      }
-
-      .panel + .panel {
-        margin-top: 14px;
-      }
-
-      .panel-title {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        align-items: baseline;
-        justify-content: space-between;
-        margin-bottom: 12px;
-      }
-
-      .panel-title h2 {
-        font-size: 21px;
-        letter-spacing: -0.02em;
-      }
-
-      .panel-title p {
-        color: var(--muted);
-        font-size: 13px;
-      }
-
-      .auth-layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-        gap: 12px;
-      }
-
-      .subpanel {
-        border: 1px solid var(--line);
-        border-radius: 20px;
-        background: rgba(255, 255, 255, 0.9);
-        padding: 12px;
-        display: grid;
-        gap: 10px;
-      }
-
-      .subpanel h3 {
-        font-size: 16px;
-      }
-
-      .grid {
-        display: grid;
-        gap: 10px;
-      }
-
-      .grid.two {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .grid.three {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .grid.four {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-      }
-
-      .compact-grid label {
-        margin-bottom: 0;
-      }
-
-      label {
-        display: grid;
-        gap: 5px;
-        color: var(--muted);
-        font-size: 13px;
-      }
-
-      input,
-      select,
-      textarea,
-      button {
-        font: inherit;
-      }
-
-      input,
-      select,
-      input,
-      select,
-      textarea {
-        width: 100%;
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        padding: 9px 10px;
-        background: #fff;
-        color: var(--text);
-        min-height: 40px;
-      }
-
-      textarea {
-        resize: vertical;
-      }
-
-      .actions {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-
-      button {
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.9);
-        color: #7A635E;
-        padding: 8px 14px;
-        min-height: 40px;
-        cursor: pointer;
-        font-weight: 700;
-        transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease;
-      }
-
-      a,
-      button,
-      input,
-      select,
-      textarea {
-        -webkit-tap-highlight-color: rgba(19, 99, 223, 0.15);
-      }
-
-      a:focus-visible,
-      button:focus-visible,
-      input:focus-visible,
-      select:focus-visible,
-      textarea:focus-visible {
-        outline: 2px solid #D9543A;
-        outline-offset: 2px;
-      }
-
-      button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 10px 22px rgba(130, 95, 128, 0.16);
-      }
-
-      button.primary {
-        background: linear-gradient(118deg, #EC6A4C, #F2899B);
-        color: #fff;
-        border-color: transparent;
-      }
-
-      button.warn {
-        background: #fff4ec;
-        border-color: #F4C3B3;
-        color: var(--warn);
-      }
-
-      button.danger {
-        background: #fff2f0;
-        border-color: #f3ccc1;
-        color: #D9543A;
-      }
-
-      button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-      }
-
-      .status {
-        border: 1px solid var(--line);
-        border-radius: 18px;
-        background: #fffdf9;
-        padding: 10px;
-        font-size: 13px;
-      }
-
-      .compact-status {
-        padding: 8px 10px;
-        border-radius: 14px;
-      }
-
-      .hint {
-        color: var(--muted);
-        font-size: 12px;
-      }
-
-      .mono {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      }
-
-      .hidden {
-        display: none !important;
-      }
-
-      .role-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        width: fit-content;
-        border-radius: 999px;
-        background: linear-gradient(118deg, #EC6A4C, #F2899B);
-        color: #fff;
-        font-weight: 700;
-        font-size: 12px;
-        padding: 6px 11px;
-      }
-
-      .quick-help {
-        border-radius: 20px;
-        border: 1px dashed var(--line-strong);
-        background: #fffdf6;
-        padding: 10px;
-        display: grid;
-        gap: 8px;
-      }
-
-      .workspace-layout {
-        display: grid;
-        grid-template-columns: 200px minmax(0, 1fr);
-        gap: 12px;
-      }
-
-      .workspace-nav {
-        border: 1px solid #F0E1D9;
-        border-radius: 12px;
-        background: #FBF3EE;
-        padding: 10px;
-        display: grid;
-        gap: 6px;
-        position: sticky;
-        top: 132px;
-        height: fit-content;
-      }
-
-      .workspace-nav strong {
-        font-size: 13px;
-        color: #3B2A29;
-      }
-
-      .workspace-nav a {
-        text-decoration: none;
-        border: 1px solid #F0E1D9;
-        background: #fff;
-        color: #3B2A29;
-        border-radius: 10px;
-        padding: 8px 10px;
-        font-size: 13px;
-        font-weight: 600;
-      }
-
-      .workspace-nav a.active {
-        border-color: #D9543A;
-        background: linear-gradient(180deg, #D9543A, #D9543A);
-        color: #fff;
-      }
-
-      .workspace-content {
-        min-width: 0;
-      }
-
-      .quick-help ol {
-        margin: 0;
-        padding-left: 18px;
-        display: grid;
-        gap: 6px;
-        color: #7A635E;
-        font-size: 13px;
-      }
-
-      .stats {
-        display: grid;
-        gap: 10px;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        margin-bottom: 12px;
-      }
-
-      .stats--four {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-      }
-
-      /* ──────── Stat card (시안: 큰 숫자 + 작은 단위 + 부드러운 흰 카드) ──────── */
-      .stat-card {
-        border: 1px solid #F0E1D9;
-        border-radius: 14px;
-        background: #FFFFFF;
-        padding: 18px 22px;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        position: relative;
-        box-shadow: var(--lh-shadow-sm, 0 1px 3px rgba(59, 42, 41, 0.06));
-      }
-
-      .stats--four .stat-card + .stat-card::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 16px;
-        bottom: 16px;
-        width: 1px;
-        background: var(--line-soft, #F7ECE5);
-      }
-
-      .stat-card strong {
-        font-size: 30px;
-        font-weight: 700;
-        letter-spacing: -0.6px;
-        line-height: 1.1;
-        font-variant-numeric: tabular-nums;
-        color: #3B2A29;
-      }
-
-      .stat-card--accent strong {
-        color: #D9543A;
-      }
-
-      /* 시안: 숫자 옆의 작은 단위 (건/개/일) — JS 가 .stat-card__unit 으로 마크업하면 자동 적용 */
-      .stat-card strong .stat-card__unit,
-      .stat-card strong small {
-        font-size: 14px;
-        font-weight: 600;
-        margin-left: 4px;
-        color: #B6A39C;
-        letter-spacing: 0;
-      }
-
-      .stat-card--accent strong small {
-        color: #D9543A;
-        opacity: 0.6;
-      }
-
-      .stat-card span {
-        font-size: 13px;
-        color: var(--muted);
-        font-weight: 500;
-        letter-spacing: -0.1px;
-      }
-
-      /* 알림 2칸 (선생님 주간 운영 명세) */
-      .notices {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        margin-bottom: 12px;
-      }
-
-      /* ──────── Notice (알림 칸 — 시안: 흰 배경, 좌측 dot, 우측 액션 텍스트) ──────── */
-      .notice {
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        background: #FFFFFF;
-        padding: 14px 16px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        position: relative;
-        box-shadow: var(--lh-shadow-sm, 0 1px 3px rgba(59, 42, 41, 0.06));
-      }
-
-      .notice::before {
-        content: "";
-        flex: 0 0 auto;
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: #B6A39C;
-        margin-right: 2px;
-      }
-
-      .notice > strong,
-      .notice > p {
-        margin: 0;
-      }
-
-      .notice strong {
-        font-size: 13.5px;
-        font-weight: 700;
-        color: #3B2A29;
-      }
-
-      .notice p {
-        flex: 1;
-        font-size: 13.5px;
-        color: #7A635E;
-        font-weight: 500;
-      }
-
-      .notice a {
-        font-size: 13px;
-        color: #D9543A;
-        font-weight: 700;
-        text-decoration: none;
-        white-space: nowrap;
-      }
-
-      .notice a:hover {
-        text-decoration: underline;
-      }
-
-      /* rose 변형 — 강조 알림 */
-      .notice--rose {
-        background: #FCEDF1;
-        border-color: #EFC4D0;
-      }
-
-      .notice--rose::before {
-        background: #D45C79;
-      }
-
-      .notice--rose strong,
-      .notice--rose p {
-        color: #D45C79;
-      }
-
-      .notice--rose a {
-        color: #D45C79;
-      }
-
-      @media (max-width: 760px) {
-        .stats--four {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .notices {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      .meta-strip {
-        border: 1px solid #F0E1D9;
-        border-radius: 12px;
-        background: #FBF3EE;
-        padding: 10px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 12px;
-      }
-
-      .meta-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        border-radius: 999px;
-        background: #fff;
-        border: 1px solid #F0E1D9;
-        padding: 5px 9px;
-        font-size: 12px;
-        color: #7A635E;
-        font-weight: 600;
-      }
-
-      .calendar-toolbar {
-        border: 1px solid #F0E1D9;
-        border-radius: 14px;
-        background: #FBF3EE;
-        padding: 10px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-        position: sticky;
-        top: 86px;
-        z-index: 12;
-      }
-
-      .calendar-toolbar .left,
-      .calendar-toolbar .right {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        align-items: center;
-      }
-
-      .calendar-toolbar .month-label {
-        min-width: 110px;
-        text-align: center;
-        font-size: 18px;
-      }
-
-      .calendar-shell {
-        display: grid;
-        gap: 12px;
-        grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-        margin-top: 12px;
-      }
-
-      .calendar-mobile-tools {
-        display: none;
-      }
-
-      .segmented-control {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-
-      .segmented-control button {
-        flex: 1 1 0;
-        min-width: 0;
-        white-space: nowrap;
-      }
-
-      /* ──────── Calendar card (학생 7열 / 선생 / slot) ──────── */
-      .calendar-card,
-      .slot-card {
-        border: 1px solid #F0E1D9;
-        border-radius: 13px;
-        background: #FFFFFF;
-        padding: 14px 12px;
-        box-shadow: var(--lh-shadow-sm, 0 1px 3px rgba(59, 42, 41, 0.06));
-      }
-
-      /* today 카드 강조 (학생 캘린더) — 시안: coralBorder + box-shadow */
-      .calendar-card.today,
-      .calendar-card[data-today="true"] {
-        border-color: #F4C3B3;
-        box-shadow: 0 0 0 3px #FBE6DD, var(--lh-shadow-sm, 0 1px 3px rgba(59, 42, 41, 0.06));
-      }
-
-      /* 카드 헤더 (요일 + 날짜) — today 는 coralTint 배경 */
-      .calendar-card__head,
-      .calendar-card .day-head {
-        text-align: center;
-        padding: 8px 4px;
-        border-radius: 8px;
-        margin: -2px -2px 8px;
-      }
-
-      .calendar-card.today .calendar-card__head,
-      .calendar-card.today .day-head {
-        background: #FBE6DD;
-      }
-
-      .calendar-card.today .day-head__date,
-      .calendar-card.today strong {
-        color: #D9543A;
-      }
-
-      .calendar-head {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 6px;
-        margin-bottom: 7px;
-      }
-
-      .calendar-head div {
-        text-align: center;
-        font-size: 11px;
-        color: var(--muted);
-        font-weight: 700;
-      }
-
-      .calendar-grid {
-        border: 1px solid #F0E1D9;
-        border-radius: 10px;
-        overflow: auto;
-        max-height: 660px;
-        background: #fff;
-        touch-action: pan-y;
-        -webkit-overflow-scrolling: touch;
-      }
-
-      .week-table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: fixed;
-      }
-
-      .week-table th,
-      .week-table td {
-        border: 1px solid #F7ECE5;
-        padding: 0;
-        vertical-align: top;
-      }
-
-      .week-time-head {
-        width: 64px;
-        background: #FBF3EE;
-        color: var(--muted);
-        font-size: 11px;
-        font-weight: 700;
-      }
-
-      .week-day-head {
-        background: #FBF3EE;
-        text-align: center;
-        font-size: 11px;
-        line-height: 1.3;
-        padding: 6px 2px;
-        color: #7A635E;
-      }
-
-      .week-day-head strong {
-        display: block;
-        color: #3B2A29;
-        font-size: 12px;
-      }
-
-      .week-day-head.holiday strong {
-        color: #D45C79;
-      }
-
-      .holiday-caption {
-        display: block;
-        margin-top: 2px;
-        color: #D45C79;
-        font-size: 10px;
-        line-height: 1.2;
-      }
-
-      .week-time {
-        width: 64px;
-        font-size: 11px;
-        color: #B6A39C;
-        text-align: center;
-        background: #FBF3EE;
-        padding-top: 3px;
-      }
-
-      .week-cell {
-        height: 22px;
-        position: relative;
-        background: #fff;
-        user-select: none;
-      }
-
-      .week-cell.selected {
-        background: #FBE6DD;
-      }
-
-      .week-cell.past {
-        background: #FBF3EE;
-      }
-
-      .week-cell.has-available {
-        background: #E7F2EC;
-      }
-
-      .week-cell.has-booked {
-        background: #FBF3EE;
-      }
-
-      .week-cell.holiday {
-        background: #FBF3EE;
-      }
-
-      .week-cell.drag-range {
-        background: #FBE6DD;
-      }
-
-      .week-cell.drag-anchor {
-        box-shadow: inset 0 0 0 2px #D9543A;
-      }
-
-      .week-cell.touch-anchor {
-        box-shadow: inset 0 0 0 2px #D9543A;
-        background: #FBE6DD;
-      }
-
-      .week-slot-btn,
-      .week-create-btn {
-        width: 100%;
-        height: 100%;
-        border: 0;
-        border-radius: 0;
-        margin: 0;
-        padding: 0 4px;
-        min-height: 22px;
-        font-size: 11px;
-        font-weight: 700;
-        line-height: 1.25;
-        box-shadow: none;
-        transform: none;
-      }
-
-      .week-slot-btn.available {
-        color: #3E9A6F;
-        background: #E7F2EC;
-      }
-
-      .week-slot-btn.booked {
-        color: #B6A39C;
-        background: #FBF3EE;
-      }
-
-      .week-create-btn {
-        color: #B6A39C;
-        background: transparent;
-        opacity: 0;
-        cursor: pointer;
-      }
-
-      .week-cell:hover .week-create-btn {
-        opacity: 1;
-        background: #FBE6DD;
-      }
-
-      .week-teacher-cell.has-window {
-        background: #FBE6DD;
-      }
-
-      .week-teacher-cell.has-exception {
-        background: #F8E2E8;
-      }
-
-      .week-teacher-cell.has-booking {
-        background: #FBE6DD;
-      }
-
-      .week-teacher-cell[data-cell-booking-id],
-      .week-teacher-cell[data-cell-window-id],
-      .week-teacher-cell[data-cell-exception-id] {
-        cursor: pointer;
-      }
-
-      .week-teacher-window {
-        width: 100%;
-        height: 100%;
-        border: 0;
-        border-radius: 0;
-        min-height: 22px;
-        padding: 0 4px;
-        font-size: 11px;
-        font-weight: 700;
-        line-height: 1.25;
-        color: #D9543A;
-        background: #FBE6DD;
-        box-shadow: none;
-        transform: none;
-      }
-
-      .week-booked-chip {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100%;
-        font-size: 11px;
-        font-weight: 700;
-        line-height: 1.25;
-        color: #7A635E;
-        background: #FBE6DD;
-      }
-
-      .week-one-time-window {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100%;
-        font-size: 11px;
-        font-weight: 700;
-        line-height: 1.25;
-        color: #3E9A6F;
-        background: #E7F2EC;
-      }
-
-      .week-open-chip {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100%;
-        font-size: 11px;
-        font-weight: 700;
-        line-height: 1.25;
-        color: #D9543A;
-        background: #FBE6DD;
-      }
-
-      .week-exception-chip {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100%;
-        font-size: 11px;
-        font-weight: 700;
-        line-height: 1.25;
-        color: #D45C79;
-        background: #F8E2E8;
-      }
-
-      #teacherCellDetailBody {
-        display: grid;
-        gap: 6px;
-        line-height: 1.45;
-      }
-
-      .month-table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: fixed;
-      }
-
-      .month-table th,
-      .month-table td {
-        border: 1px solid #F7ECE5;
-        vertical-align: top;
-      }
-
-      .month-day-head {
-        background: #FBF3EE;
-        text-align: center;
-        font-size: 12px;
-        color: #7A635E;
-        padding: 8px 4px;
-      }
-
-      .month-cell {
-        height: 110px;
-        padding: 8px;
-        cursor: pointer;
-        background: #fff;
-      }
-
-      .month-cell.out-month {
-        background: #FBF3EE;
-        color: #B6A39C;
-      }
-
-      .month-cell.today {
-        box-shadow: inset 0 0 0 2px #D9543A;
-      }
-
-      .month-cell.selected {
-        background: #FBE6DD;
-      }
-
-      .month-cell.has-available {
-        background: #E7F2EC;
-      }
-
-      .month-cell.has-booked {
-        border-color: #F0E1D9;
-      }
-
-      .month-cell.has-my-booking .month-date {
-        color: #3E9A6F;
-      }
-
-      .month-date {
-        font-weight: 700;
-        font-size: 13px;
-        margin-bottom: 6px;
-      }
-
-      .month-holiday {
-        color: #D45C79;
-        font-size: 11px;
-        margin-bottom: 4px;
-      }
-
-      .month-metrics {
-        display: grid;
-        gap: 4px;
-      }
-
-      .month-metrics .metric {
-        font-size: 11px;
-        border-radius: 999px;
-        padding: 2px 6px;
-        width: fit-content;
-      }
-
-      .month-metrics .metric.open {
-        background: #E7F2EC;
-        color: #3E9A6F;
-      }
-
-      .month-metrics .metric.close {
-        background: #FBE6DD;
-        color: #7A635E;
-      }
-
-      .month-metrics .metric.mine {
-        background: #FBE6DD;
-        color: #D9543A;
-      }
-
-      .slot-list {
-        display: grid;
-        gap: 8px;
-      }
-
-      .slot-row {
-        border: 1px solid #F0E1D9;
-        border-radius: 10px;
-        background: #fff;
-        padding: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-      }
-
-      .slot-row .actions {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-      }
-
-      .slot-row .actions button {
-        white-space: nowrap;
-      }
-
-      .slot-summary {
-        border: 1px solid #F0E1D9;
-        background: #FBF3EE;
-        border-radius: 10px;
-        padding: 8px 10px;
-        font-size: 12px;
-        color: #7A635E;
-        margin-bottom: 10px;
-      }
-
-      .slot-item {
-        border: 1px solid #F0E1D9;
-        border-radius: 11px;
-        background: #fff;
-        padding: 10px;
-        display: flex;
-        justify-content: space-between;
-        gap: 8px;
-        align-items: center;
-      }
-
-      .slot-item:not(.booked) {
-        border-color: #E7F2EC;
-        background: #E7F2EC;
-      }
-
-      .slot-item.booked {
-        background: #FBF3EE;
-        color: #B6A39C;
-      }
-
-      .slot-item strong {
-        font-size: 13px;
-      }
-
-      .slot-item small {
-        color: var(--muted);
-        font-size: 11px;
-      }
-
-      .table-card {
-        margin-top: 14px;
-        border: 1px solid #F0E1D9;
-        border-radius: 14px;
-        background: #fff;
-        padding: 10px;
-      }
-
-      .history-list {
-        display: grid;
-        gap: 10px;
-      }
-
-      .history-card {
-        border: 1px solid #F0E1D9;
-        border-radius: 12px;
-        background: #FBF3EE;
-        padding: 10px;
-        display: grid;
-        gap: 8px;
-      }
-
-      .history-card-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .history-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: #7A635E;
-      }
-
-      .history-meta {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 6px 10px;
-        font-size: 12px;
-        color: #7A635E;
-      }
-
-      .history-actions {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-
-      .table-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 8px;
-      }
-
-      .table-wrap {
-        overflow-x: auto;
-        border: 1px solid #F7ECE5;
-        border-radius: 10px;
-        -webkit-overflow-scrolling: touch;
-      }
-
-      .list-pagination {
-        margin-top: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-
-      th,
-      td {
-        border-top: 1px solid #F7ECE5;
-        text-align: left;
-        padding: 8px 4px;
-        font-size: 13px;
-        vertical-align: top;
-      }
-
-      th {
-        color: var(--muted);
-        font-size: 12px;
-      }
-
-      tbody tr:nth-child(even) {
-        background: #FBF3EE;
-      }
-
-      tbody tr:hover {
-        background: #FBF3EE;
-      }
-
-      .status-badge {
-        display: inline-flex;
-        align-items: center;
-        border-radius: 999px;
-        padding: 4px 9px;
-        font-size: 11px;
-        font-weight: 700;
-        border: 1px solid transparent;
-        white-space: nowrap;
-      }
-
-      .status-BOOKED,
-      .status-AVAILABLE,
-      .status-TRUE {
-        background: #E7F2EC;
-        border-color: #E7F2EC;
-        color: #3E9A6F;
-      }
-
-      .status-PENDING {
-        background: #fff7e8;
-        border-color: #F4C3B3;
-        color: #D9543A;
-      }
-
-      .status-CANCELED_BY_STUDENT,
-      .status-CANCELED_BY_TEACHER,
-      .status-FALSE {
-        background: #fff0f0;
-        border-color: #FBE6DD;
-        color: #D45C79;
-      }
-
-      .status-COMPLETED {
-        background: #FBE6DD;
-        border-color: #F0E1D9;
-        color: #7A635E;
-      }
-
-      /* README 명세 — 역할 칩 색상: 학생=coral / 선생님=rose / 관리자=green */
-      .status-STUDENT {
-        background: #FBE6DD;
-        border-color: #FBE6DD;
-        color: #D9543A;
-      }
-
-      .status-TEACHER {
-        background: #F8E2E8;
-        border-color: #F8E2E8;
-        color: #D45C79;
-      }
-
-      .status-POWER_ADMIN {
-        background: #E7F2EC;
-        border-color: #E7F2EC;
-        color: #3E9A6F;
-      }
-
-      /* 일시정지 (paused) */
-      .status-paused,
-      .status-PAUSED {
-        background: #F7ECE5;
-        border-color: #F7ECE5;
-        color: #B6A39C;
-      }
-
-      /* 관리자 테이블 헤더 (README: 헤더 행 lineSoft 배경) */
-      .table-card thead tr {
-        background: #F7ECE5;
-      }
-
-      .table-card thead th {
-        font-size: 11.5px;
-        font-weight: 700;
-        color: #7A635E;
-        text-align: left;
-        letter-spacing: 0.2px;
-        padding: 9px 12px;
-        border-bottom: 1px solid #F0E1D9;
-      }
-
-      .table-card tbody td {
-        padding: 9px 12px;
-        font-size: 13px;
-        color: #3B2A29;
-        border-bottom: 1px solid #F7ECE5;
-      }
-
-      /* 필터 칩 (관리자 사용자 필터 명세) */
-      .filter-chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        margin: 8px 0 12px;
-      }
-
-      .filter-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        height: 30px;
-        padding: 0 12px;
-        border: 1px solid #F0E1D9;
-        border-radius: 999px;
-        background: #FFFFFF;
-        color: #7A635E;
-        font-size: 12.5px;
-        font-weight: 600;
-        cursor: pointer;
-      }
-
-      .filter-chip[aria-selected="true"],
-      .filter-chip.is-active {
-        background: #FBE6DD;
-        border-color: #F4C3B3;
-        color: #D9543A;
-      }
-
-      .filter-chip .count {
-        color: #B6A39C;
-        font-weight: 700;
-        font-variant-numeric: tabular-nums;
-      }
-
-      .filter-chip[aria-selected="true"] .count,
-      .filter-chip.is-active .count {
-        color: #D9543A;
-      }
-
-      .status-NO_SHOW {
-        background: #fff4e8;
-        border-color: #F4C3B3;
-        color: #D9543A;
-      }
-
-      .toast-region {
-        position: fixed;
-        right: 14px;
-        bottom: calc(14px + var(--safe-bottom));
-        z-index: 1800;
-        display: grid;
-        gap: 8px;
-        width: min(92vw, 360px);
-        pointer-events: none;
-      }
-
-      .toast {
-        border-radius: 12px;
-        border: 1px solid #F0E1D9;
-        background: rgba(255, 255, 255, 0.94);
-        color: #7A635E;
-        box-shadow: 0 14px 30px rgba(14, 31, 53, 0.18);
-        backdrop-filter: blur(10px);
-        padding: 10px 12px;
-        font-size: 13px;
-        font-weight: 600;
-        line-height: 1.45;
-        animation: toastIn 0.2s ease;
-      }
-
-      .toast.success {
-        border-color: #E7F2EC;
-        background: rgba(240, 255, 248, 0.95);
-        color: #3E9A6F;
-      }
-
-      .toast.error {
-        border-color: #FBE6DD;
-        background: rgba(255, 241, 241, 0.96);
-        color: #D45C79;
-      }
-
-      .toast.leave {
-        opacity: 0;
-        transform: translateY(6px);
-        transition: opacity 0.2s ease, transform 0.2s ease;
-      }
-
-      .drag-hint {
-        position: fixed;
-        z-index: 1200;
-        pointer-events: none;
-        border: 1px solid #7A635E;
-        background: rgba(16, 36, 58, 0.94);
-        color: #FBE6DD;
-        border-radius: 8px;
-        padding: 6px 8px;
-        font-size: 11px;
-        font-weight: 700;
-        white-space: nowrap;
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
-      }
-
-      .modal-backdrop {
-        position: fixed;
-        inset: 0;
-        z-index: 1300;
-        background: rgba(13, 26, 43, 0.58);
-        display: grid;
-        place-items: center;
-        padding: 16px;
-      }
-
-      .modal-card {
-        width: min(560px, 96vw);
-        max-height: min(90vh, 880px);
-        overflow: auto;
-        border-radius: 16px;
-        border: 1px solid #F0E1D9;
-        background: #fff;
-        box-shadow: 0 24px 48px rgba(8, 18, 32, 0.28);
-        padding: 14px;
-      }
-
-      .modal-card .panel-title {
-        margin-bottom: 10px;
-      }
-
-      .reveal {
-        animation: rise 0.45s ease both;
-      }
-
-      .stagger > * {
-        opacity: 0;
-        animation: rise 0.45s ease both;
-      }
-
-      .stagger > *:nth-child(1) {
-        animation-delay: 0.04s;
-      }
-
-      .stagger > *:nth-child(2) {
-        animation-delay: 0.09s;
-      }
-
-      .stagger > *:nth-child(3) {
-        animation-delay: 0.14s;
-      }
-
-      .stagger > *:nth-child(4) {
-        animation-delay: 0.19s;
-      }
-
-      @keyframes rise {
-        from {
-          opacity: 0;
-          transform: translateY(6px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      @keyframes toastIn {
-        from {
-          opacity: 0;
-          transform: translateY(8px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        *,
-        *::before,
-        *::after {
-          animation-duration: 0.01ms !important;
-          animation-iteration-count: 1 !important;
-          transition-duration: 0.01ms !important;
-          scroll-behavior: auto !important;
-        }
-      }
-
-      @media (prefers-contrast: more) {
-        .panel,
-        .subpanel,
-        .table-wrap,
-        .calendar-grid,
-        .calendar-toolbar {
-          border-color: #B6A39C;
-        }
-
-        .status-badge {
-          border-width: 2px;
-        }
-      }
-
-      @media (max-width: 1080px) {
-        .auth-layout,
-        .calendar-shell,
-        .grid.four,
-        .grid.three,
-        .stats {
-          grid-template-columns: 1fr;
-        }
-
-        .workspace-layout {
-          grid-template-columns: 1fr;
-        }
-
-        .workspace-nav {
-          position: static;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .calendar-toolbar {
-          align-items: stretch;
-        }
-
-        .calendar-toolbar .right,
-        .calendar-toolbar .left {
-          width: 100%;
-        }
-
-        .topbar .brand small {
-          display: none;
-        }
-      }
-
-      @media (max-width: 760px) {
-        .wrap {
-          width: min(100vw, 100%);
-          margin: 8px auto calc(20px + var(--safe-bottom));
-          gap: 10px;
-          padding: 0 8px;
-        }
-
-        .hero {
-          display: none;
-        }
-
-        .topbar {
-          position: static;
-          top: auto;
-          gap: 6px;
-          padding: 8px 10px;
-        }
-
-        .topbar .brand {
-          display: none;
-        }
-
-        .top-links {
-          width: 100%;
-          gap: 6px;
-          flex-wrap: nowrap;
-          overflow-x: auto;
-          padding-bottom: 2px;
-        }
-
-        .top-links a,
-        .top-links button {
-          flex: 0 0 auto;
-          white-space: nowrap;
-          min-height: var(--touch-min);
-          padding: 10px 12px;
-          font-size: 13px;
-        }
-
-        .grid.two {
-          grid-template-columns: 1fr;
-        }
-
-        .grid.four {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .stats {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 8px;
-        }
-
-        .stat-card strong {
-          font-size: 20px;
-        }
-
-        .workspace-layout {
-          gap: 10px;
-        }
-
-        .workspace-nav {
-          display: flex;
-          position: static;
-          top: auto;
-          overflow-x: auto;
-          white-space: nowrap;
-          gap: 8px;
-          padding: 8px;
-          -webkit-overflow-scrolling: touch;
-        }
-
-        .workspace-nav strong {
-          display: none;
-        }
-
-        .workspace-nav a {
-          flex: 0 0 auto;
-          min-height: var(--touch-min);
-          display: inline-flex;
-          align-items: center;
-          padding: 10px 12px;
-        }
-
-        .modal-backdrop {
-          padding: 0;
-        }
-
-        .modal-card {
-          width: 100vw;
-          max-width: none;
-          min-height: 100dvh;
-          max-height: 100dvh;
-          border-radius: 0;
-          border: 0;
-          padding: 14px 12px calc(18px + var(--safe-bottom));
-        }
-
-        .day-cell {
-          min-height: 74px;
-        }
-
-        .hero {
-          padding: 16px;
-        }
-
-        .topbar,
-        .panel {
-          padding: 12px;
-        }
-
-        .actions button {
-          min-height: var(--touch-min);
-        }
-
-        input,
-        select,
-        textarea,
-        button {
-          min-height: var(--touch-min);
-          font-size: 16px;
-        }
-
-        .calendar-toolbar {
-          position: static;
-          top: auto;
-          padding: 9px;
-          gap: 8px;
-        }
-
-        .calendar-toolbar .left,
-        .calendar-toolbar .right {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          align-items: stretch;
-          width: 100%;
-          gap: 8px;
-        }
-
-        .calendar-toolbar .hint {
-          grid-column: 1 / -1;
-        }
-
-        .calendar-toolbar .month-label {
-          min-width: 0;
-          width: 100%;
-          font-size: 16px;
-          grid-column: 1 / -1;
-          text-align: left;
-          padding: 6px 2px;
-        }
-
-        .calendar-toolbar label {
-          min-width: 0 !important;
-          width: 100%;
-        }
-
-        .calendar-shell {
-          margin-top: 10px;
-          gap: 10px;
-        }
-
-        .calendar-mobile-tools {
-          display: grid;
-          gap: 8px;
-          margin-bottom: 12px;
-        }
-
-        .calendar-mobile-tools .actions {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .calendar-grid {
-          max-height: min(58dvh, 520px);
-        }
-
-        .week-time-head,
-        .week-time {
-          width: 56px;
-          font-size: 10px;
-        }
-
-        .week-day-head {
-          font-size: 10px;
-          padding: 7px 1px;
-        }
-
-        .week-day-head strong {
-          font-size: 11px;
-        }
-
-        .week-cell,
-        .week-slot-btn,
-        .week-create-btn,
-        .week-teacher-window,
-        .week-booked-chip,
-        .week-one-time-window,
-        .week-exception-chip {
-          min-height: 28px;
-          height: 28px;
-          font-size: 11px;
-        }
-
-        .month-cell {
-          height: 92px;
-          padding: 6px;
-        }
-
-        .month-metrics .metric {
-          font-size: 10px;
-          padding: 2px 5px;
-        }
-
-        .slot-row {
-          display: grid;
-          gap: 10px;
-        }
-
-        .slot-row .actions {
-          width: 100%;
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .slot-row .actions button {
-          width: 100%;
-        }
-
-        .slot-item {
-          display: grid;
-          gap: 8px;
-        }
-
-        .slot-item .actions {
-          width: 100%;
-        }
-
-        .slot-item .actions button {
-          flex: 1 1 auto;
-        }
-
-        .table-head {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 8px;
-        }
-
-        .list-pagination {
-          justify-content: flex-start;
-        }
-
-        table {
-          min-width: 780px;
-        }
-
-        .history-meta {
-          grid-template-columns: 1fr;
-        }
-
-        .toast-region {
-          right: 8px;
-          left: 8px;
-          width: auto;
-          bottom: calc(10px + var(--safe-bottom));
-        }
-      }
-
-      @media (max-width: 520px) {
-        .grid.four {
-          grid-template-columns: 1fr;
-        }
-
-        .stats {
-          grid-template-columns: 1fr;
-        }
-
-        .calendar-toolbar .left,
-        .calendar-toolbar .right {
-          grid-template-columns: 1fr;
-        }
-
-        .calendar-grid {
-          max-height: min(54dvh, 460px);
-        }
-
-        .calendar-mobile-tools .actions {
-          grid-template-columns: 1fr;
-        }
-
-        .week-time-head,
-        .week-time {
-          width: 50px;
-        }
-
-        .week-cell,
-        .week-slot-btn,
-        .week-create-btn,
-        .week-teacher-window,
-        .week-booked-chip,
-        .week-one-time-window,
-        .week-exception-chip {
-          min-height: 26px;
-          height: 26px;
-          font-size: 10px;
-        }
-
-        .month-cell {
-          height: 82px;
-          padding: 5px;
-        }
-
-        .month-date {
-          font-size: 12px;
-          margin-bottom: 4px;
-        }
-
-        .month-metrics {
-          gap: 3px;
-        }
-      }
-
-      body.mode-teacher #authPanel,
-      body.mode-teacher #studentView {
-        display: none !important;
-      }
-
-      body.mode-student #teacherView {
-        display: none !important;
-      }
-
-      body.session-ready #authPanel {
-        display: none !important;
-      }
-
-      body.session-ready .hero {
-        display: none !important;
-      }
-
-      /* LessonHub pastel refresh overrides */
-      .workspace-nav {
-        border: 1px solid var(--line);
-        border-radius: 20px;
-        background: #fffdf8;
-      }
-
-      .workspace-nav strong {
-        color: #7A635E;
-      }
-
-      .workspace-nav a {
-        border: 1px solid var(--line);
-        background: #fff;
-        color: #7A635E;
-        border-radius: 14px;
-      }
-
-      .workspace-nav a.active {
-        border-color: transparent;
-        background: linear-gradient(118deg, #EC6A4C, #F2899B);
-        color: #fff;
-      }
-
-      .stat-card {
-        border: 1px solid var(--line);
-        border-radius: 20px;
-        background: linear-gradient(150deg, #ffffff, #fffaf1);
-      }
-
-      .meta-strip {
-        border: 1px solid var(--line);
-        border-radius: 18px;
-        background: #fffdf7;
-      }
-
-      .meta-chip {
-        border: 1px solid var(--line);
-        background: #fff;
-        color: #7A635E;
-      }
-
-      .calendar-toolbar {
-        border: 1px solid var(--line);
-        border-radius: 22px;
-        background: #fffdf8;
-      }
-
-      .calendar-card,
-      .slot-card,
-      .table-card,
-      .history-item,
-      .modal-card {
-        border: 1px solid var(--line);
-        border-radius: 20px;
-        background: #fffef9;
-      }
-
-      .table-wrap table {
-        border-color: var(--line);
-      }
-
-      thead th {
-        background: #FBF3EE;
-        color: #7A635E;
-      }
-
-      .week-time-head,
-      .week-day-head,
-      .week-time {
-        background: #FBF3EE;
-      }
-
-      .week-day-head strong {
-        color: #7A635E;
-      }
-
-      .week-cell.selected,
-      .week-cell.drag-range {
-        background: #FBE6DD;
-      }
-
-      .week-slot-btn.available {
-        color: #3E9A6F;
-        background: #E7F2EC;
-      }
-
-      .week-slot-btn.booked {
-        color: #7A635E;
-        background: #FBE6DD;
-      }
-
-      .week-cell:hover .week-create-btn {
-        background: #FBE6DD;
-      }
-
-      .week-booked-chip {
-        color: #7A635E;
-        background: #FBE6DD;
-      }
-
-      .month-cell {
-        border-color: #F0E1D9;
-      }
-
-      .month-cell.is-selected {
-        box-shadow: inset 0 0 0 2px #D9543A;
-      }
-
-      /* ────────────────────────────────────────────────────────────
-       * Coral Blush · README override (today highlight · 슬롯 칩 4상태)
-       * Source: design_handoff_lessonhub_coral_blush/README.md
-       * ──────────────────────────────────────────────────────────── */
-
-      /* Today 강조 — 월간/주간 캘린더 */
-      .month-cell.today {
-        box-shadow: inset 0 0 0 2px #F4C3B3, 0 0 0 3px #FBE6DD;
-        background: #FFFFFF;
-      }
-
-      .month-cell.today .month-date {
-        color: #D9543A;
-      }
-
-      .week-day-head.today,
-      .week-day-head.today strong {
-        background: #FBE6DD;
-        color: #D9543A;
-      }
-
-      /* 슬롯 칩 — open (예약 가능) — 시안 정확 매칭 */
-      .slot-item:not(.booked) {
-        border: 1.5px solid #F4C3B3;
-        background: #FFFFFF;
-        color: #D9543A;
-        font-weight: 700;
-        cursor: pointer;
-        border-radius: 8px;
-        padding: 12px 14px;
-        min-height: 44px;
-      }
-
-      .slot-item:not(.booked) strong {
-        color: #D9543A;
-        font-variant-numeric: tabular-nums;
-        font-size: 15px;
-        font-weight: 700;
-      }
-
-      .slot-item:not(.booked) small {
-        color: #D9543A;
-        font-weight: 600;
-        opacity: 0.8;
-        font-size: 12.5px;
-      }
-
-      .slot-item:not(.booked):hover {
-        background: #FBE6DD;
-        border-color: #EC6A4C;
-      }
-
-      /* 슬롯 칩 — full / mine (예약됨) */
-      .slot-item.booked {
-        border: 1px solid #F0E1D9;
-        background: #F7ECE5;
-        color: #B6A39C;
-        border-radius: 7px;
-      }
-
-      .slot-item.booked strong {
-        color: #B6A39C;
-        font-variant-numeric: tabular-nums;
-      }
-
-      /* 내 예약 (mine) — JS 가 .slot-item.mine 또는 .booked.mine 부여 시 */
-      .slot-item.mine {
-        background: #D45C79;
-        color: #FFFFFF;
-        border-color: #D45C79;
-      }
-
-      .slot-item.mine strong {
-        color: #FFFFFF;
-      }
-
-      /* 지난 시간 (past) */
-      .slot-item.past {
-        text-decoration: line-through;
-        color: #B6A39C;
-      }
-
-      /* 휴무 (off) — 대각선 해치 */
-      .slot-item.off,
-      .week-cell.holiday,
-      .week-teacher-cell.has-exception {
-        background: repeating-linear-gradient(
-          45deg,
-          #F4E8E1,
-          #F4E8E1 5px,
-          #FBF3EE 5px,
-          #FBF3EE 10px
-        );
-      }
-
-      /* ──────── 주간 그리드 cell (시안: 표 형식) ────────
-       * 예약 = rose 배경 + 학생명 (좌측 inset 2px rose 액센트)
-       * 열림 = 점선 코랄 테두리 + "열림" muted
-       * 완료 = muted 텍스트 "완료" (배경 없음)
-       * 휴무 = 해치
-       * 미설정 = "·" 점
-       */
-      .week-slot-btn.available {
-        color: #D9543A;
-        background: #FFFFFF;
-        border: 1.5px dashed #F4C3B3;
-        margin: 2px;
-        border-radius: 7px;
-      }
-
-      .week-slot-btn.booked {
-        color: #B6A39C;
-        background: transparent;
-        font-weight: 600;
-      }
-
-      .week-booked-chip {
-        color: #D45C79;
-        background: #FCEDF1;
-        font-weight: 700;
-        box-shadow: inset 2px 0 0 #D45C79;
-        font-size: 11.5px;
-      }
-
-      .week-one-time-window {
-        color: #D9543A;
-        background: #FBE6DD;
-        font-weight: 700;
-        font-size: 11px;
-      }
-
-      .week-open-chip {
-        color: #D9543A;
-        background: #FFFFFF;
-        border: 1.5px dashed #F4C3B3;
-        margin: 2px;
-        border-radius: 7px;
-        font-size: 11px;
-        font-weight: 600;
-      }
-
-      .week-exception-chip {
-        color: #B6A39C;
-        background: repeating-linear-gradient(
-          45deg,
-          #F4E8E1,
-          #F4E8E1 5px,
-          #FBF3EE 5px,
-          #FBF3EE 10px
-        );
-        font-size: 11px;
-      }
-
-      .week-teacher-window {
-        color: #D9543A;
-        background: #FBE6DD;
-        font-weight: 700;
-      }
-
-      /* today 컬럼 미세 강조 (선생님 주간 운영) */
-      .week-day-head.today {
-        background: #FBE6DD;
-      }
-
-      .week-day-head.today strong {
-        color: #D9543A;
-      }
-
-      /* 상단 nav 좌측 4px 코랄→핑크 그라데이션 액센트 */
-      .topbar {
-        position: relative;
-      }
-
-      .topbar::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 4px;
-        background: linear-gradient(180deg, #EC6A4C, #F2899B);
-        border-top-left-radius: inherit;
-        border-bottom-left-radius: inherit;
-      }
-
-      /* 시간 숫자 tabular-nums (lessonhub-brand.css 의 .lh-tnum 와 동일) */
-      .calendar-grid .week-time,
-      .month-date,
-      .slot-item strong,
-      .slot-row strong,
-      .history-meta time,
-      .history-title time {
-        font-variant-numeric: tabular-nums;
-        font-feature-settings: "tnum";
-      }
-
-      /* ════════════════════════════════════════════════════════════
-       * Coral Blush · Polish (디자인 디테일 강화)
-       * - 카드/버튼 부드러운 hover lift
-       * - 입력 focus ring (coral)
-       * - primary 버튼 부드러운 그림자 + active 피드백
-       * - 페이지 진입 부드러운 fade
-       * ════════════════════════════════════════════════════════════ */
-
-      .calendar-card,
-      .slot-card,
-      .stat-card,
-      .role-card,
-      .panel,
-      .subpanel,
-      .table-card,
-      .history-card,
-      .notice {
-        transition:
-          transform var(--lh-dur, 200ms) var(--lh-ease, cubic-bezier(0.4, 0, 0.2, 1)),
-          box-shadow var(--lh-dur, 200ms) var(--lh-ease, cubic-bezier(0.4, 0, 0.2, 1)),
-          border-color var(--lh-dur, 200ms) var(--lh-ease, cubic-bezier(0.4, 0, 0.2, 1));
-      }
-
-      /* 카드 그림자 단계 — 더 부드럽고 깊이감 있게 */
-      .panel,
-      .calendar-card,
-      .slot-card,
-      .stat-card,
-      .table-card,
-      .history-card {
-        box-shadow: var(--lh-shadow-sm, 0 1px 3px rgba(59, 42, 41, 0.06));
-      }
-
-      .role-card {
-        cursor: pointer;
-        box-shadow: var(--lh-shadow-xs, 0 1px 2px rgba(59, 42, 41, 0.04));
-      }
-
-      .role-card:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--lh-shadow-lg, 0 10px 28px rgba(217, 84, 58, 0.08));
-        border-color: #F4C3B3;
-      }
-
-      .role-card:active {
-        transform: translateY(0);
-      }
-
-      .role-card__cta {
-        transition: transform var(--lh-dur, 200ms) var(--lh-ease, cubic-bezier(0.4, 0, 0.2, 1));
-      }
-
-      .role-card:hover .role-card__cta {
-        transform: translateX(3px);
-      }
-
-      /* primary 버튼 — 그림자 + scale */
-      button.primary,
-      .btn.primary {
-        position: relative;
-        transition:
-          background var(--lh-dur, 200ms) var(--lh-ease, cubic-bezier(0.4, 0, 0.2, 1)),
-          box-shadow var(--lh-dur, 200ms) var(--lh-ease, cubic-bezier(0.4, 0, 0.2, 1)),
-          transform var(--lh-dur-fast, 120ms) var(--lh-ease, cubic-bezier(0.4, 0, 0.2, 1));
-        box-shadow: 0 1px 2px rgba(217, 84, 58, 0.18);
-      }
-
-      button.primary:hover,
-      .btn.primary:hover {
-        box-shadow: 0 4px 14px rgba(217, 84, 58, 0.28);
-        transform: translateY(-1px);
-      }
-
-      button.primary:active,
-      .btn.primary:active {
-        transform: translateY(0);
-        box-shadow: 0 1px 2px rgba(217, 84, 58, 0.18);
-      }
-
-      button.primary:disabled,
-      .btn.primary:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-      }
-
-      /* 입력 focus — 코랄 ring */
-      input:focus-visible,
-      select:focus-visible,
-      textarea:focus-visible {
-        outline: none;
-        border-color: #EC6A4C;
-        box-shadow: 0 0 0 3px #FBE6DD;
-      }
-
-      /* 일반 버튼 hover — 더 부드러운 효과 */
-      button:not(.primary):not(.danger):hover {
-        border-color: #F4C3B3;
-        background: #FFFFFF;
-      }
-
-      /* 모든 클릭 가능 요소 cursor + 미세한 transition */
-      button,
-      a[href],
-      [role="button"],
-      .role-card {
-        transition: color var(--lh-dur, 200ms) var(--lh-ease, cubic-bezier(0.4, 0, 0.2, 1)),
-                    background var(--lh-dur, 200ms) var(--lh-ease, cubic-bezier(0.4, 0, 0.2, 1)),
-                    border-color var(--lh-dur, 200ms) var(--lh-ease, cubic-bezier(0.4, 0, 0.2, 1)),
-                    transform var(--lh-dur-fast, 120ms) var(--lh-ease, cubic-bezier(0.4, 0, 0.2, 1)),
-                    box-shadow var(--lh-dur, 200ms) var(--lh-ease, cubic-bezier(0.4, 0, 0.2, 1));
-      }
-
-      /* 슬롯 칩 hover lift */
-      .slot-item:not(.booked):hover {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(217, 84, 58, 0.12);
-      }
-
-      /* 통계 카드 hover */
-      .stat-card:hover {
-        transform: translateY(-1px);
-        box-shadow: var(--lh-shadow-md, 0 4px 12px rgba(59, 42, 41, 0.06));
-      }
-
-      /* 페이지 진입 fade — 메인 콘텐츠에 적용 */
-      @media (prefers-reduced-motion: no-preference) {
-        .panel,
-        .auth-shell__brand,
-        .auth-shell__form,
-        .calendar-card,
-        .role-card {
-          animation: lh-panel-in 400ms var(--lh-ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
-        }
-
-        .role-card:nth-child(2) { animation-delay: 60ms; }
-        .role-card:nth-child(3) { animation-delay: 120ms; }
-
-        @keyframes lh-panel-in {
-          from { opacity: 0; transform: translateY(8px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      }
-
-      /* 상태 칩 hover 미세 색 강화 */
-      .status-badge {
-        transition: filter var(--lh-dur, 200ms) var(--lh-ease, cubic-bezier(0.4, 0, 0.2, 1));
-      }
-
-      .status-badge:hover {
-        filter: brightness(0.96);
-      }
-
-      /* 필터 칩 활성 강조 */
-      .filter-chip {
-        transition: all var(--lh-dur, 200ms) var(--lh-ease, cubic-bezier(0.4, 0, 0.2, 1));
-      }
-
-      .filter-chip:hover {
-        border-color: #F4C3B3;
-        color: #D9543A;
-      }
+/* ════════════════════════════════════════════════════════════════════
+ * LessonHub · Coral Blush 디자인 시스템 (v2 · 시안 정밀 매칭)
+ * 사용자가 제공한 시안 캡처 7장 기반 전면 재작성.
+ * 토큰: lessonhub-brand.css (--lh-*)
+ * 기존 클래스 이름은 모두 보존 (JS DOM 후크 호환).
+ * ════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* lesson-booking-app 자체 alias (lessonhub-brand 토큰을 짧게 사용) */
+  --bg: var(--lh-bg);
+  --panel: var(--lh-surface);
+  --line: var(--lh-line);
+  --line-soft: var(--lh-line-soft);
+  --line-strong: var(--lh-coral-border);
+  --text: var(--lh-ink);
+  --sub: var(--lh-sub);
+  --muted: var(--lh-muted);
+  --brand: var(--lh-coral);
+  --brand-deep: var(--lh-coral-deep);
+  --brand-soft: var(--lh-coral-tint);
+  --brand-border: var(--lh-coral-border);
+  --accent: var(--lh-pink);
+  --rose: var(--lh-rose);
+  --rose-soft: var(--lh-rose-tint);
+  --rose-border: var(--lh-rose-border);
+  --ok: var(--lh-success-fg);
+  --ok-soft: var(--lh-success-bg);
+  --warn: var(--lh-coral-deep);
+  --warn-soft: var(--lh-coral-tint);
+  --danger: var(--lh-rose);
+  --shadow: 0 1px 3px rgba(59, 42, 41, 0.06);
+  --shadow-md: 0 4px 12px rgba(59, 42, 41, 0.06);
+  --shadow-lg: 0 10px 28px rgba(217, 84, 58, 0.08);
+  --touch-min: 44px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  background: var(--bg);
+  font-family: var(--lh-font);
+  font-feature-settings: "ss01" on, "kern" on;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6, p { margin: 0; }
+
+/* ════════════════════════════════════════════════════════════════════
+ * Layout shell
+ * ════════════════════════════════════════════════════════════════════ */
+
+.wrap {
+  width: min(1280px, 100%);
+  margin: 0 auto;
+  padding: 0 0 56px;
+  display: grid;
+  gap: 0;
+}
+
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
+
+/* ════════════════════════════════════════════════════════════════════
+ * 상단 네비 (시안 정확 매칭)
+ *  - 흰 배경 / 하단 1px / 좌측 4px 그라데이션
+ *  - 활성 탭 = coralTint pill + coralDeep 텍스트
+ *  - 우측 = 역할 라벨 + 아바타
+ * ════════════════════════════════════════════════════════════════════ */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  padding: 0 28px;
+  margin: 0 0 24px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 26px;
+}
+
+.topbar::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--brand) 0%, var(--accent) 100%);
+}
+
+.topbar .brand-lockup {
+  text-decoration: none;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.top-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.top-links a {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  padding: 8px 13px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+  min-height: 34px;
+  transition: background 160ms, color 160ms;
+}
+
+.top-links a:hover {
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+}
+
+.top-links a.is-active {
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+  font-weight: 700;
+}
+
+.top-links button {
+  display: none;
+  align-items: center;
+  border: 1px solid var(--brand-border);
+  background: var(--panel);
+  color: var(--brand-deep);
+  border-radius: 9px;
+  padding: 7px 12px;
+  min-height: 34px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: auto;
+  font-family: inherit;
+}
+
+body.session-ready .top-links button {
+  display: inline-flex;
+}
+
+.top-links button:hover {
+  background: var(--brand-soft);
+}
+
+.topbar-end {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.topbar-end__role {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.topbar-end__avatar {
+  width: 33px;
+  height: 33px;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  font-family: inherit;
+  border: 0;
+  cursor: default;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * Page header — h1 + 부제 (예: "내 예약 / 다가오는 수업 3개 · 지난 1개")
+ * ════════════════════════════════════════════════════════════════════ */
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px 24px 28px;
+  margin: 0 28px 16px;
+  box-shadow: var(--shadow);
+}
+
+.panel + .panel { margin-top: 0; }
+.panel.hidden { display: none !important; }
+
+.panel-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.panel-title h2 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: var(--text);
+}
+
+.panel-title p {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.panel-title .right {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* compact-status (로그인 정보 한 줄) */
+.compact-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+  font-size: 12.5px;
+  font-weight: 700;
+  border: 0;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * Workspace layout — 좌 nav + 우 content (선생/관리자)
+ * ════════════════════════════════════════════════════════════════════ */
+
+.workspace-layout {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.workspace-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: transparent;
+  padding: 0;
+}
+
+.workspace-nav strong {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 8px 12px 4px;
+}
+
+.workspace-nav a {
+  display: block;
+  padding: 9px 12px;
+  border-radius: 9px;
+  text-decoration: none;
+  color: var(--sub);
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: background 160ms, color 160ms;
+}
+
+.workspace-nav a:hover {
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+}
+
+.workspace-nav a.is-active,
+.workspace-nav a[data-active="true"] {
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+  font-weight: 700;
+}
+
+.workspace-content {
+  min-width: 0;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * Stats strip — 통계 4분할 (큰 숫자 + 단위)
+ * ════════════════════════════════════════════════════════════════════ */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin-bottom: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.stats--four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+.stat-card {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 0;
+  background: var(--panel);
+  border-radius: 0;
+  border-right: 1px solid var(--line-soft);
+  box-shadow: none;
+  position: relative;
+}
+
+.stat-card:last-child { border-right: 0; }
+
+.stat-card strong {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  line-height: 1.1;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-card strong small,
+.stat-card__unit {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-left: 4px;
+  letter-spacing: 0;
+}
+
+.stat-card--accent strong { color: var(--brand-deep); }
+
+.stat-card--accent strong small,
+.stat-card--accent .stat-card__unit {
+  color: var(--brand-deep);
+  opacity: 0.6;
+}
+
+.stat-card span {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * Notices — 알림 2칸 (선생님 주간 운영)
+ * ════════════════════════════════════════════════════════════════════ */
+
+.notices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.notice {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--shadow);
+}
+
+.notice::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.notice strong, .notice p { margin: 0; }
+
+.notice strong {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.notice p {
+  flex: 1;
+  font-size: 13.5px;
+  color: var(--sub);
+  font-weight: 500;
+}
+
+.notice a {
+  font-size: 13px;
+  color: var(--brand-deep);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.notice a:hover { text-decoration: underline; }
+
+.notice--rose {
+  background: #FCEDF1;
+  border-color: var(--rose-border);
+}
+
+.notice--rose::before { background: var(--rose); }
+.notice--rose strong,
+.notice--rose p,
+.notice--rose a { color: var(--rose); }
+
+/* ════════════════════════════════════════════════════════════════════
+ * Calendar toolbar — 주/월 네비
+ * ════════════════════════════════════════════════════════════════════ */
+
+.calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+
+.calendar-toolbar .left,
+.calendar-toolbar .right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.calendar-toolbar .month-label,
+.calendar-toolbar .hint {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  min-width: 110px;
+  text-align: center;
+}
+
+.calendar-toolbar .hint {
+  color: var(--muted);
+  font-weight: 500;
+  min-width: 0;
+}
+
+.calendar-toolbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--sub);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * Calendar grid — 학생 7열 + 월간
+ * ════════════════════════════════════════════════════════════════════ */
+
+.calendar-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.calendar-mobile-tools { display: none; }
+
+.calendar-card,
+.slot-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+.calendar-grid {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: auto;
+  background: var(--panel);
+}
+
+.calendar-head {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.calendar-head div {
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+/* ── 주간 표 (선생님 시간축 그리드) ── */
+.week-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  font-size: 11.5px;
+}
+
+.week-table th,
+.week-table td {
+  border-bottom: 1px solid var(--line-soft);
+  border-right: 1px solid var(--line-soft);
+  padding: 0;
+  vertical-align: middle;
+}
+
+.week-table tr:last-child td { border-bottom: 0; }
+.week-table th:last-child,
+.week-table td:last-child { border-right: 0; }
+
+.week-time-head {
+  width: 60px;
+  background: var(--line-soft);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 8px 4px;
+}
+
+.week-day-head {
+  background: transparent;
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--sub);
+  padding: 10px 4px;
+  letter-spacing: -0.2px;
+}
+
+.week-day-head strong {
+  display: block;
+  font-size: 12.5px;
+  color: var(--sub);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.week-day-head.today {
+  background: var(--brand-soft);
+}
+
+.week-day-head.today strong,
+.week-day-head.today {
+  color: var(--brand-deep);
+  font-weight: 700;
+}
+
+.week-day-head.holiday strong {
+  color: var(--rose);
+}
+
+.holiday-caption {
+  display: block;
+  font-size: 10px;
+  color: var(--rose);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.week-time {
+  width: 60px;
+  background: var(--line-soft);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  padding: 6px 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.week-cell,
+.week-teacher-cell {
+  height: 36px;
+  background: var(--panel);
+  position: relative;
+  user-select: none;
+  padding: 2px;
+}
+
+.week-cell.has-available { background: rgba(251, 230, 221, 0.3); }
+.week-cell.has-booked    { background: rgba(252, 237, 241, 0.3); }
+.week-cell.has-exception { background: var(--bg); }
+.week-cell.holiday {
+  background: repeating-linear-gradient(45deg,
+    #F4E8E1, #F4E8E1 5px,
+    #FBF3EE 5px, #FBF3EE 10px);
+}
+.week-cell.past { opacity: 0.55; }
+.week-cell.selected {
+  box-shadow: inset 0 0 0 2px var(--brand);
+}
+.week-cell.drag-range { background: var(--brand-soft); }
+.week-cell.drag-anchor { box-shadow: inset 0 0 0 2px var(--brand-deep); }
+.week-cell.touch-anchor { box-shadow: inset 0 0 0 2px var(--brand-deep); background: var(--brand-soft); }
+
+/* 셀 안 chip 들 — 시안 표 형식 매칭 */
+.week-slot-btn,
+.week-create-btn {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  border-radius: 6px;
+  font-family: inherit;
+}
+
+.week-slot-btn.available {
+  color: var(--brand-deep);
+  background: transparent;
+  border: 1.5px dashed var(--brand-border);
+}
+
+.week-slot-btn.booked {
+  color: var(--muted);
+  background: transparent;
+  font-weight: 500;
+}
+
+.week-create-btn {
+  color: var(--muted);
+  opacity: 0;
+}
+
+.week-cell:hover .week-create-btn {
+  opacity: 1;
+  background: var(--brand-soft);
+}
+
+.week-booked-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--rose);
+  background: #FCEDF1;
+  border-radius: 6px;
+  box-shadow: inset 2px 0 0 var(--rose);
+}
+
+.week-open-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--muted);
+  background: transparent;
+  border: 1.5px dashed var(--brand-border);
+  border-radius: 6px;
+}
+
+.week-one-time-window {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brand-deep);
+  background: var(--brand-soft);
+  border-radius: 6px;
+}
+
+.week-exception-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  background: repeating-linear-gradient(45deg,
+    #F4E8E1, #F4E8E1 5px,
+    #FBF3EE 5px, #FBF3EE 10px);
+}
+
+.week-teacher-window {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brand-deep);
+  background: var(--brand-soft);
+  border-radius: 6px;
+}
+
+/* ── 월간 ── */
+.month-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.month-table th,
+.month-table td {
+  border-bottom: 1px solid var(--line-soft);
+  border-right: 1px solid var(--line-soft);
+}
+
+.month-day-head {
+  background: var(--line-soft);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sub);
+  padding: 10px 4px;
+  letter-spacing: 0.3px;
+}
+
+.month-cell {
+  height: 100px;
+  padding: 8px;
+  vertical-align: top;
+  background: var(--panel);
+  cursor: pointer;
+  position: relative;
+}
+
+.month-cell:hover { background: var(--brand-soft); }
+.month-cell.out-month { background: var(--bg); color: var(--muted); }
+.month-cell.today {
+  box-shadow: inset 0 0 0 2px var(--brand-border);
+  background: var(--panel);
+}
+.month-cell.today .month-date { color: var(--brand-deep); }
+.month-cell.selected { background: var(--brand-soft); }
+.month-cell.has-available { background: rgba(251, 230, 221, 0.4); }
+.month-cell.has-booked {  }
+.month-cell.has-my-booking .month-date { color: var(--rose); }
+
+.month-date {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.month-holiday {
+  color: var(--rose);
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.month-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.month-metrics .metric {
+  font-size: 10.5px;
+  border-radius: 999px;
+  padding: 1px 6px;
+  width: fit-content;
+  font-weight: 700;
+}
+
+.month-metrics .metric.open  { background: var(--brand-soft); color: var(--brand-deep); }
+.month-metrics .metric.close { background: var(--line-soft); color: var(--muted); }
+.month-metrics .metric.mine  { background: #FCEDF1; color: var(--rose); }
+
+/* ════════════════════════════════════════════════════════════════════
+ * Slot list / Slot item — 학생 슬롯 칩 4상태
+ * ════════════════════════════════════════════════════════════════════ */
+
+.slot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.slot-summary {
+  border: 1px solid var(--line);
+  background: var(--line-soft);
+  border-radius: 10px;
+  padding: 9px 13px;
+  font-size: 12.5px;
+  color: var(--sub);
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.slot-row {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.slot-row .actions {
+  display: inline-flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* 학생 슬롯 칩 — 시안 정확 매칭 */
+.slot-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  min-height: 44px;
+  cursor: pointer;
+  transition: background 160ms, border-color 160ms, transform 120ms;
+}
+
+/* open (예약 가능) — 흰 + coralBorder + coralDeep */
+.slot-item:not(.booked) {
+  background: var(--panel);
+  border: 1.5px solid var(--brand-border);
+  color: var(--brand-deep);
+}
+
+.slot-item:not(.booked):hover {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+  transform: translateY(-1px);
+}
+
+.slot-item:not(.booked) strong {
+  color: var(--brand-deep);
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.slot-item:not(.booked) small {
+  color: var(--brand-deep);
+  opacity: 0.85;
+  font-weight: 600;
+  font-size: 12.5px;
+}
+
+/* full / booked (다른 학생 예약, 또는 마감) — muted */
+.slot-item.booked {
+  background: var(--line-soft);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.slot-item.booked strong {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.slot-item.booked small {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+/* mine (내 예약) — rose 배경 + 흰 텍스트 */
+.slot-item.mine {
+  background: var(--rose);
+  border-color: var(--rose);
+  color: #fff;
+  cursor: pointer;
+}
+
+.slot-item.mine strong,
+.slot-item.mine small {
+  color: #fff;
+}
+
+/* past (지난 시간) — line-through */
+.slot-item.past {
+  text-decoration: line-through;
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+/* off (휴무) — 해치 */
+.slot-item.off {
+  background: repeating-linear-gradient(45deg,
+    #F4E8E1, #F4E8E1 5px,
+    #FBF3EE 5px, #FBF3EE 10px);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * Forms
+ * ════════════════════════════════════════════════════════════════════ */
+
+.grid {
+  display: grid;
+  gap: 12px;
+}
+
+.grid.two   { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid.four  { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+.compact-grid label { margin-bottom: 0; }
+
+label {
+  display: grid;
+  gap: 5px;
+  color: var(--sub);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  font: inherit;
+  font-family: inherit;
+  min-height: 42px;
+  border: 1.5px solid var(--line);
+  border-radius: 11px;
+  padding: 9px 12px;
+  background: var(--panel);
+  color: var(--text);
+  transition: border-color 160ms, box-shadow 160ms;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-soft);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+button {
+  appearance: none;
+  font: inherit;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--sub);
+  padding: 9px 14px;
+  min-height: 38px;
+  cursor: pointer;
+  transition: background 160ms, border-color 160ms, color 160ms,
+              transform 120ms, box-shadow 160ms;
+}
+
+button:hover {
+  border-color: var(--brand-border);
+  color: var(--brand-deep);
+}
+
+button:focus-visible {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-soft);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.primary,
+.btn.primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(217, 84, 58, 0.18);
+}
+
+button.primary:hover,
+.btn.primary:hover {
+  background: var(--brand-deep);
+  border-color: var(--brand-deep);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(217, 84, 58, 0.28);
+  transform: translateY(-1px);
+}
+
+button.primary:active,
+.btn.primary:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(217, 84, 58, 0.18);
+}
+
+button.danger {
+  background: var(--panel);
+  border-color: var(--brand-border);
+  color: var(--brand-deep);
+}
+
+button.danger:hover {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+}
+
+button.warn {
+  background: var(--brand-soft);
+  border-color: var(--brand-border);
+  color: var(--brand-deep);
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline-offset: 2px;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * Subpanel / Card variants
+ * ════════════════════════════════════════════════════════════════════ */
+
+.subpanel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+
+.subpanel + .subpanel { margin-top: 12px; }
+
+.subpanel h3 {
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * Status badges (예정/완료/취소/활성/대기/일시정지/역할)
+ * ════════════════════════════════════════════════════════════════════ */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border: 0;
+  letter-spacing: -0.1px;
+  background: var(--line-soft);
+  color: var(--sub);
+  white-space: nowrap;
+}
+
+/* 예정 / 확정 / 활성 = green */
+.status-BOOKED,
+.status-AVAILABLE,
+.status-TRUE { background: var(--ok-soft); color: var(--ok); }
+
+/* 대기 / 임박 = coral */
+.status-PENDING { background: var(--brand-soft); color: var(--brand-deep); }
+
+/* 취소 / 비활성 = rose */
+.status-CANCELED_BY_STUDENT,
+.status-CANCELED_BY_TEACHER,
+.status-FALSE { background: #FCEDF1; color: var(--rose); }
+
+/* 완료 = muted */
+.status-COMPLETED { background: var(--line-soft); color: var(--muted); }
+
+/* 노쇼 = warn */
+.status-NO_SHOW { background: var(--brand-soft); color: var(--brand-deep); }
+
+/* 역할 칩: 학생=coral, 선생님=rose, 관리자=green */
+.status-STUDENT { background: var(--brand-soft); color: var(--brand-deep); }
+.status-TEACHER { background: #FCEDF1; color: var(--rose); }
+.status-POWER_ADMIN { background: var(--ok-soft); color: var(--ok); }
+.status-paused,
+.status-PAUSED { background: var(--line-soft); color: var(--muted); }
+
+.role-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.role-pill .avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * Tables (관리자/예약 관리)
+ * ════════════════════════════════════════════════════════════════════ */
+
+.table-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.table-card + .table-card,
+.table-card + .subpanel,
+.subpanel + .table-card { margin-top: 12px; }
+
+.table-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.table-head h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 0;
+  border-radius: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+
+thead tr {
+  background: var(--line-soft);
+}
+
+thead th {
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+tbody td {
+  padding: 12px;
+  font-size: 13px;
+  color: var(--text);
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: middle;
+}
+
+tbody tr:last-child td { border-bottom: 0; }
+
+tbody tr:hover td { background: rgba(251, 230, 221, 0.18); }
+
+/* 사용자 행: 아바타 + 이름 + 가입일 */
+.user-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-row__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 12.5px;
+  flex: 0 0 auto;
+}
+
+.user-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-row__name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.user-row__sub {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+/* "상세 보기" / "..." 메뉴 행 액션 */
+.row-action {
+  color: var(--brand-deep);
+  font-weight: 700;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.row-action:hover { text-decoration: underline; }
+
+/* ════════════════════════════════════════════════════════════════════
+ * Filter chips (예약 관리 탭, 관리자 사용자 필터)
+ * ════════════════════════════════════════════════════════════════════ */
+
+.filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--sub);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.filter-chip:hover {
+  border-color: var(--brand-border);
+  color: var(--brand-deep);
+}
+
+.filter-chip[aria-selected="true"],
+.filter-chip.is-active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.filter-chip[aria-selected="true"] .count,
+.filter-chip.is-active .count { color: #fff; opacity: 0.95; }
+
+.filter-chip .count {
+  color: var(--muted);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * Toggle (시간표 관리)
+ * ════════════════════════════════════════════════════════════════════ */
+
+.lh-toggle {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 23px;
+  flex: 0 0 auto;
+}
+
+.lh-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.lh-toggle__track {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: var(--line);
+  transition: background 200ms;
+}
+
+.lh-toggle__knob {
+  position: absolute;
+  top: 2.5px;
+  left: 2.5px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  transition: left 200ms;
+}
+
+.lh-toggle input:checked + .lh-toggle__track {
+  background: var(--brand);
+}
+
+.lh-toggle input:checked + .lh-toggle__track + .lh-toggle__knob,
+.lh-toggle input:checked ~ .lh-toggle__knob {
+  left: 19.5px;
+}
+
+/* 시간대 칩 (10:00 – 12:00) */
+.time-range-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+  font-size: 12.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border: 0;
+  cursor: pointer;
+}
+
+.time-range-chip:hover { filter: brightness(0.96); }
+
+.time-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--brand-deep);
+  border: 1.5px dashed var(--brand-border);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 0;
+}
+
+.time-add-btn:hover {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+  color: var(--brand-deep);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * History list (학생 내 예약 / 선생님 완료 수업)
+ * ════════════════════════════════════════════════════════════════════ */
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  box-shadow: var(--shadow);
+}
+
+.history-card.is-soon {
+  border-color: var(--brand-border);
+}
+
+.history-card.is-done {
+  opacity: 0.72;
+}
+
+.history-card__date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 60px;
+}
+
+.history-card__date .weekday {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand-deep);
+}
+
+.history-card__date .day {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.4px;
+}
+
+.history-card__time {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--brand-deep);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.4px;
+  min-width: 70px;
+}
+
+.history-card__divider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--line);
+  margin: 0 2px;
+}
+
+.history-card__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.history-card__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.history-card__meta {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.history-card.is-soon .history-card__meta {
+  color: var(--brand-deep);
+  font-weight: 600;
+}
+
+.history-card__status,
+.history-card__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * Hint / Status / Meta strip
+ * ════════════════════════════════════════════════════════════════════ */
+
+.hint {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.hint[data-tone="success"] { color: var(--ok); font-weight: 700; }
+.hint[data-tone="warn"]    { color: var(--brand-deep); font-weight: 700; }
+.hint[data-tone="error"]   { color: var(--rose); font-weight: 700; }
+
+.status {
+  border: 1px solid var(--line);
+  background: var(--line-soft);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--sub);
+}
+
+.meta-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--sub);
+}
+
+.meta-strip .tz-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * Modal
+ * ════════════════════════════════════════════════════════════════════ */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(59, 42, 41, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+}
+
+.modal-card {
+  background: var(--panel);
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * Animations (page enter, card hover)
+ * ════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: no-preference) {
+  .panel,
+  .calendar-card,
+  .role-card,
+  .stat-card {
+    animation: lh-fade-up 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .stat-card:nth-child(2) { animation-delay: 40ms; }
+  .stat-card:nth-child(3) { animation-delay: 80ms; }
+  .stat-card:nth-child(4) { animation-delay: 120ms; }
+
+  @keyframes lh-fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+}
+
+.reveal {
+  animation: lh-fade-up 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * Mobile responsive
+ * ════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 980px) {
+  .workspace-layout {
+    grid-template-columns: 1fr;
+  }
+  .workspace-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 6px;
+    padding: 0 4px;
+  }
+  .workspace-nav strong { display: none; }
+  .workspace-nav a { white-space: nowrap; padding: 8px 12px; }
+
+  .calendar-shell { grid-template-columns: 1fr; }
+  .calendar-mobile-tools { display: block; }
+
+  .stats,
+  .stats--four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .stat-card:nth-child(2n) { border-right: 0; }
+  .stat-card:nth-child(-n+2) { border-bottom: 1px solid var(--line-soft); }
+
+  .notices { grid-template-columns: 1fr; }
+
+  .calendar-grid { font-size: 11px; }
+  .month-cell { height: 70px; }
+}
+
+@media (max-width: 720px) {
+  .topbar {
+    padding: 0 16px;
+    gap: 12px;
+    height: 56px;
+  }
+  .top-links {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+  .top-links a { white-space: nowrap; }
+
+  .panel {
+    margin: 0 12px 12px;
+    padding: 18px 16px 22px;
+    border-radius: 12px;
+  }
+
+  .panel-title h2 { font-size: 19px; }
+
+  .stat-card { padding: 14px 16px; }
+  .stat-card strong { font-size: 22px; }
+
+  .calendar-toolbar {
+    padding: 10px 12px;
+  }
+
+  .history-card {
+    padding: 12px 14px;
+    gap: 12px;
+  }
+  .history-card__date,
+  .history-card__time { min-width: 0; }
+  .history-card__time { font-size: 18px; }
+
+  .grid.two,
+  .grid.three,
+  .grid.four { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .topbar { padding: 0 12px; }
+  .panel { margin: 0 8px 10px; padding: 16px 14px 20px; }
+  .stat-card strong { font-size: 20px; }
+  .history-card__date .day { font-size: 18px; }
+  .history-card__time { font-size: 16px; }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * Debug / dev panel (runtime-config off 시 hidden)
+ * ════════════════════════════════════════════════════════════════════ */
+
+#debugPanel {
+  background: var(--brand-soft);
+  border: 1px dashed var(--brand-border);
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 20px;
+}
+
+#log {
+  margin: 0;
+  font-size: 12px;
+  font-family: var(--lh-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  max-height: 240px;
+  overflow: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  color: var(--sub);
+}
+
+.mono {
+  font-family: var(--lh-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
