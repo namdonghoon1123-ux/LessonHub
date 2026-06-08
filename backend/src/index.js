@@ -881,6 +881,12 @@ function listSocialProviders() {
       setup_required: !String(process.env.OAUTH_NAVER_CLIENT_ID || '').trim(),
       implemented: false,
     },
+    {
+      provider: 'KAKAO',
+      enabled: Boolean(String(process.env.OAUTH_KAKAO_CLIENT_ID || '').trim()),
+      setup_required: !String(process.env.OAUTH_KAKAO_CLIENT_ID || '').trim(),
+      implemented: false,
+    },
   ];
 }
 
@@ -892,7 +898,7 @@ app.get('/api/v1/auth/social/providers', (req, res) => {
 
 app.post('/api/v1/auth/social/:provider/start', async (req, res) => {
   const providerRaw = String(req.params?.provider || '').trim().toUpperCase();
-  const provider = providerRaw === 'GOOGLE' || providerRaw === 'NAVER' ? providerRaw : '';
+  const provider = ['GOOGLE', 'NAVER', 'KAKAO'].includes(providerRaw) ? providerRaw : '';
   if (!provider) {
     return res.status(404).json({ error: 'provider_not_found' });
   }

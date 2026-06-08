@@ -288,7 +288,7 @@
       setSocialStatusText('간편로그인은 연동 설정은 되어 있으나 아직 준비중입니다. 일반 로그인/회원가입을 이용해 주세요.');
       return;
     }
-    setSocialStatusText('간편로그인은 아직 설정되지 않았습니다. (Google/Naver 준비중)');
+    setSocialStatusText('간편로그인은 아직 설정되지 않았습니다. (Google · Naver · Kakao 준비중)');
   }
 
   function attachSocialButtons() {

@@ -306,6 +306,22 @@ button.danger {
   color: var(--lh-coral-deep);
 }
 
+/* 카카오 브랜드 톤 — 노란 #FEE500 + 어두운 글자 (카카오 공식 가이드) */
+button[data-tone="kakao"],
+button[data-social-provider="KAKAO"] {
+  background: #FEE500;
+  border-color: #FEE500;
+  color: #181600;
+  font-weight: 700;
+}
+
+button[data-tone="kakao"]:hover,
+button[data-social-provider="KAKAO"]:hover {
+  background: #F2DA00;
+  border-color: #F2DA00;
+  color: #181600;
+}
+
 /* Hero / role grid (index.html) */
 .role-grid {
   display: grid;
