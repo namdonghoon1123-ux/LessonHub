@@ -261,18 +261,22 @@ body.session-ready .top-links button {
 .workspace-nav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  background: transparent;
-  padding: 0;
+  gap: 2px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 8px;
+  height: fit-content;
+  box-shadow: var(--shadow);
 }
 
 .workspace-nav strong {
   font-size: 11px;
   font-weight: 700;
   color: var(--muted);
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
-  padding: 8px 12px 4px;
+  padding: 6px 12px 8px;
 }
 
 .workspace-nav a {
@@ -616,9 +620,12 @@ body.session-ready .top-links button {
   padding: 2px;
 }
 
-.week-cell.has-available { background: rgba(251, 230, 221, 0.3); }
-.week-cell.has-booked    { background: rgba(252, 237, 241, 0.3); }
+.week-cell.has-available { background: rgba(251, 230, 221, 0.18); }
+.week-cell.has-booked    { background: rgba(252, 237, 241, 0.16); }
 .week-cell.has-exception { background: var(--bg); }
+.week-teacher-cell.has-window { background: rgba(251, 230, 221, 0.16); }
+.week-teacher-cell.has-booking { background: rgba(252, 237, 241, 0.18); }
+.week-teacher-cell.has-exception { background: var(--bg); }
 .week-cell.holiday {
   background: repeating-linear-gradient(45deg,
     #F4E8E1, #F4E8E1 5px,

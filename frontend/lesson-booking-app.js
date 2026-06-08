@@ -2333,8 +2333,22 @@
           slotsByDate.set(dateKey, list);
         }
 
+        // 시간축 범위 — 슬롯 기준 동적 결정 (없으면 9~22)
+        let _gridStart = 9 * 60;
+        let _gridEnd = 22 * 60;
+        const _allSlots = [];
+        for (const list of slotsByDate.values()) {
+          for (const item of list) _allSlots.push(item);
+        }
+        if (_allSlots.length) {
+          _gridStart = Math.max(0, Math.min(..._allSlots.map((it) => it.startMinute)) - 60);
+          _gridEnd = Math.min(24 * 60, Math.max(..._allSlots.map((it) => it.endMinute)) + 60);
+        }
+        _gridStart = Math.floor(_gridStart / step) * step;
+        _gridEnd = Math.ceil(_gridEnd / step) * step;
+
         let rows = '';
-        for (let minute = 0; minute < 24 * 60; minute += step) {
+        for (let minute = _gridStart; minute < _gridEnd; minute += step) {
           const bucketEnd = minute + step;
           let cells = '';
           for (const day of days) {
