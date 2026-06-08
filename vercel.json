@@ -5,7 +5,7 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "functions": {
-    "api/[...path].js": {
+    "api/index.js": {
       "memory": 512,
       "maxDuration": 30,
       "includeFiles": "backend/**"
@@ -13,7 +13,7 @@
   },
   "rewrites": [
     { "source": "/t/:slug", "destination": "/p.html?t=:slug" },
-    { "source": "/api/:path*", "destination": "/api/[...path]" }
+    { "source": "/api/(.*)", "destination": "/api" }
   ],
   "headers": [
     {

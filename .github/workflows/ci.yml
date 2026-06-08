@@ -38,7 +38,7 @@ jobs:
           done
 
       - name: JS — node --check (Vercel function)
-        run: node --check "api/[...path].js"
+        run: node --check api/index.js
 
       - name: SQL — basic format check
         run: |
