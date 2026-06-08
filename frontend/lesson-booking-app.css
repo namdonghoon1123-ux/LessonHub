@@ -1755,3 +1755,264 @@ tbody tr:hover td { background: rgba(251, 230, 221, 0.18); }
 .mono {
   font-family: var(--lh-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
 }
+
+/* ════════════════════════════════════════════════════════════════════
+ * Phase B polish — 시간표·예약·내예약·로그인 화면 추가 디테일
+ * ════════════════════════════════════════════════════════════════════ */
+
+/* 선생 시간표·예외 관리 — 좌(요일 행) + 우(예외 카드) 시안 매칭 */
+[data-manage-panel="availability"] .day-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+[data-manage-panel="availability"] .day-row:last-child {
+  border-bottom: 0;
+}
+
+[data-manage-panel="availability"] .day-row__name {
+  flex: 0 0 70px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+[data-manage-panel="availability"] .day-row__chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+[data-manage-panel="availability"] .day-row.is-off .day-row__name {
+  color: var(--muted);
+}
+
+[data-manage-panel="availability"] .day-row.is-off .day-row__chips::after {
+  content: "휴무";
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 5px 10px;
+}
+
+/* 예외 카드 (휴무 / 휴강 / 오픈) */
+.exception-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.exception-card__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exception-card__date {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.exception-card__chip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.exception-card__chip--off    { background: var(--line-soft); color: var(--muted); }
+.exception-card__chip--close  { background: var(--brand-soft); color: var(--brand-deep); }
+.exception-card__chip--open   { background: var(--ok-soft); color: var(--ok); }
+
+.exception-card__meta {
+  font-size: 12.5px;
+  color: var(--sub);
+}
+
+.exception-card__sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* 선생 예약 관리 — "들어온 9 / 완료 24 / 취소 2" 탭 */
+.booking-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 4px 0 14px;
+}
+
+.booking-tabs button,
+.booking-tabs .filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--sub);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.booking-tabs button:hover {
+  border-color: var(--brand-border);
+  color: var(--brand-deep);
+}
+
+.booking-tabs button.is-active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.booking-tabs .count {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+  opacity: 0.95;
+}
+
+/* 학생 모바일 뷰 — 요일 스트립 + 슬롯 리스트 + 하단 CTA */
+@media (max-width: 640px) {
+  .calendar-shell { gap: 12px; }
+
+  /* 가로 요일 스트립 — 학생 모바일 */
+  .calendar-card,
+  .slot-card {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  /* 슬롯 리스트 큰 터치 영역 */
+  .slot-item {
+    min-height: 52px;
+    padding: 14px 16px;
+  }
+
+  .slot-item:not(.booked) strong { font-size: 16px; }
+  .slot-item.booked strong { font-size: 15px; }
+
+  /* 캘린더 toolbar 모바일 */
+  .calendar-toolbar {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+  .calendar-toolbar .left,
+  .calendar-toolbar .right { gap: 6px; }
+  .calendar-toolbar label { font-size: 12px; }
+
+  /* 모바일 하단 고정 CTA 영역 — 컨테이너에 .mobile-cta-bar 추가 시 */
+  .mobile-cta-bar {
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(180deg, transparent, var(--bg) 30%);
+    padding: 16px 16px calc(16px + var(--safe-bottom));
+    margin: 0 -16px;
+    z-index: 5;
+  }
+  .mobile-cta-bar button.primary {
+    width: 100%;
+    height: 52px;
+    font-size: 16px;
+  }
+}
+
+/* 작은 데스크탑 / 태블릿 */
+@media (max-width: 1080px) and (min-width: 981px) {
+  .stats--four .stat-card { padding: 16px 18px; }
+  .stat-card strong { font-size: 26px; }
+}
+
+/* 학생 내 예약 페이지 — "취소는 수업 48시간 전까지" 칩 */
+.policy-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+  font-size: 12.5px;
+  font-weight: 700;
+  border: 1px solid var(--brand-border);
+}
+
+/* 검색 input (관리자 학생 검색 등) */
+.search-input {
+  position: relative;
+}
+
+.search-input input {
+  padding-left: 36px;
+}
+
+.search-input::before {
+  content: "🔍";
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+/* + 사용자 / + 예외 추가 같은 우상단 primary 액션 (작은 사이즈) */
+.action-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 9px;
+  background: var(--brand);
+  border: 0;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 1px 2px rgba(217, 84, 58, 0.18);
+}
+
+.action-add:hover {
+  background: var(--brand-deep);
+  box-shadow: 0 4px 12px rgba(217, 84, 58, 0.28);
+}
+
+/* 로그인 분리 패널 (브랜드 좌 + 폼 우) 미세 강화 — lessonhub-auth.css 와 함께 */
+.auth-shell__brand {
+  position: relative;
+  isolation: isolate;
+}
+
+.auth-shell__brand::after {
+  content: "";
+  position: absolute;
+  bottom: -80px;
+  left: -50px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.10);
+  z-index: -1;
+}
+
+/* 페이지 최하단 안전 영역 */
+body { padding-bottom: env(safe-area-inset-bottom, 0px); }
