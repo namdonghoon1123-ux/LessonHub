@@ -870,18 +870,6 @@ app.get(['/health', '/api/health', '/api/v1/health'], async (req, res) => {
 function listSocialProviders() {
   return [
     {
-      provider: 'GOOGLE',
-      enabled: Boolean(String(process.env.OAUTH_GOOGLE_CLIENT_ID || '').trim()),
-      setup_required: !String(process.env.OAUTH_GOOGLE_CLIENT_ID || '').trim(),
-      implemented: false,
-    },
-    {
-      provider: 'NAVER',
-      enabled: Boolean(String(process.env.OAUTH_NAVER_CLIENT_ID || '').trim()),
-      setup_required: !String(process.env.OAUTH_NAVER_CLIENT_ID || '').trim(),
-      implemented: false,
-    },
-    {
       provider: 'KAKAO',
       enabled: Boolean(String(process.env.OAUTH_KAKAO_CLIENT_ID || '').trim()),
       setup_required: !String(process.env.OAUTH_KAKAO_CLIENT_ID || '').trim(),
@@ -898,7 +886,7 @@ app.get('/api/v1/auth/social/providers', (req, res) => {
 
 app.post('/api/v1/auth/social/:provider/start', async (req, res) => {
   const providerRaw = String(req.params?.provider || '').trim().toUpperCase();
-  const provider = ['GOOGLE', 'NAVER', 'KAKAO'].includes(providerRaw) ? providerRaw : '';
+  const provider = providerRaw === 'KAKAO' ? providerRaw : '';
   if (!provider) {
     return res.status(404).json({ error: 'provider_not_found' });
   }

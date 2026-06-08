@@ -95,8 +95,8 @@ body {
   font-weight: 800;
   line-height: 1.25;
   letter-spacing: -0.8px;
-  white-space: pre-line;
   margin: 0;
+  word-break: keep-all;
 }
 
 .auth-shell__brand-sub {
