@@ -41,15 +41,50 @@
   /* Off-hatch (휴무 표시) */
   --lh-hatch: repeating-linear-gradient(45deg, #F4E8E1, #F4E8E1 5px, #FBF3EE 5px, #FBF3EE 10px);
 
-  /* Radius / shadow */
+  /* Radius scale (정교) */
+  --lh-radius-xs: 6px;
+  --lh-radius-sm: 8px;
+  --lh-radius-md: 12px;
+  --lh-radius-lg: 16px;
+  --lh-radius-xl: 20px;
+  --lh-radius-full: 999px;
   --lh-radius-card: 14px;
   --lh-radius-chip: 8px;
   --lh-radius-button: 12px;
   --lh-radius-input: 12px;
+
+  /* Shadow scale (subtle → strong, 코랄톤 영향 반영) */
+  --lh-shadow-xs: 0 1px 2px rgba(59, 42, 41, 0.04);
+  --lh-shadow-sm: 0 1px 3px rgba(59, 42, 41, 0.06), 0 1px 2px rgba(59, 42, 41, 0.04);
+  --lh-shadow-md: 0 4px 12px rgba(59, 42, 41, 0.06), 0 2px 4px rgba(59, 42, 41, 0.04);
+  --lh-shadow-lg: 0 10px 28px rgba(217, 84, 58, 0.08), 0 4px 12px rgba(59, 42, 41, 0.04);
+  --lh-shadow-xl: 0 20px 48px rgba(217, 84, 58, 0.12), 0 8px 16px rgba(59, 42, 41, 0.06);
   --lh-shadow-today: 0 0 0 3px var(--lh-coral-tint);
+  --lh-shadow-focus: 0 0 0 3px var(--lh-coral-tint);
+  --lh-shadow-focus-rose: 0 0 0 3px var(--lh-rose-tint);
+
+  /* Transition / easing */
+  --lh-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --lh-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --lh-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --lh-dur-fast: 120ms;
+  --lh-dur: 200ms;
+  --lh-dur-slow: 320ms;
+
+  /* Spacing scale */
+  --lh-space-1: 4px;
+  --lh-space-2: 8px;
+  --lh-space-3: 12px;
+  --lh-space-4: 16px;
+  --lh-space-5: 20px;
+  --lh-space-6: 24px;
+  --lh-space-8: 32px;
+  --lh-space-10: 40px;
+  --lh-space-12: 48px;
 
   /* Typography */
   --lh-font: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --lh-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
   /* === Back-compat aliases (기존 코드 사용처 보존) === */
   --lh-cream: var(--lh-bg);
@@ -57,7 +92,7 @@
   --lh-grad-a: var(--lh-coral);
   --lh-grad-b: var(--lh-pink);
   --lh-grad-c: var(--lh-coral-tint);
-  --lh-shadow: 0 20px 45px rgba(217, 84, 58, 0.10);
+  --lh-shadow: var(--lh-shadow-lg);
 }
 
 html, body {
@@ -66,6 +101,33 @@ html, body {
   background: var(--lh-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* 키보드 포커스 글로벌 — 마우스 클릭은 outline 안 그림 */
+:focus-visible {
+  outline: 2px solid var(--lh-coral);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: var(--lh-coral-tint);
+  color: var(--lh-coral-deep);
+}
+
+/* 부드러운 페이지 전환 */
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+
+  .fade-in {
+    animation: lh-fade-in var(--lh-dur-slow) var(--lh-ease-out) both;
+  }
+
+  @keyframes lh-fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 }
 
 .lh-tnum,
