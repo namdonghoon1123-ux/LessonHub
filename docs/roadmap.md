@@ -3,6 +3,10 @@
 > 최종 갱신: 2026-06-08
 > 현재 단계: MVP + Coral Blush 디자인 완료, Vercel/Supabase 배포 준비
 
+> **범위 정책 (2026-06-08 기준)**
+> - ❌ **제외(진행 안 함)**: 결제 연동(2.4), Sentry 에러추적, 커스텀 도메인 연결, 이메일 알림(1.2 — API 키 필요)
+> - ✅ 진행 중: 첫 로그인 강제 비번변경, 노쇼 수동처리, PWA 아이폰 설치, Audit 확대, Rate limit 확대, 반복예약, E2E 확장, 백엔드 라우터 분리
+
 ---
 
 ## ✅ Phase 0 — 완료 (커밋 `f340f92` ~ `315a075`)
@@ -56,7 +60,7 @@
 - [ ] 시드 비밀번호 변경 SQL 실행
 - [ ] 도메인 연결 (Vercel Settings → Domains)
 
-### 1.2 알림 시스템 (이메일)
+### 1.2 알림 시스템 (이메일) — ❌ 제외 (API 키 필요, 추후 결정)
 - [ ] Resend (또는 SendGrid) API 키 발급
 - [ ] Supabase Edge Function 으로 booking lifecycle 트리거
 - [ ] 학생용: 예약 확인 / 24h 전 리마인더 / 취소 안내
@@ -65,37 +69,39 @@
 - **예상**: 2일
 
 ### 1.3 비밀번호 변경 UI
-- [ ] 첫 로그인 시 강제 비밀번호 변경 화면
-- [ ] 학생/선생/관리자 모두 본인 비밀번호 변경 가능 (백엔드 already supports)
-- [ ] 학생 settings 페이지에 "비밀번호 변경" 카드 추가
+- [x] 학생/선생/관리자 모두 본인 비밀번호 변경 가능 (백엔드 `PATCH /api/v1/users/me/password`)
+- [x] 학생/선생 settings 페이지에 "비밀번호 변경" 카드 추가 (이미 구현됨)
+- [x] 첫 로그인 시 강제 비밀번호 변경 화면 (`must_change_password` 플래그 + 모달)
 - **예상**: 0.5일
 
-### 1.4 Toast / 인앱 알림 UI
-- [ ] `window.alert()` 대신 우상단 fade-in toast
-- [ ] 성공/경고/에러 3종 (Coral Blush 톤)
-- [ ] `lesson-booking-app.js` 의 모든 alert 호출 치환
+### 1.4 Toast / 인앱 알림 UI — ✅ 완료
+- [x] `window.alert()` 대신 우상단 fade-in toast (`lessonhub-toast.js`)
+- [x] 성공/경고/에러 3종 (Coral Blush 톤)
+- [x] `lesson-booking-app.js` 의 모든 alert 호출 치환 (alert 호출 0건)
 - **예상**: 0.5일
 
-### 1.5 보안 헤더
-- [ ] `vercel.json` 에 CSP / HSTS / X-Frame-Options 추가
-- [ ] Sentry 또는 Vercel 자체 에러 추적 활성화
+### 1.5 보안 헤더 — ✅ 헤더 완료 / Sentry ❌ 제외
+- [x] `vercel.json` 에 CSP / HSTS / X-Frame-Options 추가
+- [ ] ~~Sentry 또는 Vercel 자체 에러 추적 활성화~~ (제외)
 - **예상**: 0.5일
 
 ---
 
 ## 🟧 Phase 2 — 한 달 안 (사용자 onboarding 단계)
 
-### 2.1 노쇼 자동 처리
-- [ ] pg_cron 잡 추가: 수업 +30분 지났는데 COMPLETED 아니면 NO_SHOW
-- [ ] 선생님 화면에서 NO_SHOW 표시 + 학생 카드에 누적 카운트
-- `db/migrations/018_no_show_auto_marking.sql`
+### 2.1 노쇼 처리 — 수동 처리로 구현
+> 설계 변경: 자동완료(BOOKED→COMPLETED)가 수업 종료 즉시 동작하므로 "종료+30분 자동 NO_SHOW"와 충돌.
+> 기존 동작/테스트 보존을 위해 **선생님 수동 NO_SHOW 처리 + 학생 누적 카운트**로 구현.
+- [x] 선생님이 지난 수업을 NO_SHOW 로 표시 (`POST /api/v1/teachers/me/bookings/:id/no-show`)
+- [x] 선생님 화면에서 NO_SHOW 표시 + 학생별 노쇼 누적 카운트
+- `db/migrations/022_no_show_marking.sql` (no_show_at 컬럼 + 인덱스)
 - **예상**: 0.5일
 
-### 2.2 선생님 공개 프로필 페이지
-- [ ] URL: `/t/<teacher-slug>` 형태 (slug 컬럼 추가)
-- [ ] 비로그인 사용자도 선생님 소개 + 예약 가능 시간 미리보기
-- [ ] 슬롯 미리보기 API (`GET /api/v1/public/teachers/:slug`)
-- [ ] OG 이미지 동적 생성 (선택)
+### 2.2 선생님 공개 프로필 페이지 — ✅ 완료
+- [x] URL: `/t/<teacher-slug>` 형태 (slug 컬럼 추가, migration 019)
+- [x] 비로그인 사용자도 선생님 소개 (`/p.html?t=<slug>`)
+- [x] 공개 API (`GET /api/v1/public/teachers/:slug`)
+- [ ] OG 이미지 동적 생성 (선택 — 보류)
 - **예상**: 3일 · **마케팅 임팩트 큼**
 
 ### 2.3 반복 예약 (정기 등록)
@@ -105,13 +111,13 @@
 - [ ] 취소 정책: 개별 회차 취소 vs 전체 시리즈 취소
 - **예상**: 5일
 
-### 2.4 결제 연동
-- [ ] 토스페이먼츠 / 카카오페이 / Stripe 선택
-- [ ] 결제 시점: 예약 시 / 수업 완료 후
-- [ ] 패키지권 (10회권 / 1개월 무제한)
-- [ ] 환불 정책 + 영수증
-- [ ] PG 콜백 webhook
-- **예상**: 1-2주 · **비즈니스 임팩트 가장 큼**
+### 2.4 결제 연동 — ❌ 제외 (진행 안 함)
+- [ ] ~~토스페이먼츠 / 카카오페이 / Stripe 선택~~
+- [ ] ~~결제 시점: 예약 시 / 수업 완료 후~~
+- [ ] ~~패키지권 (10회권 / 1개월 무제한)~~
+- [ ] ~~환불 정책 + 영수증~~
+- [ ] ~~PG 콜백 webhook~~
+- **사용자 결정: 결제 기능 미진행**
 
 ---
 
@@ -125,7 +131,7 @@
 | 학생 리뷰 / 평점 | 2-3일 | 평판 시스템 |
 | 그룹 수업 (1:N) | 4-5일 | 슬롯 로직 큰 변경 |
 | 관리자 통계 대시보드 (차트) | 2-3일 | Chart.js, 매출/예약수 |
-| 모바일 PWA | 1-2일 | manifest + SW |
+| 모바일 PWA (아이폰 홈화면 설치) | 1-2일 | ✅ 진행 — manifest icons + apple-touch-icon + iOS 설치 안내 배너 |
 | 다국어 (한/영) | 3-4일 | i18n |
 
 ---
@@ -140,7 +146,7 @@
 
 ### 4.2 모니터링
 - [ ] Vercel Analytics + Speed Insights 활성화
-- [ ] Sentry 도입 (frontend + backend 에러 추적)
+- [ ] ~~Sentry 도입 (frontend + backend 에러 추적)~~ (제외)
 - [ ] Supabase Reports 대시보드 즐겨찾기 (DB 사용량 / API 호출)
 - **예상**: 1일
 
@@ -163,10 +169,10 @@
 - **예상**: 2일
 
 ### 4.6 백엔드 리팩토링
-- [ ] `backend/src/index.js` 4292줄 → 라우터별 분할
-  - `routes/auth.js`, `routes/bookings.js`, `routes/teachers.js`, ...
+- [x] 1단계: 순수 파싱 헬퍼 분리 (`backend/src/lib/parse.js`) — 테스트 20개 통과 유지
+- [ ] 2단계: 나머지 순수 헬퍼(time/format/toPublicUser) → `lib/` 분리
+- [ ] 3단계: `backend/src/index.js` 라우터별 분할 (`routes/auth.js`, `routes/bookings.js`, `routes/teachers.js`, ...) — **위험도 높음, 별도 집중 세션 권장**
 - [ ] Vercel cold start 단축 (현재 1-3초 → 0.5-1초 목표)
-- [ ] 단위 테스트 추가 가능해짐
 - **예상**: 3-5일 · **중장기 코드 품질 가장 큼**
 
 ---

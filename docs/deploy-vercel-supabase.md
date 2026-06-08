@@ -5,7 +5,7 @@ LessonHub 를 Docker 로컬 스택에서 Vercel(호스팅 · 서버리스) + Sup
 ## 한 줄 요약
 
 - **프론트**: `frontend/` 정적 파일을 Vercel 이 그대로 서빙
-- **백엔드**: `backend/src/index.js` (Express 단일 파일) 를 `api/index.js` wrapper 가 Vercel Serverless Function 으로 호출
+- **백엔드**: `backend/src/index.js` (Express 단일 파일) 를 `api/[...path].js` catchall 이 Vercel Serverless Function 으로 호출
 - **DB**: Supabase Postgres + 기존 마이그레이션 16개 + `017_pg_cron_schedulers.sql` (백그라운드 작업 이관)
 
 ## 0. 사전 준비
@@ -92,13 +92,15 @@ Vercel 대시보드에서 `Deploy` 또는 git push → 자동 배포.
 
 ## 3. 구조 매핑
 
-| 기존 Docker | Vercel + Supabase |
+> 참고: 과거에는 로컬 Docker 스택을 썼으나 2026-06-08 제거됨. 현재는 아래 Vercel+Supabase 구성만 사용한다.
+
+| 역할 | Vercel + Supabase |
 |---|---|
-| `frontend/` + nginx | `frontend/` (Vercel 정적 호스팅, vercel.json outputDirectory) |
-| nginx `/api/` → backend:4000 | vercel.json rewrites `/api/:path*` → `/api/index.js` (Serverless) |
-| `backend/src/index.js` (`app.listen()`) | `api/index.js` 가 `app` 만 export. Vercel 이 함수로 wrap |
-| `setInterval` 스케줄러 | Supabase `pg_cron` 잡 2개 (`db/migrations/017_pg_cron_schedulers.sql`) |
-| `docker compose run --rm backend npm run migrate` | `psql $SUPABASE_DB_URL -f db/migrations/*.sql` |
+| 정적 프론트 | `frontend/` (Vercel 정적 호스팅, vercel.json outputDirectory) |
+| `/api/*` 라우팅 | vercel.json rewrites `/api/:path*` → `api/[...path].js` (Serverless catchall) |
+| 백엔드 앱 | `backend/src/index.js` 가 `app` export, `api/[...path].js` 가 함수로 wrap |
+| 스케줄러 | Supabase `pg_cron` 잡 2개 (`db/migrations/017_pg_cron_schedulers.sql`) |
+| 마이그레이션 | Supabase SQL Editor 에 `scripts/supabase-bootstrap.sql`, 또는 `npm --prefix backend run migrate` (DATABASE_URL) |
 
 ## 4. 로컬 개발 (선택)
 
@@ -109,7 +111,7 @@ vercel env pull .env.local   # 클라우드 env 를 로컬로 끌어옴
 vercel dev                    # http://localhost:3000
 ```
 
-Docker 스택을 그대로 유지하려면 기존 `./scripts/dev-stack.sh` 가 그대로 동작. 두 워크플로우 병행 가능.
+로컬 백엔드/테스트는 `.env` 의 `DATABASE_URL` 을 Supabase **dev** DB 로 두고 `npm --prefix backend test` / `node backend/src/index.js` 로 실행한다. (Docker 는 사용하지 않음)
 
 ## 5. 주의 사항
 

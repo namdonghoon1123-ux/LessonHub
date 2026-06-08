@@ -13,9 +13,9 @@
 - 큰 변경은 `README.md` 또는 `docs/`에 사용 방법을 함께 갱신한다.
 
 ## 3) 일일 인수인계 루틴
-1. `bash "/Volumes/Extreme_SSD/workspace/scripts/daily-handover.sh"`
+1. `bash "scripts/daily-handover.sh"`
 2. 필요 시 스모크 테스트 실행
-   - `bash "/Volumes/Extreme_SSD/workspace/scripts/smoke-test-api.sh"`
+   - `bash "scripts/smoke-test-api.sh"`
 3. 생성/갱신된 `docs/handover-YYYY-MM-DD.md`에 아래 항목 보강
    - 오늘 완료 작업
    - 검증 결과
@@ -31,8 +31,8 @@
 - 재현 스크립트 또는 테스트 명령이 남아 있는가
 
 ## 5) 협업 인수인계 파일 규칙
-- Gemini 전용 메모: `/Volumes/Extreme_SSD/workspace/GEMINI.md`
-- Codex 전용 메모: `/Volumes/Extreme_SSD/workspace/CODEX.md`
-- Claude Code 전용 메모: `/Volumes/Extreme_SSD/workspace/CLAUDE.md`
-- 협업 운영안: `/Volumes/Extreme_SSD/workspace/docs/ai-collaboration-playbook-2026-04-02.md`
-- 일일 로그: `/Volumes/Extreme_SSD/workspace/docs/handover-YYYY-MM-DD.md`
+- Gemini 전용 메모: `GEMINI.md`
+- Codex 전용 메모: `CODEX.md`
+- Claude Code 전용 메모: `CLAUDE.md`
+- 협업 운영안: `docs/ai-collaboration-playbook-2026-04-02.md`
+- 일일 로그: `docs/handover-YYYY-MM-DD.md`

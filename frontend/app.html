@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LessonHub 워크스페이스</title>
     <link rel="icon" type="image/png" href="/lessonhub-logo.png" />
-    <link rel="apple-touch-icon" href="/lessonhub-logo.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#EC6A4C" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="/lessonhub-brand.css" />
     <link rel="stylesheet" href="/lesson-booking-app.css" />
     <script src="/lessonhub-toast.js"></script>
+    <script src="/pwa-install.js" defer></script>
   </head>
   <body>
     <main class="wrap">
@@ -831,6 +832,23 @@
           <div class="actions">
             <button id="teacherExceptionCancelBtn" type="button">취소</button>
             <button id="teacherExceptionSaveBtn" class="primary" type="submit">불가 일정 저장</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="forcePasswordModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="forcePasswordTitle">
+      <div class="modal-card">
+        <div class="panel-title">
+          <h3 id="forcePasswordTitle">비밀번호를 변경해 주세요</h3>
+          <p>임시 비밀번호로 로그인했습니다. 안전을 위해 새 비밀번호로 바꿔야 계속 이용할 수 있습니다.</p>
+        </div>
+        <form id="forcePasswordForm" class="grid">
+          <label>현재(임시) 비밀번호 <input name="current_password" type="password" autocomplete="current-password" required /></label>
+          <label>새 비밀번호 (8자 이상) <input name="new_password" type="password" autocomplete="new-password" minlength="8" required /></label>
+          <label>새 비밀번호 확인 <input name="new_password_confirm" type="password" autocomplete="new-password" minlength="8" required /></label>
+          <div class="actions">
+            <button id="forcePasswordSaveBtn" class="primary" type="submit">비밀번호 변경하고 계속</button>
           </div>
         </form>
       </div>
