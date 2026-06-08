@@ -54,28 +54,50 @@
         gap: 14px;
       }
 
+      /* ──────── 상단 네비 (시안 정확 매칭) ────────
+       * 흰 배경 + 하단 1px 라인 + 좌측 4px 그라데이션 액센트
+       * 활성 탭 = coralTint pill + coralDeep 텍스트 (그라데이션 X)
+       */
       .topbar {
-        border: 1px solid var(--line);
-        border-radius: 28px;
-        padding: 14px 18px;
-        background: rgba(255, 253, 246, 0.86);
-        backdrop-filter: blur(10px);
-        box-shadow: var(--shadow);
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        height: 58px;
+        background: #FFFFFF;
+        border: none;
+        border-bottom: 1px solid var(--line);
+        border-radius: 0;
+        padding: 0 28px;
+        margin: -22px -3vw 14px;
         display: flex;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 26px;
         align-items: center;
-        justify-content: space-between;
-        position: sticky;
-        top: 10px;
-        z-index: 20;
+        justify-content: flex-start;
+        box-shadow: none;
+        backdrop-filter: none;
+      }
+
+      .topbar::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, #EC6A4C, #F2899B);
+      }
+
+      .topbar .brand-lockup {
+        margin-right: 4px;
       }
 
       .top-links {
         display: inline-flex;
-        gap: 8px;
+        gap: 4px;
         flex-wrap: wrap;
         align-items: center;
+        flex: 1;
       }
 
       .top-links a {
@@ -83,46 +105,50 @@
         align-items: center;
         justify-content: center;
         line-height: 1;
-        min-height: 40px;
+        min-height: 34px;
         text-decoration: none;
-        color: #7A635E;
-        background: rgba(255, 255, 255, 0.88);
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        padding: 8px 12px;
-        font-size: 13px;
-        font-weight: 600;
+        color: #B6A39C;
+        background: transparent;
+        border: none;
+        border-radius: 9px;
+        padding: 8px 13px;
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: -0.2px;
       }
 
       .top-links a:hover {
-        border-color: #F4C3B3;
-        transform: translateY(-1px);
+        background: #FBE6DD;
+        color: #D9543A;
+        transform: none;
       }
 
       .top-links a.is-active {
-        background: linear-gradient(118deg, #EC6A4C, #F2899B);
-        color: #fff;
-        border-color: transparent;
+        background: #FBE6DD;
+        color: #D9543A;
+        border: none;
+        font-weight: 700;
       }
 
       .top-links a.is-active:hover {
-        filter: brightness(1.03);
+        filter: brightness(0.98);
       }
 
       .top-links button {
         display: none;
         align-items: center;
         justify-content: center;
-        border: 1px solid #f3ccc1;
-        background: #fff2f0;
+        border: 1px solid #F4C3B3;
+        background: #FFFFFF;
         color: #D9543A;
-        border-radius: 999px;
+        border-radius: 9px;
         padding: 7px 12px;
         line-height: 1;
-        min-height: 40px;
+        min-height: 34px;
         font-size: 13px;
-        font-weight: 700;
+        font-weight: 600;
         cursor: pointer;
+        margin-left: auto;
       }
 
       body.session-ready .top-links button {
@@ -131,7 +157,35 @@
       }
 
       .top-links button:hover {
-        filter: brightness(0.97);
+        background: #FBE6DD;
+      }
+
+      /* 우상단 역할 라벨 + 아바타 (role pill) */
+      .topbar-end {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-left: auto;
+        font-size: 13px;
+        color: #B6A39C;
+      }
+
+      .topbar-end__role {
+        font-size: 13px;
+        color: #B6A39C;
+      }
+
+      .topbar-end__avatar {
+        width: 33px;
+        height: 33px;
+        border-radius: 50%;
+        background: #FBE6DD;
+        color: #D9543A;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 13px;
       }
 
       .hero {
@@ -173,12 +227,17 @@
         font-weight: 700;
       }
 
+      /* ──────── Panel (시안: 흰 배경 + 라운드 14 + 미세 그림자) ──────── */
       .panel {
         border: 1px solid var(--line);
-        border-radius: 26px;
-        background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(255, 252, 245, 0.93));
-        box-shadow: var(--shadow);
-        padding: 18px;
+        border-radius: 14px;
+        background: #FFFFFF;
+        box-shadow: var(--lh-shadow-sm, 0 1px 3px rgba(59, 42, 41, 0.06));
+        padding: 24px 28px;
+      }
+
+      .panel + .panel {
+        margin-top: 14px;
       }
 
       .panel-title {
@@ -449,40 +508,62 @@
         grid-template-columns: repeat(4, minmax(0, 1fr));
       }
 
+      /* ──────── Stat card (시안: 큰 숫자 + 작은 단위 + 부드러운 흰 카드) ──────── */
       .stat-card {
         border: 1px solid #F0E1D9;
         border-radius: 14px;
         background: #FFFFFF;
-        padding: 13px 14px;
-        display: grid;
-        gap: 4px;
+        padding: 18px 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
         position: relative;
+        box-shadow: var(--lh-shadow-sm, 0 1px 3px rgba(59, 42, 41, 0.06));
       }
 
       .stats--four .stat-card + .stat-card::before {
         content: "";
         position: absolute;
         left: 0;
-        top: 13px;
-        bottom: 13px;
+        top: 16px;
+        bottom: 16px;
         width: 1px;
         background: var(--line-soft, #F7ECE5);
       }
 
       .stat-card strong {
-        font-size: 22px;
+        font-size: 30px;
         font-weight: 700;
-        letter-spacing: -0.02em;
+        letter-spacing: -0.6px;
+        line-height: 1.1;
         font-variant-numeric: tabular-nums;
+        color: #3B2A29;
       }
 
       .stat-card--accent strong {
         color: #D9543A;
       }
 
+      /* 시안: 숫자 옆의 작은 단위 (건/개/일) — JS 가 .stat-card__unit 으로 마크업하면 자동 적용 */
+      .stat-card strong .stat-card__unit,
+      .stat-card strong small {
+        font-size: 14px;
+        font-weight: 600;
+        margin-left: 4px;
+        color: #B6A39C;
+        letter-spacing: 0;
+      }
+
+      .stat-card--accent strong small {
+        color: #D9543A;
+        opacity: 0.6;
+      }
+
       .stat-card span {
-        font-size: 12px;
+        font-size: 13px;
         color: var(--muted);
+        font-weight: 500;
+        letter-spacing: -0.1px;
       }
 
       /* 알림 2칸 (선생님 주간 운영 명세) */
@@ -493,44 +574,75 @@
         margin-bottom: 12px;
       }
 
+      /* ──────── Notice (알림 칸 — 시안: 흰 배경, 좌측 dot, 우측 액션 텍스트) ──────── */
       .notice {
         border: 1px solid var(--line);
         border-radius: 12px;
         background: #FFFFFF;
-        padding: 11px 13px;
-        display: grid;
-        gap: 4px;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+        box-shadow: var(--lh-shadow-sm, 0 1px 3px rgba(59, 42, 41, 0.06));
+      }
+
+      .notice::before {
+        content: "";
+        flex: 0 0 auto;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #B6A39C;
+        margin-right: 2px;
+      }
+
+      .notice > strong,
+      .notice > p {
+        margin: 0;
       }
 
       .notice strong {
-        font-size: 13px;
-        color: var(--text);
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #3B2A29;
       }
 
       .notice p {
-        margin: 0;
-        font-size: 13px;
-        color: var(--sub);
+        flex: 1;
+        font-size: 13.5px;
+        color: #7A635E;
+        font-weight: 500;
       }
 
       .notice a {
-        margin-top: 2px;
-        font-size: 12px;
+        font-size: 13px;
         color: #D9543A;
         font-weight: 700;
         text-decoration: none;
+        white-space: nowrap;
       }
 
+      .notice a:hover {
+        text-decoration: underline;
+      }
+
+      /* rose 변형 — 강조 알림 */
       .notice--rose {
-        background: #F8E2E8;
+        background: #FCEDF1;
         border-color: #EFC4D0;
       }
 
-      .notice--rose strong {
+      .notice--rose::before {
+        background: #D45C79;
+      }
+
+      .notice--rose strong,
+      .notice--rose p {
         color: #D45C79;
       }
 
-      .notice--rose p {
+      .notice--rose a {
         color: #D45C79;
       }
 
@@ -620,12 +732,40 @@
         white-space: nowrap;
       }
 
+      /* ──────── Calendar card (학생 7열 / 선생 / slot) ──────── */
       .calendar-card,
       .slot-card {
         border: 1px solid #F0E1D9;
-        border-radius: 14px;
-        background: #fff;
-        padding: 12px;
+        border-radius: 13px;
+        background: #FFFFFF;
+        padding: 14px 12px;
+        box-shadow: var(--lh-shadow-sm, 0 1px 3px rgba(59, 42, 41, 0.06));
+      }
+
+      /* today 카드 강조 (학생 캘린더) — 시안: coralBorder + box-shadow */
+      .calendar-card.today,
+      .calendar-card[data-today="true"] {
+        border-color: #F4C3B3;
+        box-shadow: 0 0 0 3px #FBE6DD, var(--lh-shadow-sm, 0 1px 3px rgba(59, 42, 41, 0.06));
+      }
+
+      /* 카드 헤더 (요일 + 날짜) — today 는 coralTint 배경 */
+      .calendar-card__head,
+      .calendar-card .day-head {
+        text-align: center;
+        padding: 8px 4px;
+        border-radius: 8px;
+        margin: -2px -2px 8px;
+      }
+
+      .calendar-card.today .calendar-card__head,
+      .calendar-card.today .day-head {
+        background: #FBE6DD;
+      }
+
+      .calendar-card.today .day-head__date,
+      .calendar-card.today strong {
+        color: #D9543A;
       }
 
       .calendar-head {
@@ -1928,23 +2068,35 @@
         color: #D9543A;
       }
 
-      /* 슬롯 칩 — open (예약 가능) */
+      /* 슬롯 칩 — open (예약 가능) — 시안 정확 매칭 */
       .slot-item:not(.booked) {
         border: 1.5px solid #F4C3B3;
         background: #FFFFFF;
         color: #D9543A;
         font-weight: 700;
         cursor: pointer;
-        border-radius: 7px;
+        border-radius: 8px;
+        padding: 12px 14px;
+        min-height: 44px;
       }
 
       .slot-item:not(.booked) strong {
         color: #D9543A;
         font-variant-numeric: tabular-nums;
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .slot-item:not(.booked) small {
+        color: #D9543A;
+        font-weight: 600;
+        opacity: 0.8;
+        font-size: 12.5px;
       }
 
       .slot-item:not(.booked):hover {
         background: #FBE6DD;
+        border-color: #EC6A4C;
       }
 
       /* 슬롯 칩 — full / mine (예약됨) */
@@ -1990,36 +2142,54 @@
         );
       }
 
-      /* 주간 그리드 chip — 의미별 일치 */
+      /* ──────── 주간 그리드 cell (시안: 표 형식) ────────
+       * 예약 = rose 배경 + 학생명 (좌측 inset 2px rose 액센트)
+       * 열림 = 점선 코랄 테두리 + "열림" muted
+       * 완료 = muted 텍스트 "완료" (배경 없음)
+       * 휴무 = 해치
+       * 미설정 = "·" 점
+       */
       .week-slot-btn.available {
         color: #D9543A;
         background: #FFFFFF;
-        box-shadow: inset 0 0 0 1.5px #F4C3B3;
+        border: 1.5px dashed #F4C3B3;
+        margin: 2px;
+        border-radius: 7px;
       }
 
       .week-slot-btn.booked {
         color: #B6A39C;
-        background: #F7ECE5;
+        background: transparent;
+        font-weight: 600;
       }
 
       .week-booked-chip {
-        color: #FFFFFF;
-        background: #D45C79;
+        color: #D45C79;
+        background: #FCEDF1;
+        font-weight: 700;
+        box-shadow: inset 2px 0 0 #D45C79;
+        font-size: 11.5px;
       }
 
       .week-one-time-window {
         color: #D9543A;
         background: #FBE6DD;
+        font-weight: 700;
+        font-size: 11px;
       }
 
       .week-open-chip {
         color: #D9543A;
-        background: #FBE6DD;
-        box-shadow: inset 0 0 0 1.5px #F4C3B3;
+        background: #FFFFFF;
+        border: 1.5px dashed #F4C3B3;
+        margin: 2px;
+        border-radius: 7px;
+        font-size: 11px;
+        font-weight: 600;
       }
 
       .week-exception-chip {
-        color: #D45C79;
+        color: #B6A39C;
         background: repeating-linear-gradient(
           45deg,
           #F4E8E1,
@@ -2027,11 +2197,22 @@
           #FBF3EE 5px,
           #FBF3EE 10px
         );
+        font-size: 11px;
       }
 
       .week-teacher-window {
         color: #D9543A;
         background: #FBE6DD;
+        font-weight: 700;
+      }
+
+      /* today 컬럼 미세 강조 (선생님 주간 운영) */
+      .week-day-head.today {
+        background: #FBE6DD;
+      }
+
+      .week-day-head.today strong {
+        color: #D9543A;
       }
 
       /* 상단 nav 좌측 4px 코랄→핑크 그라데이션 액센트 */
