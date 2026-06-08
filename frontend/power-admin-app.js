@@ -472,16 +472,28 @@
       } else if (isActive && row.role === 'TEACHER') {
         actionButtons.push(`<button type="button" data-admin-pick-teacher="${row.id}">선생님선택</button>`);
       }
+      const displayName = String(row.name || row.login_id || '-').trim();
+      const initial = displayName === '-' ? '?' : displayName.charAt(0);
+      const createdShort = row.created_at
+        ? new Date(row.created_at).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' })
+        : '-';
+      const userCellHtml = `
+        <div class="user-row">
+          <div class="user-row__avatar">${escapeHtml(initial)}</div>
+          <div class="user-row__main">
+            <div class="user-row__name">${escapeHtml(displayName)}</div>
+            <div class="user-row__sub">가입 ${escapeHtml(createdShort)} · ID ${escapeHtml(String(row.id))}</div>
+          </div>
+        </div>
+      `;
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${row.id}</td>
+        <td colspan="2">${userCellHtml}</td>
         <td>${userRoleBadge(row.role)}</td>
         <td>${userActiveBadge(isActive)}</td>
         <td>${escapeHtml(row.login_id || '-')}</td>
-        <td>${escapeHtml(row.name || '-')}</td>
         <td>${escapeHtml(row.phone || '-')}</td>
         <td>${escapeHtml(assignedText)}</td>
-        <td class="mono">${formatDateTime(row.created_at)}</td>
         <td class="mono">${formatDateTime(row.deactivated_at)}</td>
         <td>${actionButtons.join(' ')}</td>
       `;
