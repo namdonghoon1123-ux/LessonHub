@@ -1117,9 +1117,15 @@
         const studentName = booking.student_email || booking.student_name || booking.student_user_id || '-';
         const studentComment = escapeHtml(String(booking.student_comment || booking.teacher_comment || ''));
         const teacherMemo = escapeHtml(String(booking.teacher_private_comment || ''));
+        const noShowCount = Number(booking.student_no_show_count || 0);
+        const noShowLine =
+          noShowCount > 0
+            ? `<div><strong>이 학생 누적 노쇼</strong>: <b style="color:#C0392B">${noShowCount}회</b></div>`
+            : '';
         return `
           <div><strong>상태</strong>: ${statusBadge(booking.status)}</div>
           <div><strong>학생</strong>: ${escapeHtml(String(studentName))}</div>
+          ${noShowLine}
           <div><strong>시간</strong>: <span class="mono">${formatDateTime(booking.start_at)} ~ ${formatDateTime(booking.end_at)}</span></div>
           <div><strong>학생 전달 코멘트</strong>: ${studentComment || '-'}</div>
           <div><strong>선생님 메모</strong>: ${teacherMemo || '-'}</div>
@@ -1196,6 +1202,37 @@
               if (next === null) return;
               await completeBooking(booking.id, { teacherPrivateComment: next });
               await loadTeacherBookings();
+              openTeacherBookingDetail(booking.id);
+            },
+          });
+        }
+
+        if (['BOOKED', 'COMPLETED'].includes(String(booking.status || ''))) {
+          actions.push({
+            label: '노쇼 처리',
+            tone: 'danger',
+            run: async () => {
+              const ok = window.confirm('이 수업을 노쇼(학생 미출석)로 표시할까요?');
+              if (!ok) return;
+              await noShowBooking(booking.id);
+              await loadTeacherBookings();
+              await loadSlotsForCurrentMonth();
+              openTeacherBookingDetail(booking.id);
+            },
+          });
+        }
+        if (String(booking.status || '') === 'NO_SHOW') {
+          actions.push({
+            label: '완료로 되돌리기',
+            tone: 'primary',
+            run: async () => {
+              const studentComment = promptRequiredText('학생에게 전달할 코멘트를 입력해 주세요. (필수)');
+              if (studentComment === null) return;
+              const teacherPrivateComment = promptRequiredText('선생님 내부 메모를 입력해 주세요. (필수)');
+              if (teacherPrivateComment === null) return;
+              await completeBooking(booking.id, { teacherPrivateComment, studentComment });
+              await loadTeacherBookings();
+              await loadSlotsForCurrentMonth();
               openTeacherBookingDetail(booking.id);
             },
           });
@@ -1671,6 +1708,24 @@
         renderStudentTeacherAssignmentState();
         renderStudentAccountTier();
         applyTopNavState();
+        maybeForcePasswordChange();
+      }
+
+      function maybeForcePasswordChange() {
+        const modal = document.getElementById('forcePasswordModal');
+        if (!modal) return;
+        const need = Boolean(state.user && state.user.must_change_password);
+        modal.classList.toggle('hidden', !need);
+        if (need) {
+          const firstInput = modal.querySelector('input[name="current_password"]');
+          if (firstInput) {
+            try {
+              firstInput.focus();
+            } catch (_) {
+              /* ignore */
+            }
+          }
+        }
       }
 
       function renderAccountForms() {
@@ -2558,6 +2613,33 @@
           const actionWrap = document.createElement('div');
           actionWrap.className = 'actions';
           actionWrap.appendChild(action);
+          if (!canCancelMyBooking && slot.is_available && !isInvitedSlot && state.user?.role === 'STUDENT') {
+            const recurBtn = document.createElement('button');
+            recurBtn.type = 'button';
+            recurBtn.textContent = '정기';
+            recurBtn.title = '매주 같은 요일·시간으로 반복 예약';
+            recurBtn.addEventListener('click', () => {
+              runAction('정기 예약', async () => {
+                const raw = window.prompt('매주 같은 요일·시간으로 몇 회 예약할까요? (1~24)', '4');
+                if (raw === null) return;
+                const count = Number.parseInt(raw, 10);
+                if (!Number.isInteger(count) || count < 1 || count > 24) {
+                  showToast('1~24 사이의 횟수를 입력해 주세요.', 'error');
+                  return;
+                }
+                const result = await createRecurringBooking(slot.start_at, count);
+                const createdN = (result?.created || []).length;
+                const skippedN = (result?.skipped || []).length;
+                showToast(
+                  `정기 예약 ${createdN}회 신청 완료${skippedN ? ` (예약 불가 ${skippedN}회 제외)` : ''}.`,
+                  'success'
+                );
+                await loadSlotsForCurrentMonth();
+                await loadMyBookings();
+              });
+            });
+            actionWrap.appendChild(recurBtn);
+          }
           if (isInvitedSlot && !canCancelMyBooking) {
             const rejectBtn = document.createElement('button');
             rejectBtn.type = 'button';
@@ -3303,16 +3385,25 @@
 
         for (const row of items) {
           const canCancel = ['PENDING', 'BOOKED'].includes(row.status);
-          const actionButtons = [canCancel ? `<button type="button" data-cancel-my-booking="${row.id}">취소</button>` : '']
+          const isRecurring = Boolean(row.recurring_series_id);
+          const actionButtons = [
+            canCancel ? `<button type="button" data-cancel-my-booking="${row.id}">취소</button>` : '',
+            canCancel && isRecurring
+              ? `<button type="button" data-cancel-series="${row.recurring_series_id}">정기 전체취소</button>`
+              : '',
+          ]
             .filter(Boolean)
             .join(' ');
+          const seriesTag = isRecurring
+            ? ' <span class="meta-chip" style="font-size:11px">정기</span>'
+            : '';
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>${row.id}</td>
             <td>${row.teacher_email || row.teacher_name || row.teacher_user_id}</td>
             <td class="mono">${formatDateTime(row.start_at)}</td>
             <td class="mono">${formatDateTime(row.end_at)}</td>
-            <td>${statusBadge(row.status)}</td>
+            <td>${statusBadge(row.status)}${seriesTag}</td>
             <td>${escapeHtml(row.student_comment || row.teacher_comment || '')}</td>
             <td>${actionButtons}</td>
           `;
@@ -3349,6 +3440,29 @@
           return;
         }
         throw new Error('학생 계정으로 로그인 후 예약해 주세요.');
+      }
+
+      async function createRecurringBooking(startAtIso, count) {
+        const teacherId = parseRequiredId(teacherSelect.value, 'teacher_id');
+        if (state.user?.role !== 'STUDENT') {
+          throw new Error('학생 계정으로 로그인 후 예약해 주세요.');
+        }
+        return api('/api/v1/bookings/recurring', {
+          method: 'POST',
+          auth: true,
+          body: {
+            teacher_user_id: teacherId,
+            start_at: startAtIso,
+            count,
+          },
+        });
+      }
+
+      async function cancelBookingSeries(seriesId) {
+        await api(`/api/v1/bookings/series/${seriesId}/cancel`, {
+          method: 'POST',
+          auth: true,
+        });
       }
 
       async function createBookingOnBehalf(startAtIso, durationMin) {
@@ -3430,6 +3544,13 @@
           method: 'POST',
           auth: true,
           body,
+        });
+      }
+
+      async function noShowBooking(bookingId) {
+        await api(`/api/v1/teachers/me/bookings/${bookingId}/no-show`, {
+          method: 'POST',
+          auth: true,
         });
       }
 
@@ -4478,6 +4599,21 @@
         });
       });
 
+      document.getElementById('forcePasswordForm')?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const formEl = event.currentTarget;
+        const form = formObject(formEl);
+        if (String(form.new_password || '') !== String(form.new_password_confirm || '')) {
+          showToast('새 비밀번호 확인이 일치하지 않습니다.', 'error');
+          return;
+        }
+        runAction('비밀번호 변경', async () => {
+          await changeMyPassword(formEl);
+          showToast('비밀번호가 변경되었습니다. 계속 이용해 주세요.', 'success');
+          await syncMe();
+        });
+      });
+
       document.getElementById('teacherTempStudentCreateBtn')?.addEventListener('click', () => {
         runAction('임시 학생 생성', async () => {
           await createTemporaryStudentByTeacher();
@@ -4501,6 +4637,18 @@
       });
 
       myBookingsBody.addEventListener('click', (e) => {
+        const seriesId = e.target?.dataset?.cancelSeries;
+        if (seriesId) {
+          runAction('정기예약 전체취소', async () => {
+            const ok = window.confirm('이 정기예약의 남은 회차를 모두 취소할까요?');
+            if (!ok) return;
+            await cancelBookingSeries(seriesId);
+            await loadMyBookings();
+            await loadSlotsForCurrentMonth();
+            showToast('정기예약의 남은 회차를 취소했습니다.', 'success');
+          });
+          return;
+        }
         const bookingId = e.target?.dataset?.cancelMyBooking;
         if (!bookingId) return;
         runAction('내 예약 취소', async () => {

@@ -5,6 +5,16 @@ const { randomBytes, createHash } = require('crypto');
 const { query } = require('./db');
 const { signAccessToken, requireAuth, optionalAuth, revokeAccessToken } = require('./auth');
 const { loadAppConfig } = require('./config');
+const {
+  parsePositiveInt,
+  parseNonNegativeInt,
+  parseBooleanFlag,
+  parseDateTime,
+  parseTimeZone,
+  parsePhoneNormalized,
+  parseRole,
+  parseAdminRole,
+} = require('./lib/parse');
 
 dotenv.config({ path: '../.env' });
 const { appConfig, configPath } = loadAppConfig();
@@ -37,6 +47,23 @@ const publicBookingLimiter = createPublicRateLimit({
       ? Number(appConfig.guest.rateLimit.max)
       : 60,
 });
+
+// 인증 관련 엔드포인트(로그인/회원가입/비밀번호 복구) brute-force 완화.
+// 프로덕션에서만 활성 — 로컬 개발/통합 테스트(동일 IP 다회 호출)에는 영향 없음.
+const authLimiterImpl = createPublicRateLimit({
+  windowMs:
+    Number.isInteger(Number(appConfig?.auth?.rateLimit?.windowMs)) && Number(appConfig.auth.rateLimit.windowMs) > 0
+      ? Number(appConfig.auth.rateLimit.windowMs)
+      : 10 * 60 * 1000,
+  max:
+    Number.isInteger(Number(appConfig?.auth?.rateLimit?.max)) && Number(appConfig.auth.rateLimit.max) > 0
+      ? Number(appConfig.auth.rateLimit.max)
+      : 30,
+});
+function authRateLimit(req, res, next) {
+  if (process.env.NODE_ENV !== 'production') return next();
+  return authLimiterImpl(req, res, next);
+}
 
 const LOCAL_TIME_REGEX = /^(?:([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?|24:00(?::00)?)$/;
 const LOCAL_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
@@ -91,6 +118,7 @@ const PUBLIC_USER_COLUMNS = `
   account_tier,
   temp_created_by_teacher_user_id,
   upgraded_to_full_at,
+  must_change_password,
   created_at
 `;
 
@@ -112,6 +140,7 @@ function toPublicUser(row) {
       : null,
     upgraded_to_full_at: row.upgraded_to_full_at || null,
     can_upgrade_to_full: isTempStudent,
+    must_change_password: row.must_change_password === true,
     created_at: row.created_at,
   };
 }
@@ -177,84 +206,9 @@ function parseAvailabilityId(value) {
   return parsePositiveInt(value);
 }
 
-function parsePositiveInt(value) {
-  const parsed = Number.parseInt(String(value || ''), 10);
-  if (!Number.isInteger(parsed) || parsed <= 0) {
-    return null;
-  }
-  return parsed;
-}
-
-function parseNonNegativeInt(value) {
-  const parsed = Number.parseInt(String(value || ''), 10);
-  if (!Number.isInteger(parsed) || parsed < 0) {
-    return null;
-  }
-  return parsed;
-}
-
-function parseBooleanFlag(value) {
-  const text = String(value ?? '')
-    .trim()
-    .toLowerCase();
-  return ['1', 'true', 'yes', 'y', 'on'].includes(text);
-}
-
-function parseDateTime(value) {
-  const text = String(value || '').trim();
-  if (!text) {
-    return null;
-  }
-  const parsed = new Date(text);
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
-  return parsed.toISOString();
-}
-
-function parseTimeZone(value) {
-  const text = String(value || '').trim();
-  if (!text) {
-    return null;
-  }
-  try {
-    Intl.DateTimeFormat('en-US', { timeZone: text }).format(new Date());
-    return text;
-  } catch (err) {
-    return null;
-  }
-}
-
-function parsePhoneNormalized(value) {
-  const raw = String(value || '').trim();
-  if (!raw) return null;
-  const digits = raw.replace(/\D/g, '');
-  if (!digits) return null;
-  let normalized = digits;
-  if (normalized.startsWith('82') && normalized.length >= 10 && normalized.length <= 12) {
-    normalized = `0${normalized.slice(2)}`;
-  }
-  if (normalized.length < 9 || normalized.length > 15) {
-    return null;
-  }
-  return normalized;
-}
-
-function parseRole(value) {
-  const role = String(value || '').trim().toUpperCase();
-  if (!['TEACHER', 'STUDENT'].includes(role)) {
-    return '';
-  }
-  return role;
-}
-
-function parseAdminRole(value) {
-  const role = String(value || '').trim().toUpperCase();
-  if (!['TEACHER', 'STUDENT', 'POWER_ADMIN'].includes(role)) {
-    return '';
-  }
-  return role;
-}
+// parsePositiveInt / parseNonNegativeInt / parseBooleanFlag / parseDateTime /
+// parseTimeZone / parsePhoneNormalized / parseRole / parseAdminRole 는
+// ./lib/parse 모듈로 분리되었다 (파일 상단 require 참고).
 
 function parsePin4(value) {
   const text = String(value || '').trim();
@@ -727,11 +681,13 @@ async function resolveTeacherUserIdForBooking(inputTeacherUserId) {
   return { error: 'teacher_user_id is required when multiple teachers exist' };
 }
 
-async function getBookableSlotAt(teacherUserId, startAtIso, timezone, lessonDurationMin) {
+async function getBookableSlotAt(teacherUserId, startAtIso, timezone, lessonDurationMin, options = {}) {
   const durationMin = parsePositiveInt(lessonDurationMin);
   if (!durationMin || durationMin < 10 || durationMin > 180 || durationMin % 5 !== 0) {
     return null;
   }
+  // 반복(정기) 예약은 의도적인 장기 약속이므로 예약 가능 기간(booking window)을 건너뛸 수 있다.
+  const ignoreBookingWindow = options.ignoreBookingWindow === true;
   const result = await query(
     `
       WITH weekly_slots AS (
@@ -862,15 +818,18 @@ async function getBookableSlotAt(teacherUserId, startAtIso, timezone, lessonDura
             )
         )
         AND $2::timestamptz >= NOW()
-        AND NOT EXISTS (
-          SELECT 1 FROM users u
-          JOIN teacher_profiles tp ON tp.teacher_user_id = u.id
-          WHERE u.id = $1
-            AND ($2::timestamptz > NOW() + make_interval(days => tp.booking_window_days))
+        AND (
+          $5::boolean = TRUE
+          OR NOT EXISTS (
+            SELECT 1 FROM users u
+            JOIN teacher_profiles tp ON tp.teacher_user_id = u.id
+            WHERE u.id = $1
+              AND ($2::timestamptz > NOW() + make_interval(days => tp.booking_window_days))
+          )
         )
       LIMIT 1
     `,
-    [teacherUserId, startAtIso, timezone, durationMin]
+    [teacherUserId, startAtIso, timezone, durationMin, ignoreBookingWindow]
   );
   return result.rowCount > 0 ? result.rows[0] : null;
 }
@@ -946,7 +905,7 @@ app.post('/api/v1/auth/social/:provider/start', async (req, res) => {
   return res.status(501).json({ error: 'social_login_not_implemented' });
 });
 
-app.post('/api/v1/auth/register', async (req, res) => {
+app.post('/api/v1/auth/register', authRateLimit, async (req, res) => {
   try {
     const loginId = String(req.body?.login_id ?? req.body?.email ?? '').trim().toLowerCase();
     const phoneRaw = String(req.body?.phone ?? '').trim();
@@ -1110,7 +1069,7 @@ app.post('/api/v1/auth/register', async (req, res) => {
   }
 });
 
-app.post('/api/v1/auth/recover/login-id', async (req, res) => {
+app.post('/api/v1/auth/recover/login-id', authRateLimit, async (req, res) => {
   try {
     const name = String(req.body?.name || '').trim();
     const phoneRaw = String(req.body?.phone || '').trim();
@@ -1150,7 +1109,7 @@ app.post('/api/v1/auth/recover/login-id', async (req, res) => {
   }
 });
 
-app.post('/api/v1/auth/recover/password', async (req, res) => {
+app.post('/api/v1/auth/recover/password', authRateLimit, async (req, res) => {
   try {
     const loginId = String(req.body?.login_id ?? req.body?.email ?? '').trim().toLowerCase();
     const name = String(req.body?.name || '').trim();
@@ -1204,7 +1163,7 @@ app.post('/api/v1/auth/recover/password', async (req, res) => {
   }
 });
 
-app.post('/api/v1/auth/login', async (req, res) => {
+app.post('/api/v1/auth/login', authRateLimit, async (req, res) => {
   try {
     const loginId = String(req.body?.login_id ?? req.body?.email ?? req.body?.id ?? '').trim().toLowerCase();
     const password = String(req.body?.password || '');
@@ -1378,6 +1337,12 @@ app.patch('/api/v1/teachers/me/students/assign', requireAuth, requireTeacher, as
       return res.status(404).json({ error: 'student_not_found' });
     }
 
+    auditLog(req, 'teacher.student.assign', {
+      target_type: 'user',
+      target_id: targetStudent.id,
+      payload: { student_login_id: targetStudent.login_id, student_name: targetStudent.name },
+    });
+
     return res.json({
       user: toPublicUser(updated.rows[0]),
       student: targetStudent,
@@ -1431,9 +1396,10 @@ app.post('/api/v1/teachers/me/students/temp', requireAuth, requireTeacher, async
               name,
               assigned_teacher_user_id,
               account_tier,
-              temp_created_by_teacher_user_id
+              temp_created_by_teacher_user_id,
+              must_change_password
             )
-            VALUES ('STUDENT', $1, $2, $3, $4, $5, 'TEMP', $5)
+            VALUES ('STUDENT', $1, $2, $3, $4, $5, 'TEMP', $5, TRUE)
             RETURNING ${PUBLIC_USER_COLUMNS}
           `,
           [loginId, phoneNormalized, passwordHash, name, req.auth.userId]
@@ -1451,6 +1417,12 @@ app.post('/api/v1/teachers/me/students/temp', requireAuth, requireTeacher, async
     if (!created || created.rowCount === 0) {
       throw new Error('failed_to_create_temp_student');
     }
+
+    auditLog(req, 'teacher.student.temp_create', {
+      target_type: 'user',
+      target_id: created.rows[0].id,
+      payload: { student_login_id: loginId, generated_password: !requestedPassword },
+    });
 
     return res.status(201).json({
       user: toPublicUser(created.rows[0]),
@@ -1523,6 +1495,7 @@ app.post('/api/v1/students/me/upgrade', requireAuth, requireStudent, async (req,
             name = $5,
             account_tier = 'FULL',
             upgraded_to_full_at = NOW(),
+            must_change_password = FALSE,
             updated_at = NOW()
         WHERE id = $1
           AND role = 'STUDENT'
@@ -1614,6 +1587,9 @@ app.patch('/api/v1/users/me/password', requireAuth, async (req, res) => {
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ error: 'current_password and new_password are required' });
     }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'new_password must be at least 8 characters' });
+    }
     const found = await query(
       `
         SELECT id, password_hash
@@ -1638,11 +1614,16 @@ app.patch('/api/v1/users/me/password', requireAuth, async (req, res) => {
       `
         UPDATE users
         SET password_hash = $2,
+            must_change_password = FALSE,
             updated_at = NOW()
         WHERE id = $1
       `,
       [req.auth.userId, nextHash]
     );
+    auditLog(req, 'user.password.change', {
+      target_type: 'user',
+      target_id: req.auth.userId,
+    });
     return res.json({ ok: true });
   } catch (err) {
     console.error(err);
@@ -1927,9 +1908,10 @@ app.post('/api/v1/admin/users', requireAuth, requirePowerAdmin, async (req, res)
           phone_normalized,
           password_hash,
           name,
-          account_tier
+          account_tier,
+          must_change_password
         )
-        VALUES ($1, $2, $3, $4, $5, 'FULL')
+        VALUES ($1, $2, $3, $4, $5, 'FULL', TRUE)
         RETURNING ${PUBLIC_USER_COLUMNS}
       `,
       [role, loginId, phoneNormalized, passwordHash, name]
@@ -1992,6 +1974,7 @@ app.patch('/api/v1/admin/users/:id/password', requireAuth, requirePowerAdmin, as
       `
         UPDATE users
         SET password_hash = $2,
+            must_change_password = TRUE,
             updated_at = NOW()
         WHERE id = $1
           AND is_active = TRUE
@@ -3394,6 +3377,187 @@ app.post('/api/v1/bookings', requireAuth, requireStudent, async (req, res) => {
   }
 });
 
+// 반복(정기) 예약 생성 — 매주 같은 요일/시각 count 회.
+// 각 회차는 단건 예약과 동일한 슬롯 검증을 거치며, 불가한 회차는 skipped 로 보고한다.
+app.post('/api/v1/bookings/recurring', requireAuth, requireStudent, async (req, res) => {
+  try {
+    const firstStartIso = parseDateTime(req.body?.start_at);
+    if (!firstStartIso) {
+      return res.status(400).json({ error: 'start_at is required (ISO datetime)' });
+    }
+    const count = parsePositiveInt(req.body?.count);
+    if (!count || count < 1 || count > 24) {
+      return res.status(400).json({ error: 'count must be 1~24' });
+    }
+
+    const teacherResolve = await resolveTeacherUserIdForBooking(req.body?.teacher_user_id);
+    if (teacherResolve.error) {
+      return res.status(400).json({ error: teacherResolve.error });
+    }
+    const teacherUserId = teacherResolve.teacherUserId;
+    const assignedTeacherUserId = await getAssignedTeacherUserIdForStudent(req.auth.userId);
+    if (!assignedTeacherUserId) {
+      return res.status(422).json({ error: 'student_teacher_not_assigned' });
+    }
+    if (Number(assignedTeacherUserId) !== Number(teacherUserId)) {
+      return res.status(403).json({ error: 'teacher_not_assigned_to_student' });
+    }
+
+    const profile = await getTeacherProfileById(teacherUserId);
+    if (!profile) {
+      return res.status(404).json({ error: 'teacher_not_found' });
+    }
+
+    const firstStart = new Date(firstStartIso);
+    if (firstStart.getTime() < Date.now()) {
+      return res.status(422).json({ error: 'start_at_in_past' });
+    }
+
+    const firstSlot = await getBookableSlotAt(teacherUserId, firstStartIso, profile.timezone, profile.lesson_duration_min, {
+      ignoreBookingWindow: true,
+    });
+    if (!firstSlot) {
+      return res.status(422).json({ error: 'slot_not_available' });
+    }
+
+    const seriesRow = await query(
+      `
+        INSERT INTO recurring_series (
+          teacher_user_id, student_user_id, weekday, start_time_local, duration_min, lesson_title, requested_count
+        )
+        VALUES (
+          $1, $2,
+          extract(dow FROM ($3::timestamptz AT TIME ZONE $4))::int,
+          to_char(($3::timestamptz AT TIME ZONE $4), 'HH24:MI:SS'),
+          $5, $6, $7
+        )
+        RETURNING id, weekday, start_time_local
+      `,
+      [
+        teacherUserId,
+        req.auth.userId,
+        firstStartIso,
+        profile.timezone,
+        Number(firstSlot.duration_min),
+        String(firstSlot.lesson_title || '').trim() || null,
+        count,
+      ]
+    );
+    const seriesId = seriesRow.rows[0].id;
+
+    const created = [];
+    const skipped = [];
+    for (let k = 0; k < count; k += 1) {
+      const occIso = new Date(firstStart.getTime() + k * 7 * 24 * 60 * 60 * 1000).toISOString();
+      try {
+        const slot = await getBookableSlotAt(teacherUserId, occIso, profile.timezone, profile.lesson_duration_min, {
+          ignoreBookingWindow: true,
+        });
+        if (!slot) {
+          skipped.push({ start_at: occIso, reason: 'slot_not_available' });
+          continue;
+        }
+        const ins = await query(
+          `
+            INSERT INTO bookings (
+              teacher_user_id, student_user_id, lesson_title_snapshot, start_at, duration_min, status, recurring_series_id
+            )
+            VALUES ($1, $2, $3, $4::timestamptz, $5, 'PENDING', $6)
+            RETURNING
+              id, start_at,
+              (start_at + make_interval(mins => duration_min)) AS end_at,
+              duration_min, status, recurring_series_id
+          `,
+          [
+            teacherUserId,
+            req.auth.userId,
+            String(slot.lesson_title || '').trim() || null,
+            occIso,
+            Number(slot.duration_min),
+            seriesId,
+          ]
+        );
+        created.push(ins.rows[0]);
+      } catch (err) {
+        if (err?.code === '23505') {
+          skipped.push({ start_at: occIso, reason: 'slot_already_booked' });
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    await query(`UPDATE recurring_series SET created_count = $2 WHERE id = $1`, [seriesId, created.length]);
+
+    if (created.length === 0) {
+      await query(`DELETE FROM recurring_series WHERE id = $1`, [seriesId]);
+      return res.status(422).json({ error: 'no_bookable_occurrences', skipped });
+    }
+
+    auditLog(req, 'booking.series.create', {
+      target_type: 'recurring_series',
+      target_id: seriesId,
+      payload: { teacher_user_id: teacherUserId, created: created.length, skipped: skipped.length },
+    });
+
+    return res.status(201).json({ series_id: seriesId, created, skipped });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
+// 정기예약 전체(미래 회차) 일괄 취소 — 학생 본인 또는 담당 선생님
+app.post('/api/v1/bookings/series/:id/cancel', requireAuth, async (req, res) => {
+  try {
+    const seriesId = parsePositiveInt(req.params.id);
+    if (!seriesId) {
+      return res.status(400).json({ error: 'invalid_series_id' });
+    }
+    const series = await query(
+      `SELECT id, teacher_user_id, student_user_id FROM recurring_series WHERE id = $1 LIMIT 1`,
+      [seriesId]
+    );
+    if (series.rowCount === 0) {
+      return res.status(404).json({ error: 'series_not_found' });
+    }
+    const row = series.rows[0];
+    const isStudentOwner = Number(row.student_user_id) === Number(req.auth.userId);
+    const isTeacherOwner = Number(row.teacher_user_id) === Number(req.auth.userId);
+    if (!isStudentOwner && !isTeacherOwner) {
+      return res.status(403).json({ error: 'forbidden' });
+    }
+
+    const canceledStatus = isTeacherOwner ? 'CANCELED_BY_TEACHER' : 'CANCELED_BY_STUDENT';
+    const updated = await query(
+      `
+        UPDATE bookings
+        SET status = $2,
+            canceled_at = NOW(),
+            cancel_reason = COALESCE(cancel_reason, '정기예약 일괄취소'),
+            updated_at = NOW()
+        WHERE recurring_series_id = $1
+          AND status IN ('PENDING', 'BOOKED')
+          AND start_at > NOW()
+        RETURNING id
+      `,
+      [seriesId, canceledStatus]
+    );
+    await query(`UPDATE recurring_series SET canceled_at = NOW() WHERE id = $1`, [seriesId]);
+
+    auditLog(req, 'booking.series.cancel', {
+      target_type: 'recurring_series',
+      target_id: seriesId,
+      payload: { canceled_count: updated.rowCount },
+    });
+
+    return res.json({ ok: true, canceled_count: updated.rowCount });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
 app.post('/api/v1/public/bookings', publicBookingLimiter, async (req, res) => {
   return res.status(410).json({ error: 'guest_booking_disabled' });
   try {
@@ -3842,6 +4006,7 @@ app.get('/api/v1/bookings/me', requireAuth, requireStudent, async (req, res) => 
           b.cancel_reason,
           b.created_at,
           b.updated_at,
+          b.recurring_series_id,
           t.name AS teacher_name,
           t.email AS teacher_email
         FROM bookings b
@@ -3990,7 +4155,15 @@ app.get('/api/v1/teachers/me/bookings', requireAuth, requireTeacher, async (req,
           COALESCE(su.name, b.guest_student_name, gs.contact_name, '비회원') AS student_name,
           su.email AS student_email,
           (b.guest_student_id IS NOT NULL) AS is_guest_student,
-          gs.phone_normalized AS guest_phone
+          gs.phone_normalized AS guest_phone,
+          b.no_show_at,
+          b.recurring_series_id,
+          (
+            SELECT COUNT(*) FROM bookings nb
+            WHERE nb.student_user_id = b.student_user_id
+              AND nb.teacher_user_id = b.teacher_user_id
+              AND nb.status = 'NO_SHOW'
+          )::int AS student_no_show_count
         FROM bookings b
         LEFT JOIN users su ON su.id = b.student_user_id
         LEFT JOIN guest_students gs ON gs.id = b.guest_student_id
@@ -4091,7 +4264,8 @@ app.post('/api/v1/teachers/me/bookings/:id/complete', requireAuth, requireTeache
       return res.status(403).json({ error: 'forbidden' });
     }
     const currentStatus = String(targetRow.status || '');
-    if (!['PENDING', 'BOOKED', 'COMPLETED'].includes(currentStatus)) {
+    // NO_SHOW 도 허용 → 잘못 표시한 노쇼를 완료로 되돌릴 수 있다
+    if (!['PENDING', 'BOOKED', 'COMPLETED', 'NO_SHOW'].includes(currentStatus)) {
       return res.status(409).json({ error: 'booking_not_completable' });
     }
 
@@ -4132,6 +4306,7 @@ app.post('/api/v1/teachers/me/bookings/:id/complete', requireAuth, requireTeache
         UPDATE bookings
         SET status = 'COMPLETED',
             completed_at = COALESCE(completed_at, NOW()),
+            no_show_at = NULL,
             teacher_private_comment = CASE
               WHEN $3::text IS NULL THEN teacher_private_comment
               ELSE $3::text
@@ -4147,7 +4322,7 @@ app.post('/api/v1/teachers/me/bookings/:id/complete', requireAuth, requireTeache
             updated_at = NOW()
         WHERE id = $1
           AND teacher_user_id = $2
-          AND status IN ('PENDING', 'BOOKED', 'COMPLETED')
+          AND status IN ('PENDING', 'BOOKED', 'COMPLETED', 'NO_SHOW')
         RETURNING
           id,
           teacher_user_id,
@@ -4191,6 +4366,88 @@ app.post('/api/v1/teachers/me/bookings/:id/complete', requireAuth, requireTeache
       }
       return res.status(409).json({ error: 'booking_not_completable' });
     }
+
+    return res.json({ item: updated.rows[0] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'internal_server_error' });
+  }
+});
+
+// 선생님이 지난 수업을 노쇼(NO_SHOW)로 표시 (수동)
+app.post('/api/v1/teachers/me/bookings/:id/no-show', requireAuth, requireTeacher, async (req, res) => {
+  try {
+    const bookingId = parsePositiveInt(req.params.id);
+    if (!bookingId) {
+      return res.status(400).json({ error: 'invalid_booking_id' });
+    }
+
+    const target = await query(
+      `
+        SELECT id, teacher_user_id, student_user_id, status, start_at
+        FROM bookings
+        WHERE id = $1
+        LIMIT 1
+      `,
+      [bookingId]
+    );
+    if (target.rowCount === 0) {
+      return res.status(404).json({ error: 'booking_not_found' });
+    }
+    const targetRow = target.rows[0];
+    if (Number(targetRow.teacher_user_id) !== Number(req.auth.userId)) {
+      return res.status(403).json({ error: 'forbidden' });
+    }
+
+    const currentStatus = String(targetRow.status || '');
+    // 노쇼 표시 가능: 진행(BOOKED)/완료(COMPLETED) 건. 이미 NO_SHOW 면 멱등 처리.
+    if (!['BOOKED', 'COMPLETED', 'NO_SHOW'].includes(currentStatus)) {
+      return res.status(409).json({ error: 'booking_not_no_show_markable' });
+    }
+    // 노쇼는 수업 시작 시각이 지난 뒤에만 의미가 있다
+    const startMs = Date.parse(targetRow.start_at);
+    if (Number.isFinite(startMs) && startMs > Date.now()) {
+      return res.status(409).json({ error: 'lesson_not_started' });
+    }
+
+    const updated = await query(
+      `
+        UPDATE bookings
+        SET status = 'NO_SHOW',
+            no_show_at = COALESCE(no_show_at, NOW()),
+            updated_at = NOW()
+        WHERE id = $1
+          AND teacher_user_id = $2
+          AND status IN ('BOOKED', 'COMPLETED', 'NO_SHOW')
+        RETURNING
+          id,
+          teacher_user_id,
+          student_user_id,
+          start_at,
+          (start_at + make_interval(mins => duration_min)) AS end_at,
+          duration_min,
+          status,
+          no_show_at,
+          completed_at,
+          teacher_private_comment,
+          COALESCE(student_comment, teacher_comment) AS student_comment,
+          canceled_at,
+          cancel_reason,
+          created_at,
+          updated_at
+      `,
+      [bookingId, req.auth.userId]
+    );
+
+    if (updated.rowCount === 0) {
+      return res.status(409).json({ error: 'booking_not_no_show_markable' });
+    }
+
+    auditLog(req, 'teacher.booking.no_show', {
+      target_type: 'booking',
+      target_id: bookingId,
+      payload: { previous_status: currentStatus, student_user_id: updated.rows[0].student_user_id },
+    });
 
     return res.json({ item: updated.rows[0] });
   } catch (err) {

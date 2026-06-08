@@ -4,7 +4,7 @@
 -- 사용법: Supabase 대시보드 → SQL Editor 에 통째로 붙여넣고 Run
 --        또는 psql "$SUPABASE_DB_URL" -f scripts/supabase-bootstrap.sql
 -- 
--- 포함: 마이그레이션 001~020 + 시드 001
+-- 포함: 마이그레이션 001~023 + 시드 001
 -- ============================================================
 
 -- ============================================================
@@ -612,6 +612,53 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_target
 
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created
   ON audit_logs (created_at DESC);
+
+-- ============================================================
+-- db/migrations/021_user_must_change_password.sql
+-- ============================================================
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE;
+
+CREATE INDEX IF NOT EXISTS idx_users_must_change_password
+  ON users (must_change_password)
+  WHERE must_change_password = TRUE;
+
+-- ============================================================
+-- db/migrations/022_no_show_marking.sql
+-- ============================================================
+ALTER TABLE bookings
+  ADD COLUMN IF NOT EXISTS no_show_at TIMESTAMPTZ;
+
+CREATE INDEX IF NOT EXISTS idx_bookings_student_no_show
+  ON bookings (student_user_id)
+  WHERE status = 'NO_SHOW';
+
+-- ============================================================
+-- db/migrations/023_recurring_bookings.sql
+-- ============================================================
+CREATE TABLE IF NOT EXISTS recurring_series (
+  id BIGSERIAL PRIMARY KEY,
+  teacher_user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  student_user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  weekday SMALLINT NOT NULL CHECK (weekday BETWEEN 0 AND 6),
+  start_time_local TEXT NOT NULL,
+  duration_min INT NOT NULL CHECK (duration_min > 0),
+  lesson_title TEXT,
+  requested_count INT NOT NULL CHECK (requested_count > 0),
+  created_count INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  canceled_at TIMESTAMPTZ NULL
+);
+
+ALTER TABLE bookings
+  ADD COLUMN IF NOT EXISTS recurring_series_id BIGINT REFERENCES recurring_series(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_bookings_recurring_series
+  ON bookings (recurring_series_id)
+  WHERE recurring_series_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_recurring_series_teacher ON recurring_series (teacher_user_id);
+CREATE INDEX IF NOT EXISTS idx_recurring_series_student ON recurring_series (student_user_id);
 
 -- ============================================================
 -- db/seeds/001_seed.sql

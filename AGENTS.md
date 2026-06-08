@@ -8,11 +8,11 @@
 
 ## 1. 작업 시작 전 읽을 문서
 아래 순서대로 읽는다.
-1. `/Volumes/Extreme_SSD/workspace/README.md`
-2. `/Volumes/Extreme_SSD/workspace/CODEX.md`
-3. `/Volumes/Extreme_SSD/workspace/docs/handover-YYYY-MM-DD.md` 중 최신 파일
-4. `/Volumes/Extreme_SSD/workspace/docs/ai-handover-2026-03-30.md`
-5. `/Volumes/Extreme_SSD/workspace/docs/ai-collaboration-playbook-2026-04-02.md`
+1. `README.md`
+2. `CODEX.md`
+3. `docs/handover-YYYY-MM-DD.md` 중 최신 파일
+4. `docs/ai-handover-2026-03-30.md`
+5. `docs/ai-collaboration-playbook-2026-04-02.md`
 
 ## 2. 저장소와 서비스 기준
 - 루트 워크스페이스가 소스 오브 트루스다.
@@ -20,7 +20,9 @@
 - 저장소 구조는 `frontend/`, `backend/`, `db/`, `docs/`다.
 - 백엔드는 Node.js + Express + PostgreSQL + JWT다.
 - 프론트는 정적 HTML + Vanilla JS다.
-- 기본 포트는 프론트 `18080`, 백엔드 `4000`이다.
+- 인프라는 **Supabase(DB) + Vercel(서버리스/정적) 전용**이다. Docker 는 쓰지 않는다.
+  - 로컬 전체 실행: `vercel dev` / 백엔드 단독: `node backend/src/index.js` (`PORT`, 기본 4000)
+  - DB 는 `DATABASE_URL`(Supabase) 로 연결한다.
 - 서비스 시간대는 `Asia/Seoul`이다.
 - 역할은 `POWER_ADMIN`, `TEACHER`, `STUDENT`다.
 
@@ -33,19 +35,19 @@
 - 선생님 비활성화 시 학생 연결 해제 영향까지 확인한다.
 
 ## 4. 먼저 확인할 파일
-- 백엔드 엔트리: `/Volumes/Extreme_SSD/workspace/backend/src/index.js`
-- 인증 보조: `/Volumes/Extreme_SSD/workspace/backend/src/auth.js`
-- 프론트 메인: `/Volumes/Extreme_SSD/workspace/frontend/app.html`
-- 프론트 메인 로직: `/Volumes/Extreme_SSD/workspace/frontend/lesson-booking-app.js`
-- 파워관리자 로직: `/Volumes/Extreme_SSD/workspace/frontend/power-admin-app.js`
-- 로그인 흐름 파일: `/Volumes/Extreme_SSD/workspace/frontend/index.html`, `/Volumes/Extreme_SSD/workspace/frontend/teacher-login.html`, `/Volumes/Extreme_SSD/workspace/frontend/student-login.html`, `/Volumes/Extreme_SSD/workspace/frontend/login-flow.js`
-- 관련 마이그레이션: `/Volumes/Extreme_SSD/workspace/db/migrations/014_power_admin_and_timezone.sql`, `/Volumes/Extreme_SSD/workspace/db/migrations/015_user_soft_deletion.sql`, `/Volumes/Extreme_SSD/workspace/db/migrations/016_admin_patch_notes_and_power_admin_login_fix.sql`
+- 백엔드 엔트리: `backend/src/index.js`
+- 인증 보조: `backend/src/auth.js`
+- 프론트 메인: `frontend/app.html`
+- 프론트 메인 로직: `frontend/lesson-booking-app.js`
+- 파워관리자 로직: `frontend/power-admin-app.js`
+- 로그인 흐름 파일: `frontend/index.html`, `frontend/teacher-login.html`, `frontend/student-login.html`, `frontend/login-flow.js`
+- 관련 마이그레이션: `db/migrations/014_power_admin_and_timezone.sql`, `db/migrations/015_user_soft_deletion.sql`, `db/migrations/016_admin_patch_notes_and_power_admin_login_fix.sql`
 
 다음 파일은 공용 위험 파일이다.
-- `/Volumes/Extreme_SSD/workspace/backend/src/index.js`
-- `/Volumes/Extreme_SSD/workspace/frontend/lesson-booking-app.js`
-- `/Volumes/Extreme_SSD/workspace/frontend/app.html`
-- `/Volumes/Extreme_SSD/workspace/frontend/login-flow.js`
+- `backend/src/index.js`
+- `frontend/lesson-booking-app.js`
+- `frontend/app.html`
+- `frontend/login-flow.js`
 
 이 파일을 수정할 때는 수정 전에 영향 범위를 먼저 적는다.
 
@@ -183,7 +185,7 @@
 - 학생-선생 연결 누락으로 예약 흐름이 깨진 경우
 - `lesson_duration_min`, 시간대, 날짜 경계, 슬롯 중복 판정 오류
 - 테스트는 통과했지만 수동 흐름에서 실패한 경우
-- Docker, migrate, seed, smoke 절차가 문서와 달라 막힌 경우
+- migrate, seed, smoke, 배포(Supabase/Vercel) 절차가 문서와 달라 막힌 경우
 
 ## 10. 커밋 전 체크리스트
 - 관련 기능을 직접 실행했거나 테스트했다.
@@ -206,27 +208,28 @@
 권장 검증 명령:
 
 ```bash
-docker compose up --build -d
-docker compose run --rm backend npm test
-bash "/Volumes/Extreme_SSD/workspace/scripts/daily-handover.sh"
-RUN_SMOKE=1 bash "/Volumes/Extreme_SSD/workspace/scripts/daily-handover.sh"
+# .env 의 DATABASE_URL 을 Supabase dev DB 로 설정한 뒤 (운영 DB 금지)
+npm --prefix backend run migrate
+npm --prefix backend test
+bash scripts/daily-handover.sh
+RUN_SMOKE=1 bash scripts/daily-handover.sh
 ```
 
 상황별 추가 검증:
 
 ```bash
-node --check /Volumes/Extreme_SSD/workspace/backend/src/index.js
-node --check /Volumes/Extreme_SSD/workspace/backend/src/auth.js
-node --check /Volumes/Extreme_SSD/workspace/frontend/lesson-booking-app.js
-node --check /Volumes/Extreme_SSD/workspace/frontend/login-flow.js
-node --check /Volumes/Extreme_SSD/workspace/frontend/power-admin-app.js
-docker compose run --rm backend npm run migrate
-docker compose run --rm backend npm run seed
-bash "/Volumes/Extreme_SSD/workspace/scripts/smoke-test-api.sh"
+node --check backend/src/index.js
+node --check backend/src/auth.js
+node --check frontend/lesson-booking-app.js
+node --check frontend/login-flow.js
+node --check frontend/power-admin-app.js
+npm --prefix backend run seed
+node backend/src/index.js    # 또는 vercel dev (프론트+API)
+bash scripts/smoke-test-api.sh
 ```
 
 테스트를 생략하면 이유를 적는다.
-예: 문서만 수정, Docker 미기동, 외부 의존성 장애, 브라우저 자동화 환경 제한.
+예: 문서만 수정, Supabase dev DB 미설정, 외부 의존성 장애, 브라우저 자동화 환경 제한.
 
 ## 11. 작업 후 아이디어 규칙
 - 요청 범위를 넘는 아이디어는 구현하지 말고 제안으로만 남긴다.
@@ -237,6 +240,6 @@ bash "/Volumes/Extreme_SSD/workspace/scripts/smoke-test-api.sh"
 - 예상 검증
 
 ## 12. 현 저장소에서 자주 놓치는 것
-- 오래된 문서에 `8080`이나 예전 관리자 자격 정보가 남아 있을 수 있다. 운영값은 문서에 직접 쓰지 않는다.
-- `._*` 같은 macOS 메타파일 때문에 Docker 빌드가 깨질 수 있다.
+- 오래된 문서에 `18080`/`8080` 같은 옛 Docker 포트나 예전 관리자 자격 정보가 남아 있을 수 있다. 운영값은 문서에 직접 쓰지 않는다.
+- Docker 는 제거됨(2026-06-08). `docker compose`/`dev-stack.sh` 를 다시 만들거나 켜두지 않는다.
 - 큰 변경 후에는 `docs/handover-YYYY-MM-DD.md`에 완료 작업, 검증 결과, 리스크, 다음 액션을 남긴다.

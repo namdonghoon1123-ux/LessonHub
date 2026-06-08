@@ -4,7 +4,7 @@
 - 목적: 교사/학생 레슨 예약 MVP
 - 백엔드: Node.js + Express + PostgreSQL(`pg`) + JWT
 - 프론트: Vanilla JS + 정적 HTML 다중 페이지(`frontend/*.html`)
-- 인프라: Docker Compose (`frontend`, `backend`, `db`)
+- 인프라: **Supabase(DB) + Vercel(서버리스/정적) 전용** (Docker 제거됨, 2026-06-08)
 
 ## 2) 2026-03-02 기준 핵심 변경
 - 인증 로그아웃은 서버 토큰 폐기 방식으로 동작
@@ -30,22 +30,23 @@
 
 ## 4) 필수 검증 명령
 ```bash
-docker compose run --rm backend npm test
-docker compose exec -T backend npm run -s migrate
-docker compose up --build -d backend frontend
+# .env 의 DATABASE_URL = Supabase dev DB (운영 DB 금지)
+npm --prefix backend run migrate
+npm --prefix backend test
+vercel dev          # 프론트 + /api 서버리스 로컬 실행
 ```
 
 ## 5) 참고 문서
-- 일일 인수인계: `/Volumes/Extreme_SSD/workspace/docs/handover-YYYY-MM-DD.md`
-- 작업 기록: `/Volumes/Extreme_SSD/workspace/docs/worklog-2026-03-02.md`
+- 일일 인수인계: `docs/handover-YYYY-MM-DD.md`
+- 작업 기록: `docs/worklog-2026-03-02.md`
 
 ## 6) 2026-03-02 추가 반영 (최신)
 - 설정파일 기반 운영값 적용
-  - 파일: `/Volumes/Extreme_SSD/workspace/backend/config/app.config.json`
-  - 로더: `/Volumes/Extreme_SSD/workspace/backend/src/config.js`
+  - 파일: `backend/config/app.config.json`
+  - 로더: `backend/src/config.js`
   - 반영된 설정: 게스트 취소사유 필수, PIN 락아웃 정책, 완료 코멘트 필수 정책, 스케줄러 주기
 - DB 스키마 추가
-  - `/Volumes/Extreme_SSD/workspace/db/migrations/009_guest_pin_lockout_and_comment_split.sql`
+  - `db/migrations/009_guest_pin_lockout_and_comment_split.sql`
   - `guest_students.pin_failed_attempts`, `guest_students.pin_locked_until`
   - `bookings.teacher_private_comment`, `bookings.student_comment`
 - API 정책
@@ -59,11 +60,10 @@ docker compose up --build -d backend frontend
 
 ## 7) 재검증 명령 (최신)
 ```bash
-docker-compose build backend
-docker-compose run --rm backend npm test
-docker-compose up --build -d backend frontend
-docker-compose exec -T backend npm run -s migrate
-bash "/Volumes/Extreme_SSD/workspace/scripts/smoke-test-api.sh"
+npm --prefix backend run migrate
+npm --prefix backend test
+node backend/src/index.js     # 또는 vercel dev
+bash scripts/smoke-test-api.sh
 ```
 
 ## 8) 2026-03-06 추가 인수인계
@@ -97,6 +97,6 @@ bash "/Volumes/Extreme_SSD/workspace/scripts/smoke-test-api.sh"
   - 사용자 문구 통일(`Today` -> `오늘`, `This Week` -> `이번 주`)
   - 접근성 보강(`aria-current`, `role=status`, 표 `scope`, `prefers-reduced-motion`, `prefers-contrast`)
 - 참고 문서
-  - QA 체크리스트: `/Volumes/Extreme_SSD/workspace/docs/ui-qa-checklist-2026-03-23.md`
-  - Gemini 검수 주의사항: `/Volumes/Extreme_SSD/workspace/docs/gemini-design-review-notes-2026-03-23.md`
-  - 회귀 스냅샷: `/Volumes/Extreme_SSD/workspace/docs/regression-snapshots/2026-03-23`
+  - QA 체크리스트: `docs/ui-qa-checklist-2026-03-23.md`
+  - Gemini 검수 주의사항: `docs/gemini-design-review-notes-2026-03-23.md`
+  - 회귀 스냅샷: `docs/regression-snapshots/2026-03-23`

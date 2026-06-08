@@ -3,6 +3,12 @@
     "autoCompletePollMs": 60000,
     "guestRetentionPollMs": 86400000
   },
+  "auth": {
+    "rateLimit": {
+      "windowMs": 600000,
+      "max": 30
+    }
+  },
   "guest": {
     "publicAccessDays": 90,
     "dataRetentionDays": 365,

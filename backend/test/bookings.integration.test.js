@@ -830,3 +830,126 @@ test('guest booking APIs are disabled', async () => {
   assert.equal(resetGuestPin.status, 410);
   assert.equal(resetGuestPin.body.error, 'guest_feature_disabled');
 });
+
+test('temp student must change password on first login, and self-change clears the flag', async () => {
+  await seedBookableScenario();
+  const teacherToken = await login('teacher@example.com');
+
+  const created = await requestJson('/api/v1/teachers/me/students/temp', {
+    method: 'POST',
+    token: teacherToken,
+    body: { name: '강제비번학생', password: 'temppw123' },
+  });
+  assert.equal(created.status, 201);
+  assert.equal(created.body.user.must_change_password, true);
+  const tempLoginId = created.body.temporary_credentials.login_id;
+
+  const loginRes = await requestJson('/api/v1/auth/login', {
+    method: 'POST',
+    body: { login_id: tempLoginId, password: 'temppw123' },
+  });
+  assert.equal(loginRes.status, 200);
+  assert.equal(loginRes.body.user.must_change_password, true);
+  const studentToken = loginRes.body.token;
+
+  const tooShort = await requestJson('/api/v1/users/me/password', {
+    method: 'PATCH',
+    token: studentToken,
+    body: { current_password: 'temppw123', new_password: 'short' },
+  });
+  assert.equal(tooShort.status, 400);
+  assert.equal(tooShort.body.error, 'new_password must be at least 8 characters');
+
+  const changed = await requestJson('/api/v1/users/me/password', {
+    method: 'PATCH',
+    token: studentToken,
+    body: { current_password: 'temppw123', new_password: 'brandnew123' },
+  });
+  assert.equal(changed.status, 200);
+
+  const me = await requestJson('/api/v1/auth/me', { token: studentToken });
+  assert.equal(me.status, 200);
+  assert.equal(me.body.user.must_change_password, false);
+});
+
+test('teacher can mark a started lesson as NO_SHOW, count accrues, and revert to COMPLETED works', async () => {
+  const scenario = await seedBookableScenario();
+  const studentToken = await login('student@example.com');
+  const teacherToken = await login('teacher@example.com');
+
+  const created = await requestJson('/api/v1/bookings', {
+    method: 'POST',
+    token: studentToken,
+    body: { teacher_user_id: scenario.teacherId, start_at: scenario.slotStartIso },
+  });
+  assert.equal(created.status, 201);
+  const bookingId = created.body.item.id;
+
+  const approved = await requestJson(`/api/v1/teachers/me/bookings/${bookingId}/approve`, {
+    method: 'POST',
+    token: teacherToken,
+  });
+  assert.equal(approved.status, 200);
+  assert.equal(approved.body.item.status, 'BOOKED');
+
+  // 아직 미래 → 노쇼 불가
+  const futureNoShow = await requestJson(`/api/v1/teachers/me/bookings/${bookingId}/no-show`, {
+    method: 'POST',
+    token: teacherToken,
+  });
+  assert.equal(futureNoShow.status, 409);
+  assert.equal(futureNoShow.body.error, 'lesson_not_started');
+
+  // 시작 시각을 과거로 이동
+  await pool.query(`UPDATE bookings SET start_at = NOW() - INTERVAL '2 hours' WHERE id = $1`, [bookingId]);
+
+  const noShow = await requestJson(`/api/v1/teachers/me/bookings/${bookingId}/no-show`, {
+    method: 'POST',
+    token: teacherToken,
+  });
+  assert.equal(noShow.status, 200);
+  assert.equal(noShow.body.item.status, 'NO_SHOW');
+
+  const list = await requestJson('/api/v1/teachers/me/bookings', { token: teacherToken });
+  assert.equal(list.status, 200);
+  const row = list.body.items.find((it) => Number(it.id) === Number(bookingId));
+  assert.ok(row, 'booking missing from teacher list');
+  assert.equal(row.student_no_show_count, 1);
+  assert.equal(row.status, 'NO_SHOW');
+
+  const reverted = await requestJson(`/api/v1/teachers/me/bookings/${bookingId}/complete`, {
+    method: 'POST',
+    token: teacherToken,
+    body: { student_comment: '출석 확인', teacher_private_comment: '정정 처리' },
+  });
+  assert.equal(reverted.status, 200);
+  assert.equal(reverted.body.item.status, 'COMPLETED');
+});
+
+test('recurring booking creates weekly occurrences and series cancel removes future ones', async () => {
+  const scenario = await seedBookableScenario();
+  const studentToken = await login('student@example.com');
+
+  const result = await requestJson('/api/v1/bookings/recurring', {
+    method: 'POST',
+    token: studentToken,
+    body: { teacher_user_id: scenario.teacherId, start_at: scenario.slotStartIso, count: 3 },
+  });
+  assert.equal(result.status, 201);
+  assert.equal(result.body.created.length, 3);
+  assert.ok(result.body.series_id, 'series_id missing');
+
+  const starts = result.body.created
+    .map((b) => new Date(b.start_at).getTime())
+    .sort((a, b) => a - b);
+  const week = 7 * 24 * 60 * 60 * 1000;
+  assert.equal(starts[1] - starts[0], week);
+  assert.equal(starts[2] - starts[1], week);
+
+  const cancel = await requestJson(`/api/v1/bookings/series/${result.body.series_id}/cancel`, {
+    method: 'POST',
+    token: studentToken,
+  });
+  assert.equal(cancel.status, 200);
+  assert.equal(cancel.body.canceled_count, 3);
+});
