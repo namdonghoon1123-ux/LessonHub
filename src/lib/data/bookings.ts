@@ -1,0 +1,128 @@
+import "server-only";
+import { createAdminClient } from "@/lib/supabase/admin";
+import type { BookingLite } from "@/lib/slots";
+
+export type BookingStatus =
+  | "PENDING"
+  | "BOOKED"
+  | "COMPLETED"
+  | "NO_SHOW"
+  | "CANCELED";
+
+export type BookingRow = {
+  id: string;
+  teacher_id: string;
+  student_id: string;
+  start_at: string;
+  duration_min: number;
+  status: BookingStatus;
+  lesson_title_snapshot: string | null;
+  teacher_comment: string | null;
+  student_comment: string | null;
+  canceled_at: string | null;
+  created_at: string;
+};
+
+// 슬롯 계산용: 특정 선생의 활성 예약(start_at, student_id, status)
+export async function getActiveBookings(
+  teacherId: string,
+  fromISO: string,
+  toISO: string,
+): Promise<BookingLite[]> {
+  const db = createAdminClient();
+  const { data } = await db
+    .from("bookings")
+    .select("start_at, student_id, status")
+    .eq("teacher_id", teacherId)
+    .in("status", ["PENDING", "BOOKED"])
+    .gte("start_at", fromISO)
+    .lt("start_at", toISO);
+  return (data as BookingLite[]) ?? [];
+}
+
+export async function createBooking(input: {
+  studentId: string;
+  teacherId: string;
+  startAtISO: string;
+  durationMin: number;
+  lessonTitle: string | null;
+}): Promise<{ ok: boolean; error?: string }> {
+  const db = createAdminClient();
+  const { error } = await db.from("bookings").insert({
+    teacher_id: input.teacherId,
+    student_id: input.studentId,
+    start_at: input.startAtISO,
+    duration_min: input.durationMin,
+    status: "BOOKED",
+    lesson_title_snapshot: input.lessonTitle,
+  });
+  if (error) {
+    if (error.code === "23505") return { ok: false, error: "이미 예약된 시간입니다." };
+    return { ok: false, error: error.message };
+  }
+  return { ok: true };
+}
+
+export async function getStudentBookings(
+  studentId: string,
+): Promise<(BookingRow & { teacher_name: string })[]> {
+  const db = createAdminClient();
+  const { data } = await db
+    .from("bookings")
+    .select("*")
+    .eq("student_id", studentId)
+    .order("start_at", { ascending: true });
+  const rows = (data as BookingRow[]) ?? [];
+  const teacherIds = [...new Set(rows.map((r) => r.teacher_id))];
+  const names = await namesByIds(teacherIds);
+  return rows.map((r) => ({ ...r, teacher_name: names.get(r.teacher_id) ?? "선생님" }));
+}
+
+export async function getTeacherBookings(
+  teacherId: string,
+): Promise<(BookingRow & { student_name: string })[]> {
+  const db = createAdminClient();
+  const { data } = await db
+    .from("bookings")
+    .select("*")
+    .eq("teacher_id", teacherId)
+    .order("start_at", { ascending: false });
+  const rows = (data as BookingRow[]) ?? [];
+  const studentIds = [...new Set(rows.map((r) => r.student_id))];
+  const names = await namesByIds(studentIds);
+  return rows.map((r) => ({ ...r, student_name: names.get(r.student_id) ?? "학생" }));
+}
+
+async function namesByIds(ids: string[]): Promise<Map<string, string>> {
+  if (ids.length === 0) return new Map();
+  const db = createAdminClient();
+  const { data } = await db.from("profiles").select("id, name").in("id", ids);
+  return new Map((data ?? []).map((p) => [p.id, p.name]));
+}
+
+// 단건 조회 (소유권 확인용)
+export async function getBooking(id: string): Promise<BookingRow | null> {
+  const db = createAdminClient();
+  const { data } = await db.from("bookings").select("*").eq("id", id).single();
+  return (data as BookingRow) ?? null;
+}
+
+export async function setBookingStatus(
+  id: string,
+  status: BookingStatus,
+  extra: Partial<{
+    canceled_by: string;
+    canceled_at: string;
+    cancel_reason: string;
+    completed_at: string;
+    no_show_at: string;
+    teacher_comment: string;
+  }> = {},
+) {
+  const db = createAdminClient();
+  const { error } = await db
+    .from("bookings")
+    .update({ status, ...extra })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+}
