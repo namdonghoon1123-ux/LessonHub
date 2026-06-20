@@ -35,7 +35,13 @@ export async function GET(
           return req.cookies.getAll();
         },
         setAll(list) {
-          list.forEach(({ name, value, options }) => res.cookies.set(name, value, options));
+          list.forEach(({ name, value, options }) =>
+            res.cookies.set(
+              name,
+              value,
+              value ? { ...options, maxAge: 60 * 60 * 24 * 400 } : options,
+            ),
+          );
         },
       },
     },

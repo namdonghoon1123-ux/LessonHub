@@ -19,7 +19,11 @@ export async function updateSession(request: NextRequest) {
           );
           response = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
+            response.cookies.set(
+              name,
+              value,
+              value ? { ...options, maxAge: 60 * 60 * 24 * 400 } : options,
+            ),
           );
         },
       },
