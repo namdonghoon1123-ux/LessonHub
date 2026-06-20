@@ -3,9 +3,14 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Chip, EmptyState, PageTitle } from "@/components/ui";
+import Modal from "@/components/Modal";
 import type { BookingStatus } from "@/lib/data/bookings";
 import { WEEKDAY_KO, fmtTime, kstWall } from "@/lib/time";
-import { cancelMyBookingAction, cancelMySeriesAction } from "../actions";
+import {
+  cancelMyBookingAction,
+  cancelMySeriesAction,
+  sendPaymentNoticeAction,
+} from "../actions";
 
 export type UIBooking = {
   id: string;
@@ -48,12 +53,31 @@ const STATUS_LABEL: Record<BookingStatus, string> = {
 export default function MyBookings({
   upcoming,
   past,
+  cancelNotice,
+  canNotifyPayment,
 }: {
   upcoming: UIBooking[];
   past: UIBooking[];
+  cancelNotice: string;
+  canNotifyPayment: boolean;
 }) {
+  const router = useRouter();
+  const [payTransition, startPay] = useTransition();
+  const [payOpen, setPayOpen] = useState(false);
+  const [payMsg, setPayMsg] = useState("");
+  const [paySent, setPaySent] = useState(false);
   const [month, setMonth] = useState("all");
   const [page, setPage] = useState(1);
+
+  const sendPayment = () =>
+    startPay(async () => {
+      await sendPaymentNoticeAction(payMsg);
+      setPayMsg("");
+      setPayOpen(false);
+      setPaySent(true);
+      router.refresh();
+      setTimeout(() => setPaySent(false), 3000);
+    });
   const months = [...new Set(past.map((b) => mKey(b.start_at)))].sort((a, b) =>
     b.localeCompare(a),
   );
@@ -68,11 +92,23 @@ export default function MyBookings({
       <PageTitle
         title="내 예약"
         right={
-          <span className="rounded-full bg-line-soft px-3 py-1 text-[12px] font-semibold text-sub">
-            취소는 수업 48시간 전까지
-          </span>
+          canNotifyPayment ? (
+            <button
+              type="button"
+              onClick={() => setPayOpen(true)}
+              className="h-10 rounded-[var(--radius-btn)] bg-coral px-4 text-[13.5px] font-bold text-white hover:opacity-95"
+            >
+              💰 입금 알림 보내기
+            </button>
+          ) : undefined
         }
       />
+
+      {paySent && (
+        <p className="mb-3 rounded-[10px] bg-success-bg px-3 py-2 text-[13px] font-medium text-success">
+          선생님께 입금 알림을 보냈어요.
+        </p>
+      )}
 
       <h2 className="mb-2 mt-2 text-[15px] font-bold">
         다가오는 예약{" "}
@@ -83,7 +119,7 @@ export default function MyBookings({
       ) : (
         <div className="flex flex-col gap-2.5">
           {upcoming.map((b) => (
-            <BookingCard key={b.id} b={b} />
+            <BookingCard key={b.id} b={b} cancelNotice={cancelNotice} />
           ))}
         </div>
       )}
@@ -120,7 +156,7 @@ export default function MyBookings({
                 <p className="mb-2 text-[13px] font-bold text-sub tabular-nums">{m}</p>
                 <div className="flex flex-col gap-2.5">
                   {list.map((b) => (
-                    <BookingCard key={b.id} b={b} past />
+                    <BookingCard key={b.id} b={b} past cancelNotice={cancelNotice} />
                   ))}
                 </div>
               </div>
@@ -137,6 +173,36 @@ export default function MyBookings({
           )}
         </>
       )}
+
+      <Modal open={payOpen} onClose={() => setPayOpen(false)} title="입금 알림 보내기">
+        <p className="mb-2 text-[13px] text-sub">
+          입금하셨다면 선생님께 알려드려요. 메모(금액·내용)는 선택입니다.
+        </p>
+        <textarea
+          value={payMsg}
+          onChange={(e) => setPayMsg(e.target.value)}
+          rows={3}
+          placeholder="예: 6월 레슨 4회분 입금했습니다 (홍길동)"
+          className="w-full rounded-[10px] border-[1.5px] border-line px-3 py-2 text-[14px] outline-none focus:border-coral"
+        />
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setPayOpen(false)}
+            className="h-10 rounded-[var(--radius-btn)] border border-line px-4 text-[14px] font-medium text-sub hover:bg-line-soft"
+          >
+            닫기
+          </button>
+          <button
+            type="button"
+            disabled={payTransition}
+            onClick={sendPayment}
+            className="h-10 rounded-[var(--radius-btn)] bg-coral px-5 text-[14px] font-bold text-white disabled:opacity-60"
+          >
+            {payTransition ? "보내는 중…" : "보내기"}
+          </button>
+        </div>
+      </Modal>
     </>
   );
 }
@@ -162,27 +228,34 @@ function PgBtn({
   );
 }
 
-function BookingCard({ b, past }: { b: UIBooking; past?: boolean }) {
+function BookingCard({
+  b,
+  past,
+  cancelNotice,
+}: {
+  b: UIBooking;
+  past?: boolean;
+  cancelNotice: string;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<null | "single" | "series">(null);
   const w = kstWall(new Date(b.start_at));
   const dl = kstWall(new Date(b.deadlineISO));
 
-  const cancel = () =>
+  const doCancel = () =>
     startTransition(async () => {
       setError(null);
-      const res = await cancelMyBookingAction(b.id);
+      const res =
+        confirm === "series"
+          ? await cancelMySeriesAction(b.seriesId!)
+          : await cancelMyBookingAction(b.id);
       if (!res.ok) setError(res.error ?? "취소 실패");
-      else router.refresh();
-    });
-
-  const cancelSeries = () =>
-    startTransition(async () => {
-      setError(null);
-      const res = await cancelMySeriesAction(b.seriesId!);
-      if (!res.ok) setError(res.error ?? "취소 실패");
-      else router.refresh();
+      else {
+        setConfirm(null);
+        router.refresh();
+      }
     });
 
   const statusTone =
@@ -248,7 +321,7 @@ function BookingCard({ b, past }: { b: UIBooking; past?: boolean }) {
             <button
               type="button"
               disabled={pending || !b.canCancel}
-              onClick={cancel}
+              onClick={() => setConfirm("single")}
               className="rounded-[var(--radius-btn)] border border-line px-3 py-2 text-[13px] font-medium text-sub enabled:hover:bg-line-soft disabled:cursor-not-allowed disabled:opacity-50"
             >
               {b.canCancel ? "예약 취소" : "취소 마감"}
@@ -257,7 +330,7 @@ function BookingCard({ b, past }: { b: UIBooking; past?: boolean }) {
               <button
                 type="button"
                 disabled={pending}
-                onClick={cancelSeries}
+                onClick={() => setConfirm("series")}
                 className="rounded-[var(--radius-btn)] border border-line px-3 py-2 text-[13px] font-medium text-coral-deep enabled:hover:bg-coral-tint/40 disabled:opacity-50"
               >
                 반복 취소
@@ -267,6 +340,38 @@ function BookingCard({ b, past }: { b: UIBooking; past?: boolean }) {
         )}
       </div>
       {error && <p className="w-full text-[12px] text-coral-deep">{error}</p>}
+
+      <Modal
+        open={confirm != null}
+        onClose={() => setConfirm(null)}
+        title={confirm === "series" ? "반복 예약 전체 취소" : "예약 취소"}
+      >
+        <p className="rounded-[10px] bg-coral-tint px-3 py-2.5 text-[13.5px] leading-relaxed text-coral-deep">
+          {cancelNotice}
+        </p>
+        <p className="mt-3 text-[13px] text-sub">
+          {confirm === "series"
+            ? "이 반복 예약의 다가오는 수업을 모두 취소할까요?"
+            : "이 예약을 취소할까요?"}
+        </p>
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setConfirm(null)}
+            className="h-10 rounded-[var(--radius-btn)] border border-line px-4 text-[14px] font-medium text-sub hover:bg-line-soft"
+          >
+            닫기
+          </button>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={doCancel}
+            className="h-10 rounded-[var(--radius-btn)] bg-coral px-5 text-[14px] font-bold text-white disabled:opacity-60"
+          >
+            {pending ? "취소 중…" : "예약 취소"}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -7,6 +7,19 @@ import {
   removeStudentLink,
   requestStudentLink,
 } from "@/lib/data/links";
+import { createPaymentNotices } from "@/lib/data/notifications";
+
+export async function sendPaymentNoticeAction(
+  message: string,
+): Promise<Result> {
+  const me = await requireRole("STUDENT");
+  const teachers = await getStudentTeachers(me.id);
+  const ids = teachers.map((t) => t.teacher_id);
+  if (ids.length === 0)
+    return { ok: false, error: "연결된 선생님이 없습니다." };
+  await createPaymentNotices(me.id, ids, message.trim());
+  return { ok: true };
+}
 import { getOverrides, getWeekly } from "@/lib/data/availability";
 import {
   cancelSeriesFuture,

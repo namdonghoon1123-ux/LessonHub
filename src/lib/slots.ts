@@ -24,7 +24,11 @@ export type BookingLite = {
   start_at: string; // ISO
   student_id: string;
   status: string;
+  duration_min: number;
 };
+
+// 슬롯 시작 간격(분). 레슨은 duration_min 길이지만 시작은 30분 단위.
+export const SLOT_STEP_MIN = 30;
 
 export type SlotStatus = "open" | "full" | "mine" | "past";
 export type Slot = { time: string; startAtISO: string; status: SlotStatus };
@@ -124,36 +128,40 @@ export function computeDaySlots(p: ComputeParams): DaySlots {
 
   const ranges = subtractIntervals(base, cuts);
 
-  // 활성 예약 시작시각 맵
-  const bookingByIso = new Map<string, BookingLite>();
-  for (const b of p.bookings) {
-    bookingByIso.set(new Date(b.start_at).toISOString(), b);
-  }
+  // 활성 예약을 시간 구간(ms)으로 — 겹침 판정용
+  const intervals = p.bookings.map((b) => {
+    const s = new Date(b.start_at).getTime();
+    return { s, e: s + b.duration_min * 60000, student_id: b.student_id };
+  });
+  const nowMs = now.getTime();
 
   const slots: Slot[] = [];
   for (const iv of ranges) {
     let t = iv.start;
+    // 시작은 30분 단위, 레슨 길이는 durationMin (겹치는 시작시간 허용)
     while (t + p.durationMin <= iv.end) {
       const h = Math.floor(t / 60);
       const m = t % 60;
       const timeStr = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
       const startAt = kstToUtc(p.date, timeStr);
-      const iso = startAt.toISOString();
-      const booking = bookingByIso.get(iso);
+      const sMs = startAt.getTime();
+      const eMs = sMs + p.durationMin * 60000;
+      // 이 슬롯 구간과 겹치는 예약 찾기
+      const ov = intervals.find((b) => b.s < eMs && b.e > sMs);
 
       let status: SlotStatus;
-      if (booking) {
+      if (ov) {
         status =
-          p.viewingStudentId && booking.student_id === p.viewingStudentId
+          p.viewingStudentId && ov.student_id === p.viewingStudentId
             ? "mine"
             : "full";
-      } else if (startAt.getTime() <= now.getTime()) {
+      } else if (sMs <= nowMs) {
         status = "past";
       } else {
         status = "open";
       }
-      slots.push({ time: timeStr, startAtISO: iso, status });
-      t += p.durationMin;
+      slots.push({ time: timeStr, startAtISO: startAt.toISOString(), status });
+      t += SLOT_STEP_MIN;
     }
   }
 

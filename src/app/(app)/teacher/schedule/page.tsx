@@ -33,6 +33,7 @@ export default async function Page() {
           cancelCutoffHours={profile?.teacher_cancel_cutoff_hours ?? 2}
           bookingWindowDays={profile?.booking_window_days ?? 30}
           shareTemplate={profile?.share_message_template ?? ""}
+          cancelNotice={profile?.cancel_notice ?? ""}
         />
         {icsUrl && <CalendarSync icsUrl={icsUrl} />}
       </div>

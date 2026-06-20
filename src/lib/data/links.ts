@@ -9,6 +9,7 @@ export type LinkedTeacher = {
   booking_window_days: number;
   teacher_cancel_cutoff_hours: number;
   student_cancel_day_before_hour: number | null;
+  cancel_notice: string | null;
 };
 
 // 학생의 ACTIVE 연결 선생님 목록 (+ teacher_profile)
@@ -31,7 +32,7 @@ export async function getStudentTeachers(
   const { data: tps } = await db
     .from("teacher_profiles")
     .select(
-      "teacher_id, subject, lesson_duration_min, booking_window_days, teacher_cancel_cutoff_hours, student_cancel_day_before_hour",
+      "teacher_id, subject, lesson_duration_min, booking_window_days, teacher_cancel_cutoff_hours, student_cancel_day_before_hour, cancel_notice",
     )
     .in("teacher_id", ids);
 
@@ -44,6 +45,7 @@ export async function getStudentTeachers(
     booking_window_days: tp.booking_window_days,
     teacher_cancel_cutoff_hours: tp.teacher_cancel_cutoff_hours,
     student_cancel_day_before_hour: tp.student_cancel_day_before_hour,
+    cancel_notice: tp.cancel_notice,
   }));
 }
 

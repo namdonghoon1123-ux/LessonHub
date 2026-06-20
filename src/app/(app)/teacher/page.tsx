@@ -3,6 +3,7 @@ import { getOverrides, getWeekly } from "@/lib/data/availability";
 import { getTeacherBookings } from "@/lib/data/bookings";
 import { getPendingRequests, getTeacherStudents } from "@/lib/data/links";
 import { getTeacherProfile } from "@/lib/data/teachers";
+import { getUnreadNotifications } from "@/lib/data/notifications";
 import { computeRange } from "@/lib/slots";
 import {
   addDaysStr,
@@ -13,6 +14,7 @@ import {
 } from "@/lib/time";
 import { Card, PageTitle } from "@/components/ui";
 import PendingRequests from "./PendingRequests";
+import Notifications from "./Notifications";
 import TeacherCalendar, { type SlotInfo } from "./TeacherCalendar";
 
 const STATUS_KO: Record<string, string> = {
@@ -48,13 +50,15 @@ export default async function Page({
   const fromISO = isoStart(gridStart);
   const toISO = isoStart(addDaysStr(gridStart, dayCount));
 
-  const [weekly, overrides, allBookings, pendingReqs, students] = await Promise.all([
-    getWeekly(me.id),
-    getOverrides(me.id, gridStart),
-    getTeacherBookings(me.id),
-    getPendingRequests(me.id),
-    getTeacherStudents(me.id),
-  ]);
+  const [weekly, overrides, allBookings, pendingReqs, students, notifications] =
+    await Promise.all([
+      getWeekly(me.id),
+      getOverrides(me.id, gridStart),
+      getTeacherBookings(me.id),
+      getPendingRequests(me.id),
+      getTeacherStudents(me.id),
+      getUnreadNotifications(me.id),
+    ]);
   const activeStudentOpts = students
     .filter((s) => s.status === "ACTIVE")
     .map((s) => ({ id: s.student_id, name: s.name }));
@@ -84,6 +88,7 @@ export default async function Page({
       start_at: b.start_at,
       student_id: b.student_id,
       status: b.status,
+      duration_min: b.duration_min,
     })),
   });
 
@@ -110,6 +115,7 @@ export default async function Page({
         desc="Asia/Seoul · 빈 시간 클릭=휴강, 예약 클릭=정보"
       />
 
+      <Notifications notes={notifications} />
       <PendingRequests requests={pendingReqs} />
 
       <Card className="mb-4 grid grid-cols-2 divide-x divide-line-soft">

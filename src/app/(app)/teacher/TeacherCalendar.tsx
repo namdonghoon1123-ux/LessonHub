@@ -436,10 +436,14 @@ function DayList({
 }: { day: DaySlots; infoBySlot: Record<string, SlotInfo>; onSlot: (s: Slot, date: string) => void }) {
   if (day.isPast) return <Centered>지난 날짜입니다.</Centered>;
   if (day.isOff) return <Centered>휴무입니다.</Centered>;
-  if (day.slots.length === 0) return <Centered>이 날은 열린 시간이 없습니다.</Centered>;
+  // 실제 예약 + 열린 시간만 (겹쳐서 막힌 중복 슬롯은 숨김)
+  const visible = day.slots.filter(
+    (s) => infoBySlot[s.startAtISO] || s.status === "open",
+  );
+  if (visible.length === 0) return <Centered>이 날은 열린 시간이 없습니다.</Centered>;
   return (
     <div className="flex flex-col gap-2">
-      {day.slots.map((s) => <SlotRow key={s.startAtISO} slot={s} info={infoBySlot[s.startAtISO]} onSlot={() => onSlot(s, day.date)} />)}
+      {visible.map((s) => <SlotRow key={s.startAtISO} slot={s} info={infoBySlot[s.startAtISO]} onSlot={() => onSlot(s, day.date)} />)}
     </div>
   );
 }
@@ -480,25 +484,33 @@ function WeekDayCard({
         {holidayName(day.date) && <div className="truncate text-[9px] font-semibold text-rose">{holidayName(day.date)}</div>}
       </div>
       <div className="flex flex-1 flex-col gap-1 p-2">
-        {day.isPast ? <Centered>지난 날짜</Centered> : day.isOff ? <Centered>휴무</Centered> : day.slots.length === 0 ? <Centered>—</Centered> : (
-          day.slots.map((s) => {
-            const info = infoBySlot[s.startAtISO];
-            if (info)
-              return (
-                <button key={s.startAtISO} type="button" onClick={() => onSlot(s, day.date)}
-                  className="rounded-[6px] border-l-2 border-rose bg-rose-tint px-1.5 py-1 text-left text-[11.5px] font-semibold text-rose tabular-nums">
-                  {s.time} {info.student_name}
-                </button>
-              );
-            if (s.status === "open")
+        {day.isPast ? (
+          <Centered>지난 날짜</Centered>
+        ) : day.isOff ? (
+          <Centered>휴무</Centered>
+        ) : (
+          (() => {
+            const visible = day.slots.filter(
+              (s) => infoBySlot[s.startAtISO] || s.status === "open",
+            );
+            if (visible.length === 0) return <Centered>—</Centered>;
+            return visible.map((s) => {
+              const info = infoBySlot[s.startAtISO];
+              if (info)
+                return (
+                  <button key={s.startAtISO} type="button" onClick={() => onSlot(s, day.date)}
+                    className="rounded-[6px] border-l-2 border-rose bg-rose-tint px-1.5 py-1 text-left text-[11.5px] font-semibold text-rose tabular-nums">
+                    {s.time} {info.student_name}
+                  </button>
+                );
               return (
                 <button key={s.startAtISO} type="button" onClick={() => onSlot(s, day.date)}
                   className="rounded-[6px] border border-dashed border-coral-border px-1.5 py-1 text-left text-[11.5px] text-coral-deep tabular-nums hover:bg-coral-tint/40">
                   {s.time} 열림
                 </button>
               );
-            return <span key={s.startAtISO} className="px-1.5 py-1 text-[11.5px] text-muted tabular-nums">{s.time}</span>;
-          })
+            });
+          })()
         )}
       </div>
     </div>

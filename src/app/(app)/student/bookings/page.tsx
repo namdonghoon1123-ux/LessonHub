@@ -1,11 +1,20 @@
 import { requireRole } from "@/lib/auth";
 import { getStudentBookings } from "@/lib/data/bookings";
+import { getStudentTeachers } from "@/lib/data/links";
 import { canStudentCancel, studentCancelDeadline } from "@/lib/policy";
 import MyBookings, { type UIBooking } from "./MyBookings";
 
+const DEFAULT_CANCEL_NOTICE =
+  "연습실 취소 수수료가 있어요. 부득이한 경우가 아니면 48시간 이전에 취소 부탁드립니다. ㅠㅠ";
+
 export default async function Page() {
   const me = await requireRole("STUDENT");
-  const rows = await getStudentBookings(me.id);
+  const [rows, teachers] = await Promise.all([
+    getStudentBookings(me.id),
+    getStudentTeachers(me.id),
+  ]);
+  const cancelNotice = teachers[0]?.cancel_notice ?? DEFAULT_CANCEL_NOTICE;
+  const hasTeacher = teachers.length > 0;
   const now = Date.now();
 
   const toUI = (r: (typeof rows)[number]): UIBooking => ({
@@ -33,5 +42,12 @@ export default async function Page() {
     .map(toUI)
     .reverse();
 
-  return <MyBookings upcoming={upcoming} past={past} />;
+  return (
+    <MyBookings
+      upcoming={upcoming}
+      past={past}
+      cancelNotice={cancelNotice}
+      canNotifyPayment={hasTeacher}
+    />
+  );
 }

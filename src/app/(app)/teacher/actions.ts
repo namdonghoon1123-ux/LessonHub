@@ -19,6 +19,14 @@ import {
 import { createAuthUser, createLink } from "@/lib/data/admin";
 import { getTeacherProfile, updateTeacherProfile } from "@/lib/data/teachers";
 import { addOverride, getOverrides, getWeekly } from "@/lib/data/availability";
+import { markNotificationRead } from "@/lib/data/notifications";
+
+export async function markNotificationReadAction(id: string): Promise<{ ok: boolean }> {
+  const me = await requireRole("TEACHER");
+  await markNotificationRead(id, me.id);
+  revalidatePath("/teacher");
+  return { ok: true };
+}
 import { computeDaySlots } from "@/lib/slots";
 import { addDaysStr, kstDateStr } from "@/lib/time";
 import { syntheticEmail, usernameTaken } from "@/lib/account";
@@ -91,6 +99,7 @@ export async function updateLessonSettingsAction(input: {
   cancelCutoffHours: number;
   bookingWindowDays: number;
   shareTemplate: string;
+  cancelNotice: string;
 }): Promise<Result> {
   const me = await requireRole("TEACHER");
   if (input.lessonDurationMin < 10 || input.lessonDurationMin > 240)
@@ -101,6 +110,7 @@ export async function updateLessonSettingsAction(input: {
       teacher_cancel_cutoff_hours: input.cancelCutoffHours,
       booking_window_days: input.bookingWindowDays,
       share_message_template: input.shareTemplate.trim() || null,
+      cancel_notice: input.cancelNotice.trim() || null,
     });
     revalidatePath("/teacher/schedule");
     revalidatePath("/teacher");

@@ -36,7 +36,7 @@ export async function getActiveBookings(
   const db = createAdminClient();
   const { data } = await db
     .from("bookings")
-    .select("start_at, student_id, status")
+    .select("start_at, student_id, status, duration_min")
     .eq("teacher_id", teacherId)
     .in("status", ["PENDING", "BOOKED"])
     .gte("start_at", fromISO)
