@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Chip, EmptyState, PageTitle } from "@/components/ui";
 import type { BookingStatus } from "@/lib/data/bookings";
 import { WEEKDAY_KO, fmtTime, kstWall } from "@/lib/time";
-import { cancelMyBookingAction } from "../actions";
+import { cancelMyBookingAction, cancelMySeriesAction } from "../actions";
 
 export type UIBooking = {
   id: string;
@@ -14,6 +14,7 @@ export type UIBooking = {
   status: BookingStatus;
   teacher_name: string;
   lesson_title: string | null;
+  seriesId: string | null;
   canCancel: boolean;
   deadlineISO: string;
 };
@@ -89,6 +90,14 @@ function BookingCard({ b, past }: { b: UIBooking; past?: boolean }) {
       else router.refresh();
     });
 
+  const cancelSeries = () =>
+    startTransition(async () => {
+      setError(null);
+      const res = await cancelMySeriesAction(b.seriesId!);
+      if (!res.ok) setError(res.error ?? "취소 실패");
+      else router.refresh();
+    });
+
   const statusTone =
     b.status === "BOOKED"
       ? "rose"
@@ -137,16 +146,29 @@ function BookingCard({ b, past }: { b: UIBooking; past?: boolean }) {
 
       {/* 상태 + 취소 */}
       <div className="ml-auto flex items-center gap-2">
+        {b.seriesId && <Chip tone="coral">반복</Chip>}
         <Chip tone={statusTone}>{STATUS_LABEL[b.status]}</Chip>
         {!past && b.status === "BOOKED" && (
-          <button
-            type="button"
-            disabled={pending || !b.canCancel}
-            onClick={cancel}
-            className="rounded-[var(--radius-btn)] border border-line px-3 py-2 text-[13px] font-medium text-sub enabled:hover:bg-line-soft disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {b.canCancel ? "예약 취소" : "취소 마감"}
-          </button>
+          <>
+            <button
+              type="button"
+              disabled={pending || !b.canCancel}
+              onClick={cancel}
+              className="rounded-[var(--radius-btn)] border border-line px-3 py-2 text-[13px] font-medium text-sub enabled:hover:bg-line-soft disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {b.canCancel ? "예약 취소" : "취소 마감"}
+            </button>
+            {b.seriesId && (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={cancelSeries}
+                className="rounded-[var(--radius-btn)] border border-line px-3 py-2 text-[13px] font-medium text-coral-deep enabled:hover:bg-coral-tint/40 disabled:opacity-50"
+              >
+                반복 취소
+              </button>
+            )}
+          </>
         )}
       </div>
       {error && <p className="w-full text-[12px] text-coral-deep">{error}</p>}

@@ -7,7 +7,7 @@ import Modal from "@/components/Modal";
 import { Avatar, PageTitle } from "@/components/ui";
 import type { DaySlots, Slot } from "@/lib/slots";
 import { WEEKDAY_KO, addDaysStr, dayNum } from "@/lib/time";
-import { bookSlotAction } from "./actions";
+import { bookRecurringAction, bookSlotAction } from "./actions";
 
 export default function StudentCalendar({
   teacherId,
@@ -30,6 +30,8 @@ export default function StudentCalendar({
   const [pending, startTransition] = useTransition();
   const [target, setTarget] = useState<Slot | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [repeat, setRepeat] = useState(1);
 
   const defaultDay =
     days.find((d) => d.date === today && !d.isPast)?.date ??
@@ -43,17 +45,31 @@ export default function StudentCalendar({
 
   const openSlot = (s: Slot) => {
     setError(null);
+    setNotice(null);
+    setRepeat(1);
     setTarget(s);
   };
 
   const confirmBook = () => {
     if (!target) return;
+    const slot = target;
     startTransition(async () => {
       setError(null);
-      const res = await bookSlotAction(teacherId, target.startAtISO);
+      setNotice(null);
+      const res =
+        repeat > 1
+          ? await bookRecurringAction(teacherId, slot.startAtISO, repeat)
+          : await bookSlotAction(teacherId, slot.startAtISO);
       if (!res.ok) setError(res.error ?? "예약에 실패했습니다.");
       else {
         setTarget(null);
+        if (res.requested && res.created !== undefined && res.created < res.requested) {
+          setNotice(
+            `반복 ${res.requested}회 중 ${res.created}회 예약됨 (나머지는 불가능한 시간이라 제외).`,
+          );
+        } else if (res.requested) {
+          setNotice(`매주 ${res.created}회 반복 예약 완료.`);
+        }
         router.refresh();
       }
     });
@@ -87,6 +103,11 @@ export default function StudentCalendar({
       {error && (
         <p className="mb-3 rounded-[10px] bg-coral-tint px-3 py-2 text-[13px] font-medium text-coral-deep">
           {error}
+        </p>
+      )}
+      {notice && (
+        <p className="mb-3 rounded-[10px] bg-success-bg px-3 py-2 text-[13px] font-medium text-success">
+          {notice}
         </p>
       )}
 
@@ -207,6 +228,28 @@ export default function StudentCalendar({
             <Row label="선생님" value={`${teacherName} 선생님`} />
             <Row label="시간" value={target.time} />
             <Row label="취소 정책" value={`수업 ${cancelCutoffHours}시간 전까지`} />
+
+            <div className="mt-3">
+              <p className="mb-1.5 text-[13px] font-semibold text-sub">반복</p>
+              <div className="flex gap-1.5">
+                {[1, 2, 4, 8].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setRepeat(n)}
+                    className={
+                      "flex-1 rounded-[10px] border py-2 text-[13px] font-semibold transition-colors " +
+                      (repeat === n
+                        ? "border-coral bg-coral-tint text-coral-deep"
+                        : "border-line text-sub hover:bg-line-soft")
+                    }
+                  >
+                    {n === 1 ? "1회" : `매주 ${n}회`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"

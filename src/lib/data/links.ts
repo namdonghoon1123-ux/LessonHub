@@ -90,18 +90,27 @@ export async function getStudentLinks(
   }));
 }
 
-// 연결 가능한 활성 선생님 목록
+// 연결 가능한 활성 선생님 목록 (slug 유무와 무관하게 전체 노출)
 export async function getAvailableTeachers(): Promise<
   { teacher_id: string; name: string; subject: string | null }[]
 > {
   const db = createAdminClient();
-  const { data } = await db
-    .from("public_teachers")
-    .select("id, name, subject");
-  return (data ?? []).map((t) => ({
-    teacher_id: t.id,
-    name: t.name,
-    subject: t.subject,
+  const { data: profs } = await db
+    .from("profiles")
+    .select("id, name")
+    .eq("role", "TEACHER")
+    .eq("is_active", true);
+  const ids = (profs ?? []).map((p) => p.id);
+  if (ids.length === 0) return [];
+  const { data: tps } = await db
+    .from("teacher_profiles")
+    .select("teacher_id, subject")
+    .in("teacher_id", ids);
+  const sub = new Map((tps ?? []).map((t) => [t.teacher_id, t.subject]));
+  return (profs ?? []).map((p) => ({
+    teacher_id: p.id,
+    name: p.name,
+    subject: sub.get(p.id) ?? null,
   }));
 }
 

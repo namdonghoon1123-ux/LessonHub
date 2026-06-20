@@ -9,6 +9,7 @@ export default async function AppLayout({
 }) {
   const profile = await getProfile();
   if (!profile) redirect("/login");
+  if (profile.must_change_password) redirect("/change-password");
 
   return (
     <div className="flex min-h-screen flex-col">

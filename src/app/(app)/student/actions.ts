@@ -9,16 +9,26 @@ import {
 } from "@/lib/data/links";
 import { getOverrides, getWeekly } from "@/lib/data/availability";
 import {
+  cancelSeriesFuture,
   createBooking,
+  createRecurringSeries,
   getActiveBookings,
   getBooking,
   setBookingStatus,
+  setSeriesCreatedCount,
 } from "@/lib/data/bookings";
 import { computeDaySlots } from "@/lib/slots";
-import { kstDateStr, addDaysStr } from "@/lib/time";
+import { kstDateStr, addDaysStr, kstWall } from "@/lib/time";
 import { canStudentCancel } from "@/lib/policy";
 
-export type Result = { ok: boolean; error?: string };
+export type Result = {
+  ok: boolean;
+  error?: string;
+  created?: number;
+  requested?: number;
+};
+
+const pad = (n: number) => String(n).padStart(2, "0");
 
 export async function bookSlotAction(
   teacherId: string,
@@ -62,6 +72,81 @@ export async function bookSlotAction(
   revalidatePath("/student");
   revalidatePath("/student/bookings");
   return { ok: true };
+}
+
+export async function bookRecurringAction(
+  teacherId: string,
+  startAtISO: string,
+  count: number,
+): Promise<Result> {
+  const me = await requireRole("STUDENT");
+  const teachers = await getStudentTeachers(me.id);
+  const teacher = teachers.find((t) => t.teacher_id === teacherId);
+  if (!teacher) return { ok: false, error: "담당 선생님과 연결되어 있지 않습니다." };
+  if (count < 2 || count > 12) return { ok: false, error: "반복 횟수가 올바르지 않습니다." };
+
+  const base = new Date(startAtISO);
+  const w = kstWall(base);
+  const startTime = `${pad(w.h)}:${pad(w.mi)}`;
+  const duration = teacher.lesson_duration_min;
+
+  const firstDate = kstDateStr(base);
+  const spanToISO = new Date(
+    base.getTime() + count * 7 * 86400000,
+  ).toISOString();
+  const [weekly, overrides, bookings] = await Promise.all([
+    getWeekly(teacherId),
+    getOverrides(teacherId, firstDate),
+    getActiveBookings(teacherId, startAtISO, spanToISO),
+  ]);
+
+  const seriesId = await createRecurringSeries({
+    teacherId,
+    studentId: me.id,
+    weekday: w.weekday,
+    startTime,
+    durationMin: duration,
+    lessonTitle: teacher.subject,
+    requestedCount: count,
+  });
+  if (!seriesId) return { ok: false, error: "반복 예약 생성에 실패했습니다." };
+
+  let created = 0;
+  for (let i = 0; i < count; i++) {
+    const occ = new Date(base.getTime() + i * 7 * 86400000);
+    const date = kstDateStr(occ);
+    const day = computeDaySlots({
+      date,
+      durationMin: duration,
+      weekly,
+      overrides,
+      bookings,
+      viewingStudentId: me.id,
+    });
+    const slot = day.slots.find((s) => s.startAtISO === occ.toISOString());
+    if (!slot || slot.status !== "open") continue;
+    const res = await createBooking({
+      studentId: me.id,
+      teacherId,
+      startAtISO: occ.toISOString(),
+      durationMin: duration,
+      lessonTitle: teacher.subject,
+      recurringSeriesId: seriesId,
+    });
+    if (res.ok) created++;
+  }
+  await setSeriesCreatedCount(seriesId, created);
+  revalidatePath("/student");
+  revalidatePath("/student/bookings");
+  return { ok: true, created, requested: count };
+}
+
+export async function cancelMySeriesAction(seriesId: string): Promise<Result> {
+  const me = await requireRole("STUDENT");
+  const n = await cancelSeriesFuture(seriesId, me.id);
+  revalidatePath("/student");
+  revalidatePath("/student/bookings");
+  return { ok: true, created: n };
 }
 
 export async function requestLinkAction(teacherId: string): Promise<Result> {
