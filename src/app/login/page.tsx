@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { login, type AuthState } from "@/app/auth/actions";
 import { LogoMark } from "@/components/ui";
+import InstallButton from "@/components/InstallButton";
 
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState<AuthState, FormData>(
@@ -100,6 +101,10 @@ export default function LoginPage() {
               회원가입
             </a>
           </p>
+
+          <div className="mt-5">
+            <InstallButton />
+          </div>
         </div>
       </main>
     </div>
