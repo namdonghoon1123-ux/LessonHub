@@ -19,11 +19,17 @@ export type UIBooking = {
   deadlineISO: string;
 };
 
+const PAGE_SIZE = 15;
+const mKey = (iso: string) => {
+  const w = kstWall(new Date(iso));
+  return `${w.y}-${String(w.mo + 1).padStart(2, "0")}`;
+};
+const mLabel = (key: string) => key.replace("-", ". ");
+
 function groupByMonth(items: UIBooking[]): [string, UIBooking[]][] {
   const map = new Map<string, UIBooking[]>();
   for (const b of items) {
-    const w = kstWall(new Date(b.start_at));
-    const key = `${w.y}. ${String(w.mo + 1).padStart(2, "0")}`;
+    const key = mLabel(mKey(b.start_at));
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(b);
   }
@@ -45,6 +51,17 @@ export default function MyBookings({
   upcoming: UIBooking[];
   past: UIBooking[];
 }) {
+  const [month, setMonth] = useState("all");
+  const [page, setPage] = useState(1);
+  const months = [...new Set(past.map((b) => mKey(b.start_at)))].sort((a, b) =>
+    b.localeCompare(a),
+  );
+  const pastFiltered =
+    month === "all" ? past : past.filter((b) => mKey(b.start_at) === month);
+  const totalPages = Math.max(1, Math.ceil(pastFiltered.length / PAGE_SIZE));
+  const cur = Math.min(page, totalPages);
+  const pastSlice = pastFiltered.slice((cur - 1) * PAGE_SIZE, cur * PAGE_SIZE);
+
   return (
     <>
       <PageTitle
@@ -70,26 +87,77 @@ export default function MyBookings({
         </div>
       )}
 
-      <h2 className="mb-2 mt-7 text-[15px] font-bold">
-        지난 수업 <span className="text-muted">({past.length})</span>
-      </h2>
-      {past.length === 0 ? (
+      <div className="mb-2 mt-7 flex flex-wrap items-center gap-2">
+        <h2 className="text-[15px] font-bold">
+          지난 수업 <span className="text-muted">({past.length})</span>
+        </h2>
+        {months.length > 0 && (
+          <select
+            value={month}
+            onChange={(e) => {
+              setMonth(e.target.value);
+              setPage(1);
+            }}
+            className="ml-auto h-9 rounded-[10px] border-[1.5px] border-line bg-surface px-3 text-[13px] font-medium outline-none focus:border-coral"
+          >
+            <option value="all">전체</option>
+            {months.map((m) => (
+              <option key={m} value={m}>
+                {mLabel(m)}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+      {pastFiltered.length === 0 ? (
         <EmptyState>지난 수업이 없습니다.</EmptyState>
       ) : (
-        <div className="flex flex-col gap-4">
-          {groupByMonth(past).map(([month, list]) => (
-            <div key={month}>
-              <p className="mb-2 text-[13px] font-bold text-sub tabular-nums">{month}</p>
-              <div className="flex flex-col gap-2.5">
-                {list.map((b) => (
-                  <BookingCard key={b.id} b={b} past />
-                ))}
+        <>
+          <div className="flex flex-col gap-4">
+            {groupByMonth(pastSlice).map(([m, list]) => (
+              <div key={m}>
+                <p className="mb-2 text-[13px] font-bold text-sub tabular-nums">{m}</p>
+                <div className="flex flex-col gap-2.5">
+                  {list.map((b) => (
+                    <BookingCard key={b.id} b={b} past />
+                  ))}
+                </div>
               </div>
+            ))}
+          </div>
+          {totalPages > 1 && (
+            <div className="mt-5 flex items-center justify-center gap-2">
+              <PgBtn disabled={cur <= 1} onClick={() => setPage(cur - 1)}>← 이전</PgBtn>
+              <span className="text-[12.5px] font-semibold text-sub tabular-nums">
+                {cur} / {totalPages}
+              </span>
+              <PgBtn disabled={cur >= totalPages} onClick={() => setPage(cur + 1)}>다음 →</PgBtn>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </>
+  );
+}
+
+function PgBtn({
+  children,
+  disabled,
+  onClick,
+}: {
+  children: React.ReactNode;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className="rounded-[8px] border border-line px-3 py-1.5 text-[12.5px] font-medium text-sub hover:bg-line-soft disabled:opacity-40"
+    >
+      {children}
+    </button>
   );
 }
 
@@ -127,9 +195,9 @@ function BookingCard({ b, past }: { b: UIBooking; past?: boolean }) {
 
   return (
     <div
-      className={`flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[14px] border border-line bg-surface p-4 ${past ? "opacity-75" : ""}`}
+      className={`flex flex-col gap-3 rounded-[14px] border border-line bg-surface p-4 sm:flex-row sm:items-center ${past ? "opacity-75" : ""}`}
     >
-      <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+      <div className="flex min-w-0 items-center gap-3 sm:flex-1 sm:gap-4">
         {/* 날짜 블록 */}
         <div className="w-11 shrink-0 text-center">
           <div className={`text-[12px] font-bold ${w.weekday === 0 ? "text-rose" : "text-sub"}`}>
@@ -163,7 +231,7 @@ function BookingCard({ b, past }: { b: UIBooking; past?: boolean }) {
       </div>
 
       {/* 상태 + 취소 */}
-      <div className="ml-auto flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
         {b.seriesId && <Chip tone="coral">반복</Chip>}
         <Chip tone={statusTone}>{STATUS_LABEL[b.status]}</Chip>
         {!past && b.status === "BOOKED" && (

@@ -210,47 +210,53 @@ function Row({ b, onComment }: { b: UITB; onComment: () => void }) {
       else router.refresh();
     });
 
-  return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[14px] border border-line bg-surface p-3.5">
-      <Avatar name={b.student_name} size={34} />
-      <div className="min-w-0 flex-1">
-        <p className="text-[14.5px] font-semibold">{b.student_name}</p>
-        {b.lesson_title && <p className="text-[12px] text-muted">{b.lesson_title}</p>}
-        {b.student_note && (
-          <p className="mt-0.5 text-[12px] text-coral-deep">💬 {b.student_note}</p>
-        )}
-      </div>
-      <div className="text-right">
-        <p className="text-[13px] font-semibold tabular-nums">
-          {w.mo + 1}.{w.d} ({WEEKDAY_KO[w.weekday]})
-        </p>
-        <p className="text-[15px] font-bold text-coral-deep tabular-nums">
-          {fmtTime(new Date(b.start_at))}
-        </p>
-      </div>
-      <Chip tone={s.tone}>{s.label}</Chip>
+  const hasActions = b.status !== "CANCELED";
 
-      <div className="ml-auto flex items-center gap-1.5">
-        {b.status !== "CANCELED" && (
-          <ActBtn onClick={onComment} disabled={pending}>
-            {hasComment ? "코멘트 ✎" : "코멘트"}
-          </ActBtn>
-        )}
-        {(b.status === "BOOKED" || b.status === "PENDING") && (
-          <>
-            <ActBtn onClick={() => act(completeBookingAction)} disabled={pending} tone="primary">
-              완료
-            </ActBtn>
-            <ActBtn onClick={() => act(noShowBookingAction)} disabled={pending}>
-              노쇼
-            </ActBtn>
-            <ActBtn onClick={() => act(cancelBookingAction)} disabled={pending}>
-              취소
-            </ActBtn>
-          </>
-        )}
+  return (
+    <div className="rounded-[14px] border border-line bg-surface p-3.5">
+      <div className="flex items-center gap-3">
+        <Avatar name={b.student_name} size={34} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[14.5px] font-semibold">{b.student_name}</p>
+          {b.lesson_title && <p className="truncate text-[12px] text-muted">{b.lesson_title}</p>}
+          {b.student_note && (
+            <p className="truncate text-[12px] text-coral-deep">💬 {b.student_note}</p>
+          )}
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-[13px] font-semibold tabular-nums">
+            {w.mo + 1}.{w.d} ({WEEKDAY_KO[w.weekday]})
+          </p>
+          <p className="text-[15px] font-bold text-coral-deep tabular-nums">
+            {fmtTime(new Date(b.start_at))}
+          </p>
+        </div>
+        <Chip tone={s.tone}>{s.label}</Chip>
       </div>
-      {error && <p className="w-full text-[12px] text-coral-deep">{error}</p>}
+
+      {hasActions && (
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          {b.status !== "CANCELED" && (
+            <ActBtn onClick={onComment} disabled={pending}>
+              {hasComment ? "코멘트 ✎" : "코멘트"}
+            </ActBtn>
+          )}
+          {(b.status === "BOOKED" || b.status === "PENDING") && (
+            <>
+              <ActBtn onClick={() => act(completeBookingAction)} disabled={pending} tone="primary">
+                완료
+              </ActBtn>
+              <ActBtn onClick={() => act(noShowBookingAction)} disabled={pending}>
+                노쇼
+              </ActBtn>
+              <ActBtn onClick={() => act(cancelBookingAction)} disabled={pending}>
+                취소
+              </ActBtn>
+            </>
+          )}
+        </div>
+      )}
+      {error && <p className="mt-1.5 text-[12px] text-coral-deep">{error}</p>}
     </div>
   );
 }
