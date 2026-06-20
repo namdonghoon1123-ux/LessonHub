@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/auth";
 import { countUnseenFeedback } from "@/lib/data/bookings";
+import StudioBanner from "@/components/StudioBanner";
 import Nav from "./_components/Nav";
 
 export default async function AppLayout({
@@ -20,6 +21,7 @@ export default async function AppLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <Nav profile={profile} badges={badges} />
+      <StudioBanner />
       <main className="mx-auto w-full max-w-6xl flex-1 p-4 sm:p-6 md:p-7">
         {children}
       </main>
