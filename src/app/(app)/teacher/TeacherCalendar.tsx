@@ -407,6 +407,7 @@ function WeekStrip({
 function DayList({
   day, infoBySlot, onSlot,
 }: { day: DaySlots; infoBySlot: Record<string, SlotInfo>; onSlot: (s: Slot, date: string) => void }) {
+  if (day.isPast) return <Centered>지난 날짜입니다.</Centered>;
   if (day.isOff) return <Centered>휴무입니다.</Centered>;
   if (day.slots.length === 0) return <Centered>이 날은 열린 시간이 없습니다.</Centered>;
   return (
@@ -452,7 +453,7 @@ function WeekDayCard({
         {holidayName(day.date) && <div className="truncate text-[9px] font-semibold text-rose">{holidayName(day.date)}</div>}
       </div>
       <div className="flex flex-1 flex-col gap-1 p-2">
-        {day.isOff ? <Centered>휴무</Centered> : day.slots.length === 0 ? <Centered>—</Centered> : (
+        {day.isPast ? <Centered>지난 날짜</Centered> : day.isOff ? <Centered>휴무</Centered> : day.slots.length === 0 ? <Centered>—</Centered> : (
           day.slots.map((s) => {
             const info = infoBySlot[s.startAtISO];
             if (info)

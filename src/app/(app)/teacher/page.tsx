@@ -102,15 +102,6 @@ export default async function Page({
       b.start_at >= wkFrom &&
       b.start_at < wkTo,
   ).length;
-  const openCount = days.reduce(
-    (n, d) => n + d.slots.filter((s) => s.status === "open").length,
-    0,
-  );
-  const exceptionDays = new Set(
-    overrides
-      .filter((o) => o.date >= gridStart && o.date < addDaysStr(gridStart, dayCount))
-      .map((o) => o.date),
-  ).size;
 
   return (
     <>
@@ -121,11 +112,9 @@ export default async function Page({
 
       <PendingRequests requests={pendingReqs} />
 
-      <Card className="mb-4 grid grid-cols-2 divide-line-soft sm:grid-cols-4 sm:divide-x">
+      <Card className="mb-4 grid grid-cols-2 divide-x divide-line-soft">
         <Stat n={todayCount} label="오늘 수업" highlight />
         <Stat n={weekActive} label="이번 주 예약" />
-        <Stat n={openCount} label="열어둔 빈 슬롯" />
-        <Stat n={exceptionDays} label="예외·휴무" />
       </Card>
 
       <TeacherCalendar
