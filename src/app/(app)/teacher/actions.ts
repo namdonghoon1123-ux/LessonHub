@@ -15,6 +15,7 @@ import {
 } from "@/lib/data/links";
 import { createAuthUser, createLink } from "@/lib/data/admin";
 import { updateTeacherProfile } from "@/lib/data/teachers";
+import { syntheticEmail, usernameTaken } from "@/lib/account";
 
 export type Result = { ok: boolean; error?: string };
 
@@ -43,16 +44,21 @@ export async function updateLessonSettingsAction(input: {
 // 선생님이 학생(임시) 계정 생성 + 본인에게 자동 연결(ACTIVE)
 export async function createStudentAction(input: {
   name: string;
-  email: string;
+  username: string;
   password: string;
 }): Promise<Result> {
   const me = await requireRole("TEACHER");
-  if (!input.name || !input.email)
-    return { ok: false, error: "이름/이메일을 입력하세요." };
+  if (!input.name || !input.username)
+    return { ok: false, error: "이름/아이디를 입력하세요." };
+  if (input.username.includes("@") || /\s/.test(input.username))
+    return { ok: false, error: "아이디에 공백이나 @는 쓸 수 없습니다." };
   if (input.password.length < 6)
     return { ok: false, error: "임시 비밀번호는 6자 이상이어야 합니다." };
+  if (await usernameTaken(input.username))
+    return { ok: false, error: "이미 사용 중인 아이디입니다." };
   const res = await createAuthUser({
-    email: input.email,
+    email: syntheticEmail(),
+    username: input.username,
     password: input.password,
     name: input.name,
     role: "STUDENT",

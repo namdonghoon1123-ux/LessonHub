@@ -25,9 +25,9 @@ export default function SignupPage() {
 
         <form action={formAction} className="mt-7 flex flex-col gap-4">
           <Field label="이름" name="name" type="text" autoComplete="name" />
-          <Field label="이메일" name="email" type="email" autoComplete="email" />
+          <Field label="아이디" name="username" type="text" autoComplete="username" />
           <Field
-            label="비밀번호"
+            label="비밀번호 (6자 이상)"
             name="password"
             type="password"
             autoComplete="new-password"

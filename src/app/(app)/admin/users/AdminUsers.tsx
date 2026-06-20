@@ -124,7 +124,9 @@ export default function AdminUsers({ users }: { users: AdminUser[] }) {
                     <Avatar name={u.name} size={30} />
                     <div>
                       <div className="font-semibold">{u.name}</div>
-                      <div className="text-[12px] text-muted">{u.email}</div>
+                      <div className="text-[12px] text-muted">
+                        {u.username ? `@${u.username}` : u.email}
+                      </div>
                     </div>
                   </div>
                 </td>
@@ -195,14 +197,14 @@ function CreateUserModal({
   pending: boolean;
   onClose: () => void;
   onSubmit: (input: {
-    email: string;
+    username: string;
     password: string;
     name: string;
     role: Role;
   }) => void;
 }) {
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("STUDENT");
 
@@ -210,7 +212,7 @@ function CreateUserModal({
     <Modal open={open} onClose={onClose} title="사용자 추가">
       <div className="flex flex-col gap-3">
         <Input label="이름" value={name} onChange={setName} />
-        <Input label="이메일" value={email} onChange={setEmail} type="email" />
+        <Input label="아이디 (한글 가능)" value={username} onChange={setUsername} />
         <Input
           label="임시 비밀번호 (6자+)"
           value={password}
@@ -239,8 +241,8 @@ function CreateUserModal({
         </button>
         <button
           type="button"
-          disabled={pending || !name || !email}
-          onClick={() => onSubmit({ name, email, password, role })}
+          disabled={pending || !name || !username}
+          onClick={() => onSubmit({ name, username, password, role })}
           className="h-10 rounded-[var(--radius-btn)] bg-coral px-4 text-[14px] font-bold text-white disabled:opacity-60"
         >
           생성

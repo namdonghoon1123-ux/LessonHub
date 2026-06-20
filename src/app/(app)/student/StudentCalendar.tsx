@@ -9,12 +9,20 @@ import type { DaySlots, Slot } from "@/lib/slots";
 import { WEEKDAY_KO, addDaysStr, dayNum } from "@/lib/time";
 import { bookRecurringAction, bookSlotAction } from "./actions";
 
+const pad = (n: number) => String(n).padStart(2, "0");
+function addMonths(ym1: string, delta: number): string {
+  const [y, m] = ym1.split("-").map(Number);
+  const d = new Date(Date.UTC(y, m - 1 + delta, 1));
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-01`;
+}
+
 export default function StudentCalendar({
   teacherId,
   teacherName,
   subject,
   cancelCutoffHours,
-  weekStart,
+  view,
+  periodStart,
   today,
   days,
 }: {
@@ -22,7 +30,8 @@ export default function StudentCalendar({
   teacherName: string;
   subject: string | null;
   cancelCutoffHours: number;
-  weekStart: string;
+  view: "week" | "month";
+  periodStart: string;
   today: string;
   days: DaySlots[];
 }) {
@@ -34,15 +43,20 @@ export default function StudentCalendar({
   const [repeat, setRepeat] = useState(1);
   const [note, setNote] = useState("");
 
+  const month = periodStart.slice(0, 7);
   const defaultDay =
     days.find((d) => d.date === today && !d.isPast)?.date ??
-    days.find((d) => !d.isPast)?.date ??
+    days.find((d) => !d.isPast && (view === "week" || d.date.slice(0, 7) === month))?.date ??
     days[0].date;
   const [selected, setSelected] = useState(defaultDay);
   const selectedDay = days.find((d) => d.date === selected) ?? days[0];
 
-  const prevWeek = addDaysStr(weekStart, -7);
-  const nextWeek = addDaysStr(weekStart, 7);
+  const prev = view === "month" ? addMonths(periodStart, -1) : addDaysStr(periodStart, -7);
+  const next = view === "month" ? addMonths(periodStart, 1) : addDaysStr(periodStart, 7);
+  const label =
+    view === "month"
+      ? `${month.replace("-", ". ")}`
+      : `${periodStart.slice(5)} ~ ${addDaysStr(periodStart, 6).slice(5)}`;
 
   const openSlot = (s: Slot) => {
     setError(null);
@@ -64,16 +78,12 @@ export default function StudentCalendar({
           : await bookSlotAction(teacherId, slot.startAtISO, note);
       if (!res.ok) {
         setError(res.error ?? "예약에 실패했습니다.");
-        router.refresh(); // 이미 찬 슬롯이면 즉시 '마감'으로 갱신
+        router.refresh();
       } else {
         setTarget(null);
-        if (res.requested && res.created !== undefined && res.created < res.requested) {
-          setNotice(
-            `반복 ${res.requested}회 중 ${res.created}회 예약됨 (나머지는 불가능한 시간이라 제외).`,
-          );
-        } else if (res.requested) {
-          setNotice(`매주 ${res.created}회 반복 예약 완료.`);
-        }
+        if (res.requested && res.created !== undefined && res.created < res.requested)
+          setNotice(`반복 ${res.requested}회 중 ${res.created}회 예약됨 (나머지는 불가능한 시간이라 제외).`);
+        else if (res.requested) setNotice(`매주 ${res.created}회 반복 예약 완료.`);
         router.refresh();
       }
     });
@@ -85,11 +95,10 @@ export default function StudentCalendar({
         title="예약하기"
         right={
           <div className="flex items-center gap-1.5">
-            <WeekNav href={`/student?week=${prevWeek}`}>←</WeekNav>
-            <span className="px-1 text-[12.5px] font-semibold text-sub tabular-nums">
-              {weekStart.slice(5)} ~ {addDaysStr(weekStart, 6).slice(5)}
-            </span>
-            <WeekNav href={`/student?week=${nextWeek}`}>→</WeekNav>
+            <ViewToggle view={view} />
+            <WeekNav href={`/student?view=${view}&period=${prev}`}>←</WeekNav>
+            <span className="px-1 text-[12.5px] font-semibold text-sub tabular-nums">{label}</span>
+            <WeekNav href={`/student?view=${view}&period=${next}`}>→</WeekNav>
           </div>
         }
       />
@@ -104,122 +113,48 @@ export default function StudentCalendar({
         </div>
       </div>
 
-      {error && (
-        <p className="mb-3 rounded-[10px] bg-coral-tint px-3 py-2 text-[13px] font-medium text-coral-deep">
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p className="mb-3 rounded-[10px] bg-success-bg px-3 py-2 text-[13px] font-medium text-success">
-          {notice}
-        </p>
+      {error && <Banner tone="error">{error}</Banner>}
+      {notice && <Banner tone="ok">{notice}</Banner>}
+
+      {view === "month" ? (
+        <MonthGrid
+          days={days}
+          month={month}
+          today={today}
+          selected={selected}
+          onSelect={setSelected}
+        />
+      ) : (
+        <WeekStrip
+          days={days}
+          today={today}
+          selected={selected}
+          onSelect={setSelected}
+        />
       )}
 
-      {/* ── 모바일: day-strip + 슬롯 리스트 ── */}
-      <div className="lg:hidden">
-        <div className="-mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none]">
-          {days.map((d) => {
-            const isSel = d.date === selected;
-            return (
-              <button
-                key={d.date}
-                type="button"
-                onClick={() => setSelected(d.date)}
-                className={
-                  "flex min-w-[52px] shrink-0 flex-col items-center rounded-[12px] border px-2 py-2 " +
-                  (isSel
-                    ? "border-coral bg-coral text-white"
-                    : d.date === today
-                      ? "border-coral-border bg-surface"
-                      : "border-line bg-surface")
-                }
-              >
-                <span
-                  className={`text-[11px] font-semibold ${isSel ? "text-white/90" : d.weekday === 0 ? "text-rose" : "text-muted"}`}
-                >
-                  {WEEKDAY_KO[d.weekday]}
-                </span>
-                <span className="text-[18px] font-bold tabular-nums">
-                  {dayNum(d.date)}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          {selectedDay.isPast ? (
-            <Centered>지난 날짜입니다.</Centered>
-          ) : selectedDay.isOff ? (
-            <Centered>이 날은 휴무입니다.</Centered>
-          ) : selectedDay.slots.length === 0 ? (
-            <Centered>예약 가능한 시간이 없어요.</Centered>
-          ) : (
-            selectedDay.slots.map((s) => (
-              <SlotRow key={s.startAtISO} slot={s} onBook={() => openSlot(s)} />
-            ))
-          )}
-        </div>
+      {/* 선택 날짜 슬롯 리스트 (월간 + 모바일 주간 공통) */}
+      <div className={view === "month" ? "mt-4" : "mt-3 lg:hidden"}>
+        <p className="mb-2 text-[13px] font-bold text-sub tabular-nums">
+          {selectedDay.date.slice(5).replace("-", ". ")} ({WEEKDAY_KO[selectedDay.weekday]})
+        </p>
+        <DaySlotList day={selectedDay} onBook={openSlot} />
       </div>
 
-      {/* ── 데스크톱: 7열 그리드 ── */}
-      <div className="hidden grid-cols-7 gap-2 lg:grid">
-        {days.map((day) => {
-          const isToday = day.date === today;
-          return (
-            <div
-              key={day.date}
-              className={
-                "flex min-h-[140px] flex-col rounded-[var(--radius-card)] border bg-surface " +
-                (isToday
-                  ? "border-coral-border shadow-[0_0_0_3px_var(--color-coral-tint)]"
-                  : "border-line")
-              }
-            >
-              <div
-                className={
-                  "rounded-t-[var(--radius-card)] px-2.5 py-2 " +
-                  (isToday ? "bg-coral-tint" : "")
-                }
-              >
-                <div
-                  className={`text-[12px] font-semibold ${day.weekday === 0 ? "text-rose" : "text-sub"}`}
-                >
-                  {WEEKDAY_KO[day.weekday]}
-                </div>
-                <div
-                  className={`text-[19px] font-bold tabular-nums ${isToday ? "text-coral-deep" : ""}`}
-                >
-                  {dayNum(day.date)}
-                </div>
-              </div>
-              <div className="flex flex-1 flex-col gap-1.5 p-2">
-                {day.isPast ? (
-                  <Centered>지난 날짜</Centered>
-                ) : day.isOff ? (
-                  <Centered>휴무</Centered>
-                ) : day.slots.length === 0 ? (
-                  <Centered>없음</Centered>
-                ) : (
-                  day.slots.map((s) => (
-                    <SlotChip key={s.startAtISO} slot={s} onBook={() => openSlot(s)} />
-                  ))
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      {/* 데스크톱 주간 7열 그리드 */}
+      {view === "week" && (
+        <div className="mt-4 hidden grid-cols-7 gap-2 lg:grid">
+          {days.map((day) => (
+            <WeekDayCard key={day.date} day={day} today={today} onBook={openSlot} />
+          ))}
+        </div>
+      )}
 
-      {/* 범례 + 취소정책 */}
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-[12px] text-sub">
         <div className="flex flex-wrap items-center gap-3">
-          <Legend className="border-[1.5px] border-coral-border bg-surface" />
-          <span>예약 가능</span>
-          <Legend className="bg-rose" />
-          <span>내 예약</span>
-          <Legend className="bg-line-soft" />
-          <span>마감</span>
+          <Legend className="border-[1.5px] border-coral-border bg-surface" /> <span>예약 가능</span>
+          <Legend className="bg-rose" /> <span>내 예약</span>
+          <Legend className="bg-line-soft" /> <span>마감</span>
         </div>
         <span className="text-muted">
           취소는 수업 <b className="text-coral-deep">{cancelCutoffHours}시간 전</b>까지
@@ -230,6 +165,7 @@ export default function StudentCalendar({
         {target && (
           <div className="text-[14px]">
             <Row label="선생님" value={`${teacherName} 선생님`} />
+            <Row label="날짜" value={target.startAtISO.slice(0, 10)} />
             <Row label="시간" value={target.time} />
             <Row label="취소 정책" value={`수업 ${cancelCutoffHours}시간 전까지`} />
 
@@ -291,7 +227,181 @@ export default function StudentCalendar({
   );
 }
 
-// 모바일 큰 터치 행 (≥52px)
+function MonthGrid({
+  days,
+  month,
+  today,
+  selected,
+  onSelect,
+}: {
+  days: DaySlots[];
+  month: string;
+  today: string;
+  selected: string;
+  onSelect: (d: string) => void;
+}) {
+  return (
+    <div className="overflow-hidden rounded-[var(--radius-card)] border border-line">
+      <div className="grid grid-cols-7 bg-line-soft">
+        {WEEKDAY_KO.map((w, i) => (
+          <div
+            key={w}
+            className={`py-1.5 text-center text-[11.5px] font-bold ${i === 0 ? "text-rose" : "text-sub"}`}
+          >
+            {w}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7">
+        {days.map((d) => {
+          const inMonth = d.date.slice(0, 7) === month;
+          const open = d.slots.filter((s) => s.status === "open").length;
+          const mine = d.slots.some((s) => s.status === "mine");
+          const isToday = d.date === today;
+          const isSel = d.date === selected;
+          const clickable = inMonth && !d.isPast;
+          return (
+            <button
+              key={d.date}
+              type="button"
+              disabled={!clickable}
+              onClick={() => clickable && onSelect(d.date)}
+              className={
+                "flex min-h-[58px] flex-col items-center gap-0.5 border-b border-r border-line-soft p-1 text-center sm:min-h-[72px] " +
+                (isSel ? "bg-coral-tint " : "") +
+                (clickable ? "hover:bg-coral-tint/40 " : "cursor-default ")
+              }
+            >
+              <span
+                className={
+                  "text-[12.5px] font-bold tabular-nums " +
+                  (!inMonth || d.isPast
+                    ? "text-muted/50"
+                    : isToday
+                      ? "text-coral-deep"
+                      : d.weekday === 0
+                        ? "text-rose"
+                        : "text-ink")
+                }
+              >
+                {dayNum(d.date)}
+              </span>
+              {inMonth && !d.isPast && (
+                mine ? (
+                  <span className="h-1.5 w-1.5 rounded-full bg-rose" />
+                ) : d.isOff ? (
+                  <span className="text-[9.5px] text-muted">휴무</span>
+                ) : open > 0 ? (
+                  <span className="rounded-full bg-coral px-1 text-[9.5px] font-bold text-white">
+                    {open}
+                  </span>
+                ) : null
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function WeekStrip({
+  days,
+  today,
+  selected,
+  onSelect,
+}: {
+  days: DaySlots[];
+  today: string;
+  selected: string;
+  onSelect: (d: string) => void;
+}) {
+  return (
+    <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] lg:hidden">
+      {days.map((d) => {
+        const isSel = d.date === selected;
+        return (
+          <button
+            key={d.date}
+            type="button"
+            onClick={() => onSelect(d.date)}
+            className={
+              "flex min-w-[52px] shrink-0 flex-col items-center rounded-[12px] border px-2 py-2 " +
+              (isSel
+                ? "border-coral bg-coral text-white"
+                : d.date === today
+                  ? "border-coral-border bg-surface"
+                  : "border-line bg-surface")
+            }
+          >
+            <span
+              className={`text-[11px] font-semibold ${isSel ? "text-white/90" : d.weekday === 0 ? "text-rose" : "text-muted"}`}
+            >
+              {WEEKDAY_KO[d.weekday]}
+            </span>
+            <span className="text-[18px] font-bold tabular-nums">{dayNum(d.date)}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function DaySlotList({ day, onBook }: { day: DaySlots; onBook: (s: Slot) => void }) {
+  if (day.isPast) return <Centered>지난 날짜입니다.</Centered>;
+  if (day.isOff) return <Centered>이 날은 휴무입니다.</Centered>;
+  if (day.slots.length === 0) return <Centered>예약 가능한 시간이 없어요.</Centered>;
+  return (
+    <div className="flex flex-col gap-2">
+      {day.slots.map((s) => (
+        <SlotRow key={s.startAtISO} slot={s} onBook={() => onBook(s)} />
+      ))}
+    </div>
+  );
+}
+
+function WeekDayCard({
+  day,
+  today,
+  onBook,
+}: {
+  day: DaySlots;
+  today: string;
+  onBook: (s: Slot) => void;
+}) {
+  const isToday = day.date === today;
+  return (
+    <div
+      className={
+        "flex min-h-[140px] flex-col rounded-[var(--radius-card)] border bg-surface " +
+        (isToday
+          ? "border-coral-border shadow-[0_0_0_3px_var(--color-coral-tint)]"
+          : "border-line")
+      }
+    >
+      <div className={"rounded-t-[var(--radius-card)] px-2.5 py-2 " + (isToday ? "bg-coral-tint" : "")}>
+        <div className={`text-[12px] font-semibold ${day.weekday === 0 ? "text-rose" : "text-sub"}`}>
+          {WEEKDAY_KO[day.weekday]}
+        </div>
+        <div className={`text-[19px] font-bold tabular-nums ${isToday ? "text-coral-deep" : ""}`}>
+          {dayNum(day.date)}
+        </div>
+      </div>
+      <div className="flex flex-1 flex-col gap-1.5 p-2">
+        {day.isPast ? (
+          <Centered>지난 날짜</Centered>
+        ) : day.isOff ? (
+          <Centered>휴무</Centered>
+        ) : day.slots.length === 0 ? (
+          <Centered>없음</Centered>
+        ) : (
+          day.slots.map((s) => <SlotChip key={s.startAtISO} slot={s} onBook={() => onBook(s)} />)
+        )}
+      </div>
+    </div>
+  );
+}
+
 function SlotRow({ slot, onBook }: { slot: Slot; onBook: () => void }) {
   if (slot.status === "open")
     return (
@@ -300,12 +410,8 @@ function SlotRow({ slot, onBook }: { slot: Slot; onBook: () => void }) {
         onClick={onBook}
         className="flex h-[52px] items-center justify-between rounded-[13px] border-[1.5px] border-coral-border bg-surface px-4 text-left active:bg-coral-tint/40"
       >
-        <span className="text-[17px] font-bold text-coral-deep tabular-nums">
-          {slot.time}
-        </span>
-        <span className="text-[13px] font-semibold text-coral-deep">
-          예약 가능 ›
-        </span>
+        <span className="text-[17px] font-bold text-coral-deep tabular-nums">{slot.time}</span>
+        <span className="text-[13px] font-semibold text-coral-deep">예약 가능 ›</span>
       </button>
     );
   if (slot.status === "mine")
@@ -318,22 +424,17 @@ function SlotRow({ slot, onBook }: { slot: Slot; onBook: () => void }) {
   if (slot.status === "full")
     return (
       <div className="flex h-[52px] items-center justify-between rounded-[13px] bg-line-soft px-4 opacity-70">
-        <span className="text-[17px] font-bold text-muted tabular-nums">
-          {slot.time}
-        </span>
+        <span className="text-[17px] font-bold text-muted tabular-nums">{slot.time}</span>
         <span className="text-[13px] font-semibold text-muted">마감</span>
       </div>
     );
   return (
     <div className="flex h-[44px] items-center px-4">
-      <span className="text-[15px] text-[#D8C8C0] line-through tabular-nums">
-        {slot.time}
-      </span>
+      <span className="text-[15px] text-[#D8C8C0] line-through tabular-nums">{slot.time}</span>
     </div>
   );
 }
 
-// 데스크톱 칩
 function SlotChip({ slot, onBook }: { slot: Slot; onBook: () => void }) {
   if (slot.status === "open")
     return (
@@ -364,9 +465,41 @@ function SlotChip({ slot, onBook }: { slot: Slot; onBook: () => void }) {
   );
 }
 
+function ViewToggle({ view }: { view: "week" | "month" }) {
+  return (
+    <div className="mr-1 flex overflow-hidden rounded-[8px] border border-line">
+      <Link
+        href="/student?view=week"
+        className={"px-2.5 py-1 text-[12px] font-semibold " + (view === "week" ? "bg-coral text-white" : "text-sub")}
+      >
+        주
+      </Link>
+      <Link
+        href="/student?view=month"
+        className={"px-2.5 py-1 text-[12px] font-semibold " + (view === "month" ? "bg-coral text-white" : "text-sub")}
+      >
+        월
+      </Link>
+    </div>
+  );
+}
+
+function Banner({ tone, children }: { tone: "error" | "ok"; children: React.ReactNode }) {
+  return (
+    <p
+      className={
+        "mb-3 rounded-[10px] px-3 py-2 text-[13px] font-medium " +
+        (tone === "error" ? "bg-coral-tint text-coral-deep" : "bg-success-bg text-success")
+      }
+    >
+      {children}
+    </p>
+  );
+}
+
 function Centered({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-1 items-center justify-center py-6 text-center text-[12.5px] text-muted">
+    <div className="flex flex-1 items-center justify-center rounded-[12px] border border-line bg-surface py-6 text-center text-[12.5px] text-muted">
       {children}
     </div>
   );

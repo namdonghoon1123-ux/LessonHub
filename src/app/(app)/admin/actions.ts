@@ -16,6 +16,7 @@ import {
   createPatchNote,
   deletePatchNote,
 } from "@/lib/data/patchNotes";
+import { syntheticEmail, usernameTaken } from "@/lib/account";
 import type { Profile, Role, StudentTier } from "@/lib/types";
 
 function actor(me: Profile) {
@@ -25,19 +26,30 @@ function actor(me: Profile) {
 export type AdminResult = { ok: boolean; error?: string; tempPassword?: string };
 
 export async function createUserAction(input: {
-  email: string;
+  username: string;
   password: string;
   name: string;
   role: Role;
   tier?: StudentTier;
 }): Promise<AdminResult> {
   const me = await requireRole("POWER_ADMIN");
-  if (!input.email || !input.name) return { ok: false, error: "이름/이메일 필수" };
+  if (!input.username || !input.name) return { ok: false, error: "이름/아이디 필수" };
+  if (input.username.includes("@") || /\s/.test(input.username))
+    return { ok: false, error: "아이디에 공백이나 @는 쓸 수 없습니다." };
   if (input.password.length < 6)
     return { ok: false, error: "비밀번호는 6자 이상" };
-  const res = await createAuthUser(input);
+  if (await usernameTaken(input.username))
+    return { ok: false, error: "이미 사용 중인 아이디입니다." };
+  const res = await createAuthUser({
+    email: syntheticEmail(),
+    username: input.username,
+    password: input.password,
+    name: input.name,
+    role: input.role,
+    tier: input.tier,
+  });
   if (res.ok) {
-    await logAudit({ ...actor(me), action: "user.create", targetType: "user", payload: { email: input.email, role: input.role } });
+    await logAudit({ ...actor(me), action: "user.create", targetType: "user", payload: { username: input.username, role: input.role } });
     revalidatePath("/admin/users");
   }
   return res;

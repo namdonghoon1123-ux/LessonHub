@@ -17,10 +17,10 @@ export default function StudentsManager({
   const [addOpen, setAddOpen] = useState(false);
   const [manage, setManage] = useState<LinkedStudent | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [created, setCreated] = useState<{ email: string; pw: string } | null>(null);
+  const [created, setCreated] = useState<{ username: string; pw: string } | null>(null);
 
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [pw, setPw] = useState("");
 
   const pendingList = students.filter((s) => s.status === "PENDING");
@@ -28,11 +28,11 @@ export default function StudentsManager({
   const submitAdd = () =>
     startTransition(async () => {
       setError(null);
-      const res = await createStudentAction({ name, email, password: pw });
+      const res = await createStudentAction({ name, username, password: pw });
       if (!res.ok) setError(res.error ?? "생성 실패");
       else {
-        setCreated({ email, pw });
-        setName(""); setEmail(""); setPw("");
+        setCreated({ username, pw });
+        setName(""); setUsername(""); setPw("");
         setAddOpen(false);
         router.refresh();
       }
@@ -56,9 +56,9 @@ export default function StudentsManager({
 
       {created && (
         <div className="mb-3 rounded-[10px] bg-success-bg px-3 py-2.5 text-[13px] text-success">
-          학생 계정 생성됨 — <b>이메일</b> {created.email} · <b>임시 비번</b> {created.pw}
+          학생 계정 생성됨 — <b>아이디</b> {created.username} · <b>임시 비번</b> {created.pw}
           <br />
-          <span className="text-[12px]">첫 로그인 시 비밀번호를 변경하게 됩니다.</span>
+          <span className="text-[12px]">학생에게 전달하세요. 첫 로그인 시 비밀번호를 변경하게 됩니다.</span>
         </div>
       )}
       {error && (
@@ -116,14 +116,14 @@ export default function StudentsManager({
       <Modal open={addOpen} onClose={() => setAddOpen(false)} title="학생 추가 (임시 계정)">
         <div className="flex flex-col gap-3">
           <Field label="이름" value={name} onChange={setName} />
-          <Field label="이메일" value={email} onChange={setEmail} type="email" />
+          <Field label="아이디 (한글 가능)" value={username} onChange={setUsername} />
           <Field label="임시 비밀번호 (6자+)" value={pw} onChange={setPw} />
         </div>
         <div className="mt-5 flex justify-end gap-2">
           <CancelBtn onClick={() => setAddOpen(false)} />
           <button
             type="button"
-            disabled={pending || !name || !email || pw.length < 6}
+            disabled={pending || !name || !username || pw.length < 6}
             onClick={submitAdd}
             className="h-10 rounded-[var(--radius-btn)] bg-coral px-4 text-[14px] font-bold text-white disabled:opacity-60"
           >

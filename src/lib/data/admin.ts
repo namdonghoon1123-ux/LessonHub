@@ -7,6 +7,7 @@ export type AdminUser = {
   role: Role;
   name: string;
   email: string | null;
+  username: string | null;
   is_active: boolean;
   student_tier: StudentTier | null;
   must_change_password: boolean;
@@ -18,7 +19,7 @@ export async function getAllUsers(): Promise<AdminUser[]> {
   const { data } = await db
     .from("profiles")
     .select(
-      "id, role, name, email, is_active, student_tier, must_change_password, created_at",
+      "id, role, name, email, username, is_active, student_tier, must_change_password, created_at",
     )
     .order("created_at", { ascending: false });
   return (data as AdminUser[]) ?? [];
@@ -40,6 +41,7 @@ export async function createAuthUser(input: {
   name: string;
   role: Role;
   tier?: StudentTier;
+  username?: string;
 }): Promise<{ ok: boolean; error?: string; userId?: string }> {
   const db = createAdminClient();
   const { data, error } = await db.auth.admin.createUser({
@@ -50,6 +52,7 @@ export async function createAuthUser(input: {
       name: input.name,
       role: input.role,
       ...(input.tier ? { tier: input.tier } : {}),
+      ...(input.username ? { username: input.username } : {}),
       must_change_password: true,
     },
   });

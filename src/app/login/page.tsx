@@ -53,7 +53,7 @@ export default function LoginPage() {
           </p>
 
           <form action={formAction} className="mt-7 flex flex-col gap-4">
-            <Field label="이메일" name="email" type="email" autoComplete="email" />
+            <Field label="아이디" name="identifier" type="text" autoComplete="username" />
             <div>
               <div className="mb-1.5 flex items-center justify-between">
                 <label htmlFor="password" className="text-[13px] font-semibold text-sub">
