@@ -21,9 +21,9 @@ export async function GET(
 
   const { data: bookings } = await db
     .from("bookings")
-    .select("id, start_at, duration_min, student_id, lesson_title_snapshot")
+    .select("id, start_at, duration_min, student_id, lesson_title_snapshot, status")
     .eq("teacher_id", tp.teacher_id)
-    .in("status", ["BOOKED", "COMPLETED"])
+    .in("status", ["PENDING", "BOOKED", "COMPLETED"])
     .order("start_at");
   const rows = bookings ?? [];
 
@@ -48,7 +48,8 @@ export async function GET(
       new Date(b.start_at).getTime() + b.duration_min * 60000,
     ).toISOString();
     const who = names.get(b.student_id) ?? "학생";
-    const title = `${who} 레슨${b.lesson_title_snapshot ? ` (${b.lesson_title_snapshot})` : ""}`;
+    const mark = b.status === "PENDING" ? "[대기] " : "";
+    const title = `${mark}${who} 레슨${b.lesson_title_snapshot ? ` (${b.lesson_title_snapshot})` : ""}`;
     lines.push(
       "BEGIN:VEVENT",
       `UID:${b.id}@lessonhub`,
