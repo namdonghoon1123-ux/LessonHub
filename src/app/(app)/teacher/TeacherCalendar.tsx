@@ -7,6 +7,7 @@ import Modal from "@/components/Modal";
 import { Linkify } from "@/components/Linkify";
 import type { DaySlots, Slot } from "@/lib/slots";
 import { WEEKDAY_KO, addDaysStr, addMinutesToTime, dayNum } from "@/lib/time";
+import { holidayName } from "@/lib/holidays";
 import { quickCloseSlotAction } from "./actions";
 
 export type SlotInfo = {
@@ -116,6 +117,9 @@ export default function TeacherCalendar({
       <div className={view === "month" ? "mt-4" : "mt-3 lg:hidden"}>
         <p className="mb-2 text-[13px] font-bold text-sub tabular-nums">
           {selectedDay.date.slice(5).replace("-", ". ")} ({WEEKDAY_KO[selectedDay.weekday]})
+          {holidayName(selectedDay.date) && (
+            <span className="ml-1.5 font-semibold text-rose">· {holidayName(selectedDay.date)}</span>
+          )}
         </p>
         <DayList day={selectedDay} infoBySlot={infoBySlot} onSlot={onSlot} />
       </div>
@@ -213,6 +217,7 @@ function MonthGrid({
           const open = d.slots.filter((s) => s.status === "open").length;
           const isToday = d.date === today;
           const isSel = d.date === selected;
+          const hol = holidayName(d.date);
           return (
             <button
               key={d.date}
@@ -224,9 +229,12 @@ function MonthGrid({
                 (isSel ? "bg-coral-tint " : "") + (inMonth ? "hover:bg-coral-tint/40 " : "cursor-default ")
               }
             >
-              <span className={"text-[12.5px] font-bold tabular-nums " + (!inMonth ? "text-muted/50" : isToday ? "text-coral-deep" : d.weekday === 0 ? "text-rose" : "text-ink")}>
+              <span className={"text-[12.5px] font-bold tabular-nums " + (!inMonth ? "text-muted/50" : isToday ? "text-coral-deep" : hol || d.weekday === 0 ? "text-rose" : "text-ink")}>
                 {dayNum(d.date)}
               </span>
+              {inMonth && hol && (
+                <span className="max-w-full truncate text-[9px] font-semibold text-rose">{hol}</span>
+              )}
               {inMonth && (
                 <div className="flex flex-col items-center gap-0.5">
                   {booked > 0 && (
@@ -311,8 +319,9 @@ function WeekDayCard({
   return (
     <div className={"flex min-h-[130px] flex-col rounded-[var(--radius-card)] border bg-surface " + (isToday ? "border-coral-border" : "border-line")}>
       <div className={"px-2.5 py-2 " + (isToday ? "bg-coral-tint" : "")}>
-        <div className={`text-[12px] font-semibold ${day.weekday === 0 ? "text-rose" : "text-sub"}`}>{WEEKDAY_KO[day.weekday]}</div>
-        <div className={`text-[18px] font-bold tabular-nums ${isToday ? "text-coral-deep" : ""}`}>{dayNum(day.date)}</div>
+        <div className={`text-[12px] font-semibold ${holidayName(day.date) || day.weekday === 0 ? "text-rose" : "text-sub"}`}>{WEEKDAY_KO[day.weekday]}</div>
+        <div className={`text-[18px] font-bold tabular-nums ${isToday ? "text-coral-deep" : holidayName(day.date) ? "text-rose" : ""}`}>{dayNum(day.date)}</div>
+        {holidayName(day.date) && <div className="truncate text-[9px] font-semibold text-rose">{holidayName(day.date)}</div>}
       </div>
       <div className="flex flex-1 flex-col gap-1 p-2">
         {day.isOff ? <Centered>휴무</Centered> : day.slots.length === 0 ? <Centered>—</Centered> : (

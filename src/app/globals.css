@@ -44,3 +44,9 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
 }
+
+/* 페이지 이동 진행바 애니메이션 */
+@keyframes lh-bar {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}

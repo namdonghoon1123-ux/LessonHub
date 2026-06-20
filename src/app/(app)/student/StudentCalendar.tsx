@@ -7,6 +7,7 @@ import Modal from "@/components/Modal";
 import { Avatar, PageTitle } from "@/components/ui";
 import type { DaySlots, Slot } from "@/lib/slots";
 import { WEEKDAY_KO, addDaysStr, dayNum } from "@/lib/time";
+import { holidayName } from "@/lib/holidays";
 import { bookRecurringAction, bookSlotAction } from "./actions";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -137,6 +138,9 @@ export default function StudentCalendar({
       <div className={view === "month" ? "mt-4" : "mt-3 lg:hidden"}>
         <p className="mb-2 text-[13px] font-bold text-sub tabular-nums">
           {selectedDay.date.slice(5).replace("-", ". ")} ({WEEKDAY_KO[selectedDay.weekday]})
+          {holidayName(selectedDay.date) && (
+            <span className="ml-1.5 font-semibold text-rose">· {holidayName(selectedDay.date)}</span>
+          )}
         </p>
         <DaySlotList day={selectedDay} onBook={openSlot} />
       </div>
@@ -260,6 +264,7 @@ function MonthGrid({
           const isToday = d.date === today;
           const isSel = d.date === selected;
           const clickable = inMonth && !d.isPast;
+          const hol = holidayName(d.date);
           return (
             <button
               key={d.date}
@@ -279,13 +284,18 @@ function MonthGrid({
                     ? "text-muted/50"
                     : isToday
                       ? "text-coral-deep"
-                      : d.weekday === 0
+                      : hol || d.weekday === 0
                         ? "text-rose"
                         : "text-ink")
                 }
               >
                 {dayNum(d.date)}
               </span>
+              {inMonth && hol && (
+                <span className="max-w-full truncate text-[9px] font-semibold text-rose">
+                  {hol}
+                </span>
+              )}
               {inMonth && !d.isPast && (
                 mine ? (
                   <span className="h-1.5 w-1.5 rounded-full bg-rose" />
@@ -380,12 +390,15 @@ function WeekDayCard({
       }
     >
       <div className={"rounded-t-[var(--radius-card)] px-2.5 py-2 " + (isToday ? "bg-coral-tint" : "")}>
-        <div className={`text-[12px] font-semibold ${day.weekday === 0 ? "text-rose" : "text-sub"}`}>
+        <div className={`text-[12px] font-semibold ${holidayName(day.date) || day.weekday === 0 ? "text-rose" : "text-sub"}`}>
           {WEEKDAY_KO[day.weekday]}
         </div>
-        <div className={`text-[19px] font-bold tabular-nums ${isToday ? "text-coral-deep" : ""}`}>
+        <div className={`text-[19px] font-bold tabular-nums ${isToday ? "text-coral-deep" : holidayName(day.date) ? "text-rose" : ""}`}>
           {dayNum(day.date)}
         </div>
+        {holidayName(day.date) && (
+          <div className="truncate text-[9.5px] font-semibold text-rose">{holidayName(day.date)}</div>
+        )}
       </div>
       <div className="flex flex-1 flex-col gap-1.5 p-2">
         {day.isPast ? (

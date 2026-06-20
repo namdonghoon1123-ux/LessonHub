@@ -42,13 +42,43 @@ const STATUS: Record<BookingStatus, { label: string; tone: "rose" | "success" | 
   CANCELED: { label: "취소", tone: "muted" },
 };
 
+const PAGE_SIZE = 15;
+
+function groupByMonth(items: UITB[]): [string, UITB[]][] {
+  const map = new Map<string, UITB[]>();
+  for (const b of items) {
+    const w = kstWall(new Date(b.start_at));
+    const key = `${w.y}. ${String(w.mo + 1).padStart(2, "0")}`;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(b);
+  }
+  return [...map.entries()];
+}
+
 export default function TeacherBookings({ items }: { items: UITB[] }) {
   const [tab, setTab] = useState<Tab>("upcoming");
+  const [page, setPage] = useState(1);
   const [commentTarget, setCommentTarget] = useState<UITB | null>(null);
   const active = TABS.find((t) => t.key === tab)!;
-  const filtered = items.filter((i) => active.match(i.status));
   const count = (t: (typeof TABS)[number]) =>
     items.filter((i) => t.match(i.status)).length;
+
+  const filtered = items
+    .filter((i) => active.match(i.status))
+    .sort((a, b) =>
+      tab === "upcoming"
+        ? a.start_at.localeCompare(b.start_at)
+        : b.start_at.localeCompare(a.start_at),
+    );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const cur = Math.min(page, totalPages);
+  const slice = filtered.slice((cur - 1) * PAGE_SIZE, cur * PAGE_SIZE);
+  const groups = groupByMonth(slice);
+
+  const selectTab = (k: Tab) => {
+    setTab(k);
+    setPage(1);
+  };
 
   return (
     <>
@@ -59,7 +89,7 @@ export default function TeacherBookings({ items }: { items: UITB[] }) {
           <button
             key={t.key}
             type="button"
-            onClick={() => setTab(t.key)}
+            onClick={() => selectTab(t.key)}
             className={
               "shrink-0 rounded-full px-3.5 py-2 text-[13.5px] font-semibold transition-colors " +
               (tab === t.key
@@ -75,11 +105,30 @@ export default function TeacherBookings({ items }: { items: UITB[] }) {
       {filtered.length === 0 ? (
         <EmptyState>해당하는 예약이 없습니다.</EmptyState>
       ) : (
-        <div className="flex flex-col gap-2">
-          {filtered.map((b) => (
-            <Row key={b.id} b={b} onComment={() => setCommentTarget(b)} />
-          ))}
-        </div>
+        <>
+          <div className="flex flex-col gap-4">
+            {groups.map(([month, list]) => (
+              <div key={month}>
+                <p className="mb-2 text-[13px] font-bold text-sub tabular-nums">{month}</p>
+                <div className="flex flex-col gap-2">
+                  {list.map((b) => (
+                    <Row key={b.id} b={b} onComment={() => setCommentTarget(b)} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="mt-5 flex items-center justify-center gap-2">
+              <PageBtn disabled={cur <= 1} onClick={() => setPage(cur - 1)}>← 이전</PageBtn>
+              <span className="text-[12.5px] font-semibold text-sub tabular-nums">
+                {cur} / {totalPages}
+              </span>
+              <PageBtn disabled={cur >= totalPages} onClick={() => setPage(cur + 1)}>다음 →</PageBtn>
+            </div>
+          )}
+        </>
       )}
 
       <CommentModal
@@ -87,6 +136,27 @@ export default function TeacherBookings({ items }: { items: UITB[] }) {
         onClose={() => setCommentTarget(null)}
       />
     </>
+  );
+}
+
+function PageBtn({
+  children,
+  disabled,
+  onClick,
+}: {
+  children: React.ReactNode;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className="rounded-[8px] border border-line px-3 py-1.5 text-[12.5px] font-medium text-sub hover:bg-line-soft disabled:opacity-40"
+    >
+      {children}
+    </button>
   );
 }
 

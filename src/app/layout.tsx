@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "./globals.css";
 import PwaRegister from "@/components/PwaRegister";
+import TopProgress from "@/components/TopProgress";
 
 export const metadata: Metadata = {
   title: "LessonHub",
@@ -30,6 +31,7 @@ export default function RootLayout({
     <html lang="ko" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
         <PwaRegister />
+        <TopProgress />
         {children}
       </body>
     </html>
