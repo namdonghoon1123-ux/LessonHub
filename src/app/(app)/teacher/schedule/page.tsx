@@ -26,14 +26,16 @@ export default async function Page() {
         title="시간표 · 예외"
         desc="레슨 설정 + 주간 가능 시간 + 예외 = 학생에게 보이는 슬롯"
       />
-      <LessonSettings
-        durationMin={profile?.lesson_duration_min ?? 60}
-        cancelCutoffHours={profile?.teacher_cancel_cutoff_hours ?? 2}
-        bookingWindowDays={profile?.booking_window_days ?? 30}
-        shareTemplate={profile?.share_message_template ?? ""}
-      />
-      {icsUrl && <CalendarSync icsUrl={icsUrl} />}
       <ScheduleEditor weekly={weekly} overrides={overrides} />
+      <div className="mt-5">
+        <LessonSettings
+          durationMin={profile?.lesson_duration_min ?? 60}
+          cancelCutoffHours={profile?.teacher_cancel_cutoff_hours ?? 2}
+          bookingWindowDays={profile?.booking_window_days ?? 30}
+          shareTemplate={profile?.share_message_template ?? ""}
+        />
+        {icsUrl && <CalendarSync icsUrl={icsUrl} />}
+      </div>
     </>
   );
 }

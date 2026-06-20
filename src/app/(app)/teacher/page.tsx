@@ -31,7 +31,7 @@ export default async function Page({
   const profile = await getTeacherProfile(me.id);
   const duration = profile?.lesson_duration_min ?? 60;
   const today = kstTodayStr();
-  const view = sp.view === "month" ? "month" : "week";
+  const view = sp.view === "week" ? "week" : "month";
 
   let periodStart: string;
   let gridStart: string;

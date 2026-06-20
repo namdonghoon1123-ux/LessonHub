@@ -45,6 +45,12 @@ export default function Nav({
           <span className="grid h-8 w-8 place-items-center rounded-full bg-coral-tint text-[13px] font-bold text-coral-deep">
             {profile.name.slice(0, 1)}
           </span>
+          <Link
+            href="/account"
+            className="rounded-[8px] px-2 py-2 text-[12.5px] font-medium text-muted transition-colors hover:text-coral-deep"
+          >
+            설정
+          </Link>
           <form action={logout}>
             <button
               type="submit"

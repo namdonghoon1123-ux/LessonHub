@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar, Chip, EmptyState, PageTitle } from "@/components/ui";
 import Modal from "@/components/Modal";
@@ -210,7 +210,20 @@ function Row({ b, onComment }: { b: UITB; onComment: () => void }) {
       else router.refresh();
     });
 
-  const hasActions = b.status !== "CANCELED";
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+  }, []);
+  const start = new Date(b.start_at).getTime();
+  const end = start + b.duration_min * 60000;
+  const canComplete = now != null && now >= end; // 수업 종료 후
+  const canNoShow = now != null && now >= start; // 수업 시작 후
+  const canComment = b.status === "COMPLETED"; // 완료 후에만 코멘트
+
+  const hasActions =
+    canComment ||
+    b.status === "BOOKED" ||
+    b.status === "PENDING";
 
   return (
     <div className="rounded-[14px] border border-line bg-surface p-3.5">
@@ -236,17 +249,26 @@ function Row({ b, onComment }: { b: UITB; onComment: () => void }) {
 
       {hasActions && (
         <div className="mt-2.5 flex flex-wrap gap-1.5">
-          {b.status !== "CANCELED" && (
+          {canComment && (
             <ActBtn onClick={onComment} disabled={pending}>
-              {hasComment ? "코멘트 ✎" : "코멘트"}
+              {hasComment ? "코멘트 ✎" : "코멘트 작성"}
             </ActBtn>
           )}
           {(b.status === "BOOKED" || b.status === "PENDING") && (
             <>
-              <ActBtn onClick={() => act(completeBookingAction)} disabled={pending} tone="primary">
+              <ActBtn
+                onClick={() => act(completeBookingAction)}
+                disabled={pending || !canComplete}
+                tone="primary"
+                title={canComplete ? undefined : "수업 종료 후 완료할 수 있어요"}
+              >
                 완료
               </ActBtn>
-              <ActBtn onClick={() => act(noShowBookingAction)} disabled={pending}>
+              <ActBtn
+                onClick={() => act(noShowBookingAction)}
+                disabled={pending || !canNoShow}
+                title={canNoShow ? undefined : "수업 시작 후 노쇼 처리할 수 있어요"}
+              >
                 노쇼
               </ActBtn>
               <ActBtn onClick={() => act(cancelBookingAction)} disabled={pending}>
@@ -351,17 +373,20 @@ function ActBtn({
   onClick,
   disabled,
   tone,
+  title,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
   tone?: "primary";
+  title?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
+      title={title}
       className={
         "rounded-[9px] px-2.5 py-1.5 text-[12.5px] font-semibold transition-colors disabled:opacity-50 " +
         (tone === "primary"

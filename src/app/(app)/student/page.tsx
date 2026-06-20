@@ -35,7 +35,7 @@ export default async function Page({
 
   const teacher = teachers.find((t) => t.teacher_id === sp.t) ?? teachers[0];
   const today = kstTodayStr();
-  const view = sp.view === "month" ? "month" : "week";
+  const view = sp.view === "week" ? "week" : "month";
 
   let periodStart: string;
   let gridStart: string;

@@ -8,7 +8,11 @@ import { Linkify } from "@/components/Linkify";
 import type { DaySlots, Slot } from "@/lib/slots";
 import { WEEKDAY_KO, addDaysStr, addMinutesToTime, dayNum } from "@/lib/time";
 import { holidayName } from "@/lib/holidays";
-import { bookForStudentAction, quickCloseSlotAction } from "./actions";
+import {
+  bookForStudentAction,
+  cancelBookingAction,
+  quickCloseSlotAction,
+} from "./actions";
 
 export type SlotInfo = {
   student_name: string;
@@ -156,6 +160,20 @@ export default function TeacherCalendar({
     });
   };
 
+  const cancelInfo = () => {
+    if (!info) return;
+    const id = info.info.id;
+    startTransition(async () => {
+      setError(null);
+      const res = await cancelBookingAction(id);
+      if (!res.ok) setError(res.error ?? "취소 실패");
+      else {
+        setInfo(null);
+        router.refresh();
+      }
+    });
+  };
+
   // 예약 정보 모달에서 링크 복사
   const copyInfoShare = async () => {
     if (!info) return;
@@ -237,6 +255,15 @@ export default function TeacherCalendar({
             >
               구글 캘린더에 추가
             </a>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={cancelInfo}
+              className="mt-2 grid h-10 w-full place-items-center rounded-[var(--radius-btn)] border border-coral-border text-[13.5px] font-semibold text-coral-deep hover:bg-coral-tint/40 disabled:opacity-60"
+            >
+              예약 취소
+            </button>
+            {error && <p className="mt-2 text-[12.5px] text-coral-deep">{error}</p>}
           </div>
         )}
       </Modal>

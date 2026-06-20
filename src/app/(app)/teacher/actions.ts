@@ -196,6 +196,9 @@ export async function saveCommentAction(
 export async function completeBookingAction(id: string): Promise<Result> {
   const b = await ownedBooking(id);
   if (!b) return { ok: false, error: "권한이 없습니다." };
+  const endMs = new Date(b.start_at).getTime() + b.duration_min * 60000;
+  if (Date.now() < endMs)
+    return { ok: false, error: "수업 종료 후에 완료할 수 있어요." };
   await setBookingStatus(id, "COMPLETED", { completed_at: new Date().toISOString() });
   await decrementRemainingLessons(b.student_id, b.teacher_id); // 잔여 횟수 설정 시 차감
   refresh();
@@ -224,6 +227,8 @@ export async function saveStudentMgmtAction(
 export async function noShowBookingAction(id: string): Promise<Result> {
   const b = await ownedBooking(id);
   if (!b) return { ok: false, error: "권한이 없습니다." };
+  if (Date.now() < new Date(b.start_at).getTime())
+    return { ok: false, error: "수업 시작 후에 노쇼 처리할 수 있어요." };
   await setBookingStatus(id, "NO_SHOW", { no_show_at: new Date().toISOString() });
   refresh();
   return { ok: true };

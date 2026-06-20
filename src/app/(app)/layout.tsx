@@ -10,7 +10,6 @@ export default async function AppLayout({
 }) {
   const profile = await getProfile();
   if (!profile) redirect("/login");
-  if (profile.must_change_password) redirect("/change-password");
 
   const badges: Record<string, number> = {};
   if (profile.role === "STUDENT") {
