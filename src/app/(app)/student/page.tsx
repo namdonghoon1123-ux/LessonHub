@@ -11,6 +11,7 @@ import {
   weekdayOf,
 } from "@/lib/time";
 import { EmptyState, PageTitle } from "@/components/ui";
+import { STUDENT_CANCEL_CUTOFF_HOURS } from "@/lib/policy";
 import StudentCalendar from "./StudentCalendar";
 
 export default async function Page({
@@ -72,7 +73,8 @@ export default async function Page({
       teacherId={teacher.teacher_id}
       teacherName={teacher.name}
       subject={teacher.subject}
-      cancelCutoffHours={teacher.teacher_cancel_cutoff_hours}
+      durationMin={teacher.lesson_duration_min}
+      cancelCutoffHours={STUDENT_CANCEL_CUTOFF_HOURS}
       view={view}
       periodStart={periodStart}
       today={today}

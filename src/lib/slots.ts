@@ -30,7 +30,8 @@ export type BookingLite = {
 // 슬롯 시작 간격(분). 레슨은 duration_min 길이지만 시작은 30분 단위.
 export const SLOT_STEP_MIN = 30;
 
-export type SlotStatus = "open" | "full" | "mine" | "past";
+// blocked = 인접 예약과 겹쳐 1시간 레슨이 안 들어가는 시작시간 (화면에서 숨김)
+export type SlotStatus = "open" | "full" | "mine" | "past" | "blocked";
 export type Slot = { time: string; startAtISO: string; status: SlotStatus };
 export type DaySlots = {
   date: string;
@@ -151,10 +152,16 @@ export function computeDaySlots(p: ComputeParams): DaySlots {
 
       let status: SlotStatus;
       if (ov) {
-        status =
-          p.viewingStudentId && ov.student_id === p.viewingStudentId
-            ? "mine"
-            : "full";
+        if (ov.s === sMs) {
+          // 이 시작시각의 실제 예약
+          status =
+            p.viewingStudentId && ov.student_id === p.viewingStudentId
+              ? "mine"
+              : "full";
+        } else {
+          // 인접 예약과 겹쳐 예약 불가 → 숨김
+          status = "blocked";
+        }
       } else if (sMs <= nowMs) {
         status = "past";
       } else {

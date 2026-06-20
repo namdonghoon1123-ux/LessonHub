@@ -21,6 +21,7 @@ export default function StudentCalendar({
   teacherId,
   teacherName,
   subject,
+  durationMin,
   cancelCutoffHours,
   view,
   periodStart,
@@ -30,6 +31,7 @@ export default function StudentCalendar({
   teacherId: string;
   teacherName: string;
   subject: string | null;
+  durationMin: number;
   cancelCutoffHours: number;
   view: "week" | "month";
   periodStart: string;
@@ -110,7 +112,9 @@ export default function StudentCalendar({
           <p className="truncate text-[16px] font-bold">
             {teacherName} 선생님{subject ? ` · ${subject}` : ""}
           </p>
-          <p className="text-[12.5px] text-muted">🕓 Asia/Seoul · KST</p>
+          <p className="text-[12.5px] text-muted">
+            🕓 Asia/Seoul · KST · <b className="text-coral-deep">레슨 {durationMin}분</b>
+          </p>
         </div>
       </div>
 
@@ -170,7 +174,7 @@ export default function StudentCalendar({
           <div className="text-[14px]">
             <Row label="선생님" value={`${teacherName} 선생님`} />
             <Row label="날짜" value={target.startAtISO.slice(0, 10)} />
-            <Row label="시간" value={target.time} />
+            <Row label="시간" value={`${target.time} (${durationMin}분)`} />
             <Row label="취소 정책" value={`수업 ${cancelCutoffHours}시간 전까지`} />
 
             <div className="mt-3">
@@ -360,10 +364,11 @@ function WeekStrip({
 function DaySlotList({ day, onBook }: { day: DaySlots; onBook: (s: Slot) => void }) {
   if (day.isPast) return <Centered>지난 날짜입니다.</Centered>;
   if (day.isOff) return <Centered>이 날은 휴무입니다.</Centered>;
-  if (day.slots.length === 0) return <Centered>예약 가능한 시간이 없어요.</Centered>;
+  const slots = day.slots.filter((s) => s.status !== "blocked");
+  if (slots.length === 0) return <Centered>예약 가능한 시간이 없어요.</Centered>;
   return (
     <div className="flex flex-col gap-2">
-      {day.slots.map((s) => (
+      {slots.map((s) => (
         <SlotRow key={s.startAtISO} slot={s} onBook={() => onBook(s)} />
       ))}
     </div>
@@ -405,10 +410,14 @@ function WeekDayCard({
           <Centered>지난 날짜</Centered>
         ) : day.isOff ? (
           <Centered>휴무</Centered>
-        ) : day.slots.length === 0 ? (
-          <Centered>없음</Centered>
         ) : (
-          day.slots.map((s) => <SlotChip key={s.startAtISO} slot={s} onBook={() => onBook(s)} />)
+          (() => {
+            const slots = day.slots.filter((s) => s.status !== "blocked");
+            if (slots.length === 0) return <Centered>없음</Centered>;
+            return slots.map((s) => (
+              <SlotChip key={s.startAtISO} slot={s} onBook={() => onBook(s)} />
+            ));
+          })()
         )}
       </div>
     </div>
