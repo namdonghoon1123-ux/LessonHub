@@ -30,6 +30,7 @@ export default async function Page() {
         durationMin={profile?.lesson_duration_min ?? 60}
         cancelCutoffHours={profile?.teacher_cancel_cutoff_hours ?? 2}
         bookingWindowDays={profile?.booking_window_days ?? 30}
+        shareTemplate={profile?.share_message_template ?? ""}
       />
       {icsUrl && <CalendarSync icsUrl={icsUrl} />}
       <ScheduleEditor weekly={weekly} overrides={overrides} />

@@ -8,14 +8,48 @@ import { Linkify } from "@/components/Linkify";
 import type { DaySlots, Slot } from "@/lib/slots";
 import { WEEKDAY_KO, addDaysStr, addMinutesToTime, dayNum } from "@/lib/time";
 import { holidayName } from "@/lib/holidays";
-import { quickCloseSlotAction } from "./actions";
+import { bookForStudentAction, quickCloseSlotAction } from "./actions";
 
 export type SlotInfo = {
   student_name: string;
   student_note: string | null;
   status: string;
   id: string;
+  share_token: string;
 };
+
+type StudentOpt = { id: string; name: string };
+
+function fmtKDate(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return `${y}년 ${m}월 ${d}일`;
+}
+function buildShareText(
+  template: string,
+  dateStr: string,
+  timeStr: string,
+  url: string,
+): string {
+  const base =
+    (template && template.trim()) ||
+    "안녕하세요! 아래 시간으로 레슨 예약했어요~ 링크 참고 부탁드립니다 :)";
+  const replaced = base
+    .replaceAll("{날짜}", dateStr)
+    .replaceAll("{시간}", timeStr);
+  return `${replaced}\n\n📅 ${dateStr} ${timeStr}\n🔗 ${url}`;
+}
+function shareUrl(token: string): string {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return `${origin}/l/${token}`;
+}
+async function copy(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 const pad = (n: number) => String(n).padStart(2, "0");
 function addMonths(ym1: string, delta: number): string {
@@ -40,6 +74,8 @@ export default function TeacherCalendar({
   days,
   durationMin,
   infoBySlot,
+  students,
+  shareTemplate,
 }: {
   view: "week" | "month";
   periodStart: string;
@@ -47,11 +83,16 @@ export default function TeacherCalendar({
   days: DaySlots[];
   durationMin: number;
   infoBySlot: Record<string, SlotInfo>;
+  students: StudentOpt[];
+  shareTemplate: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [info, setInfo] = useState<{ slot: Slot; info: SlotInfo; date: string } | null>(null);
-  const [closeT, setCloseT] = useState<{ slot: Slot; date: string } | null>(null);
+  const [menu, setMenu] = useState<{ slot: Slot; date: string } | null>(null);
+  const [bookSid, setBookSid] = useState("");
+  const [share, setShare] = useState<{ text: string; url: string } | null>(null);
+  const [copied, setCopied] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const month = periodStart.slice(0, 7);
@@ -72,25 +113,55 @@ export default function TeacherCalendar({
   const onSlot = (s: Slot, date: string) => {
     const i = infoBySlot[s.startAtISO];
     if (i) setInfo({ slot: s, info: i, date });
-    else if (s.status === "open") setCloseT({ slot: s, date });
+    else if (s.status === "open") {
+      setBookSid(students[0]?.id ?? "");
+      setError(null);
+      setMenu({ slot: s, date });
+    }
   };
 
-  const confirmClose = () => {
-    if (!closeT) return;
-    const { slot: s, date } = closeT;
+  // 빈 슬롯 → 학생 예약 잡기 → 공유 모달
+  const bookForStudent = () => {
+    if (!menu || !bookSid) return;
+    const { slot: s, date } = menu;
     startTransition(async () => {
       setError(null);
-      const res = await quickCloseSlotAction(
-        date,
-        s.time,
-        addMinutesToTime(s.time, durationMin),
-      );
+      const res = await bookForStudentAction(bookSid, s.startAtISO);
+      if (!res.ok || !res.shareToken) {
+        setError(res.error ?? "예약 실패");
+        return;
+      }
+      const url = shareUrl(res.shareToken);
+      setMenu(null);
+      setCopied("");
+      setShare({
+        url,
+        text: buildShareText(shareTemplate, fmtKDate(date), s.time, url),
+      });
+      router.refresh();
+    });
+  };
+
+  const closeSlot = () => {
+    if (!menu) return;
+    const { slot: s, date } = menu;
+    startTransition(async () => {
+      setError(null);
+      const res = await quickCloseSlotAction(date, s.time, addMinutesToTime(s.time, durationMin));
       if (!res.ok) setError(res.error ?? "처리 실패");
       else {
-        setCloseT(null);
+        setMenu(null);
         router.refresh();
       }
     });
+  };
+
+  // 예약 정보 모달에서 링크 복사
+  const copyInfoShare = async () => {
+    if (!info) return;
+    const url = shareUrl(info.info.share_token);
+    const text = buildShareText(shareTemplate, fmtKDate(info.date), info.slot.time, url);
+    setCopied((await copy(text)) ? "info" : "");
   };
 
   return (
@@ -133,7 +204,7 @@ export default function TeacherCalendar({
       )}
 
       <p className="mt-4 text-[12px] text-muted">
-        빈 시간을 누르면 휴강 처리, 예약된 시간을 누르면 상세 정보를 볼 수 있어요.
+        빈 시간을 누르면 <b>학생 예약을 잡거나 휴강</b>, 예약된 시간을 누르면 <b>정보·공유</b>.
       </p>
 
       {/* 예약 정보 모달 */}
@@ -151,11 +222,18 @@ export default function TeacherCalendar({
                 </p>
               </div>
             )}
+            <button
+              type="button"
+              onClick={copyInfoShare}
+              className="mt-4 grid h-11 w-full place-items-center rounded-[var(--radius-btn)] bg-coral text-[14px] font-bold text-white hover:opacity-95"
+            >
+              {copied === "info" ? "복사됨! 학생에게 붙여넣기" : "📋 레슨 링크·문구 복사"}
+            </button>
             <a
               href={gcalUrl(info.slot.startAtISO, durationMin, `${info.info.student_name} 레슨`)}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 grid h-10 w-full place-items-center rounded-[var(--radius-btn)] border border-line text-[13.5px] font-semibold text-sub hover:bg-line-soft"
+              className="mt-2 grid h-10 w-full place-items-center rounded-[var(--radius-btn)] border border-line text-[13.5px] font-semibold text-sub hover:bg-line-soft"
             >
               구글 캘린더에 추가
             </a>
@@ -163,31 +241,81 @@ export default function TeacherCalendar({
         )}
       </Modal>
 
-      {/* 휴강 확인 모달 */}
-      <Modal open={closeT != null} onClose={() => setCloseT(null)} title="휴강 처리">
-        {closeT && (
+      {/* 빈 슬롯: 학생 예약 잡기 / 휴강 */}
+      <Modal
+        open={menu != null}
+        onClose={() => setMenu(null)}
+        title={menu ? `${menu.date} ${menu.slot.time}` : ""}
+      >
+        {menu && (
           <div className="text-[14px]">
-            <p className="text-sub">
-              {closeT.date} {closeT.slot.time} 시간을 <b className="text-coral-deep">휴강</b>으로 막을까요?
-              <br />학생에게 이 시간이 더 이상 보이지 않습니다.
+            <p className="mb-1.5 text-[13px] font-semibold text-sub">학생 예약 잡기</p>
+            {students.length === 0 ? (
+              <p className="text-[13px] text-muted">연결된 학생이 없습니다.</p>
+            ) : (
+              <div className="flex gap-2">
+                <select
+                  value={bookSid}
+                  onChange={(e) => setBookSid(e.target.value)}
+                  className="h-11 flex-1 rounded-[10px] border-[1.5px] border-line bg-surface px-3 text-[14px] outline-none focus:border-coral"
+                >
+                  {students.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  disabled={pending || !bookSid}
+                  onClick={bookForStudent}
+                  className="h-11 shrink-0 rounded-[var(--radius-btn)] bg-coral px-5 text-[14px] font-bold text-white disabled:opacity-60"
+                >
+                  예약 잡기
+                </button>
+              </div>
+            )}
+            {error && <p className="mt-2 text-[12.5px] text-coral-deep">{error}</p>}
+
+            <div className="my-4 h-px bg-line-soft" />
+            <button
+              type="button"
+              disabled={pending}
+              onClick={closeSlot}
+              className="h-10 w-full rounded-[var(--radius-btn)] border border-line text-[14px] font-medium text-sub hover:bg-line-soft disabled:opacity-60"
+            >
+              이 시간 휴강 처리
+            </button>
+          </div>
+        )}
+      </Modal>
+
+      {/* 예약 후 공유 모달 */}
+      <Modal
+        open={share != null}
+        onClose={() => setShare(null)}
+        title="예약 완료 · 학생에게 공유"
+      >
+        {share && (
+          <div className="text-[14px]">
+            <p className="mb-2 text-[13px] text-sub">
+              아래 문구를 복사해 학생에게 보내세요. 학생이 링크를 누르면 바로 본인 예약이 보여요.
             </p>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setCloseT(null)}
-                className="h-10 rounded-[var(--radius-btn)] border border-line px-4 text-[14px] font-medium text-sub hover:bg-line-soft"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                disabled={pending}
-                onClick={confirmClose}
-                className="h-10 rounded-[var(--radius-btn)] bg-coral px-5 text-[14px] font-bold text-white disabled:opacity-60"
-              >
-                {pending ? "처리 중…" : "휴강 처리"}
-              </button>
-            </div>
+            <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-[10px] bg-line-soft p-3 text-[13px] text-ink">
+              {share.text}
+            </pre>
+            <button
+              type="button"
+              onClick={async () => setCopied((await copy(share.text)) ? "share" : "")}
+              className="mt-3 grid h-11 w-full place-items-center rounded-[var(--radius-btn)] bg-coral text-[14px] font-bold text-white hover:opacity-95"
+            >
+              {copied === "share" ? "복사됨!" : "📋 문구 전체 복사"}
+            </button>
+            <button
+              type="button"
+              onClick={async () => setCopied((await copy(share.url)) ? "url" : "")}
+              className="mt-2 grid h-10 w-full place-items-center rounded-[var(--radius-btn)] border border-line text-[13.5px] font-semibold text-sub hover:bg-line-soft"
+            >
+              {copied === "url" ? "링크 복사됨!" : "링크만 복사"}
+            </button>
           </div>
         )}
       </Modal>

@@ -9,23 +9,27 @@ export default function LessonSettings({
   durationMin,
   cancelCutoffHours,
   bookingWindowDays,
+  shareTemplate,
 }: {
   durationMin: number;
   cancelCutoffHours: number;
   bookingWindowDays: number;
+  shareTemplate: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [duration, setDuration] = useState(durationMin);
   const [cutoff, setCutoff] = useState(cancelCutoffHours);
   const [windowDays, setWindowDays] = useState(bookingWindowDays);
+  const [template, setTemplate] = useState(shareTemplate);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const dirty =
     duration !== durationMin ||
     cutoff !== cancelCutoffHours ||
-    windowDays !== bookingWindowDays;
+    windowDays !== bookingWindowDays ||
+    template !== shareTemplate;
 
   const save = () =>
     startTransition(async () => {
@@ -35,6 +39,7 @@ export default function LessonSettings({
         lessonDurationMin: duration,
         cancelCutoffHours: cutoff,
         bookingWindowDays: windowDays,
+        shareTemplate: template,
       });
       if (!res.ok) setError(res.error ?? "저장 실패");
       else {
@@ -90,6 +95,21 @@ export default function LessonSettings({
           {pending ? "저장 중…" : "저장"}
         </button>
       </div>
+
+      <label className="mt-4 block text-[13px] font-semibold text-sub">
+        공유 문구 (예약 잡고 학생에게 링크 보낼 때 자동 복사됨)
+        <textarea
+          value={template}
+          onChange={(e) => setTemplate(e.target.value)}
+          rows={2}
+          placeholder="예: 안녕하세요! 아래 시간으로 레슨 예약했어요~ 링크 참고 부탁드립니다 :)"
+          className="mt-1 w-full rounded-[10px] border-[1.5px] border-line px-3 py-2 text-[14px] outline-none focus:border-coral"
+        />
+        <span className="mt-1 block font-normal text-muted">
+          날짜·시간·링크는 복사할 때 자동으로 아래에 붙어요. (특정 위치에 넣고 싶으면 {"{날짜}"} {"{시간}"} 를 적으세요)
+        </span>
+      </label>
+
       {saved && !dirty && (
         <p className="mt-2 text-[12.5px] font-medium text-success">저장되었습니다.</p>
       )}

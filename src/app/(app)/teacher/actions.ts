@@ -3,20 +3,63 @@
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import {
+  createBooking,
+  getActiveBookings,
   getBooking,
   setBookingStatus,
   updateBookingComments,
 } from "@/lib/data/bookings";
 import {
   decrementRemainingLessons,
+  getTeacherStudents,
   rejectLinkByTeacher,
   setLinkStatusByTeacher,
   updateStudentMgmt,
 } from "@/lib/data/links";
 import { createAuthUser, createLink } from "@/lib/data/admin";
-import { updateTeacherProfile } from "@/lib/data/teachers";
-import { addOverride } from "@/lib/data/availability";
+import { getTeacherProfile, updateTeacherProfile } from "@/lib/data/teachers";
+import { addOverride, getOverrides, getWeekly } from "@/lib/data/availability";
+import { computeDaySlots } from "@/lib/slots";
+import { addDaysStr, kstDateStr } from "@/lib/time";
 import { syntheticEmail, usernameTaken } from "@/lib/account";
+
+// 선생님이 학생 대신 예약을 잡아줌 (빈 슬롯 클릭 → 학생 선택)
+export async function bookForStudentAction(
+  studentId: string,
+  startAtISO: string,
+): Promise<Result & { shareToken?: string }> {
+  const me = await requireRole("TEACHER");
+  const students = await getTeacherStudents(me.id);
+  const student = students.find(
+    (s) => s.student_id === studentId && s.status === "ACTIVE",
+  );
+  if (!student) return { ok: false, error: "연결된 학생이 아닙니다." };
+
+  const profile = await getTeacherProfile(me.id);
+  const duration = profile?.lesson_duration_min ?? 60;
+  const date = kstDateStr(new Date(startAtISO));
+  const [weekly, overrides, bookings] = await Promise.all([
+    getWeekly(me.id),
+    getOverrides(me.id, date),
+    getActiveBookings(me.id, startAtISO, addDaysStr(date, 1) + "T00:00:00Z"),
+  ]);
+  const day = computeDaySlots({ date, durationMin: duration, weekly, overrides, bookings });
+  const slot = day.slots.find((s) => s.startAtISO === startAtISO);
+  if (!slot || slot.status !== "open") {
+    return { ok: false, error: "예약할 수 없는 시간입니다." };
+  }
+  const res = await createBooking({
+    studentId,
+    teacherId: me.id,
+    startAtISO,
+    durationMin: duration,
+    lessonTitle: profile?.subject ?? null,
+  });
+  if (!res.ok) return { ok: false, error: res.error };
+  revalidatePath("/teacher");
+  revalidatePath("/teacher/bookings");
+  return { ok: true, shareToken: res.shareToken };
+}
 
 // 주간 그리드에서 빈 슬롯 클릭 → 그 시간만 휴강(CLOSE) 처리
 export async function quickCloseSlotAction(
@@ -47,6 +90,7 @@ export async function updateLessonSettingsAction(input: {
   lessonDurationMin: number;
   cancelCutoffHours: number;
   bookingWindowDays: number;
+  shareTemplate: string;
 }): Promise<Result> {
   const me = await requireRole("TEACHER");
   if (input.lessonDurationMin < 10 || input.lessonDurationMin > 240)
@@ -56,6 +100,7 @@ export async function updateLessonSettingsAction(input: {
       lesson_duration_min: input.lessonDurationMin,
       teacher_cancel_cutoff_hours: input.cancelCutoffHours,
       booking_window_days: input.bookingWindowDays,
+      share_message_template: input.shareTemplate.trim() || null,
     });
     revalidatePath("/teacher/schedule");
     revalidatePath("/teacher");

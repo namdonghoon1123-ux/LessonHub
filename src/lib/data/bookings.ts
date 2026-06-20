@@ -23,6 +23,7 @@ export type BookingRow = {
   student_note: string | null;
   canceled_at: string | null;
   recurring_series_id: string | null;
+  share_token: string;
   created_at: string;
 };
 
@@ -51,23 +52,40 @@ export async function createBooking(input: {
   lessonTitle: string | null;
   recurringSeriesId?: string;
   studentNote?: string | null;
-}): Promise<{ ok: boolean; error?: string }> {
+}): Promise<{ ok: boolean; error?: string; shareToken?: string }> {
   const db = createAdminClient();
-  const { error } = await db.from("bookings").insert({
-    teacher_id: input.teacherId,
-    student_id: input.studentId,
-    start_at: input.startAtISO,
-    duration_min: input.durationMin,
-    status: "BOOKED",
-    lesson_title_snapshot: input.lessonTitle,
-    recurring_series_id: input.recurringSeriesId ?? null,
-    student_note: input.studentNote?.trim() || null,
-  });
+  const { data, error } = await db
+    .from("bookings")
+    .insert({
+      teacher_id: input.teacherId,
+      student_id: input.studentId,
+      start_at: input.startAtISO,
+      duration_min: input.durationMin,
+      status: "BOOKED",
+      lesson_title_snapshot: input.lessonTitle,
+      recurring_series_id: input.recurringSeriesId ?? null,
+      student_note: input.studentNote?.trim() || null,
+    })
+    .select("share_token")
+    .single();
   if (error) {
     if (error.code === "23505") return { ok: false, error: "이미 예약된 시간입니다." };
     return { ok: false, error: error.message };
   }
-  return { ok: true };
+  return { ok: true, shareToken: data.share_token as string };
+}
+
+// 공유 링크용: 토큰 → 학생 id (자동 로그인 라우트에서 사용)
+export async function getStudentIdByShareToken(
+  token: string,
+): Promise<string | null> {
+  const db = createAdminClient();
+  const { data } = await db
+    .from("bookings")
+    .select("student_id")
+    .eq("share_token", token)
+    .maybeSingle();
+  return data?.student_id ?? null;
 }
 
 export async function createRecurringSeries(input: {

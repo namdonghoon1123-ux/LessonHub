@@ -1,7 +1,7 @@
 import { requireRole } from "@/lib/auth";
 import { getOverrides, getWeekly } from "@/lib/data/availability";
 import { getTeacherBookings } from "@/lib/data/bookings";
-import { getPendingRequests } from "@/lib/data/links";
+import { getPendingRequests, getTeacherStudents } from "@/lib/data/links";
 import { getTeacherProfile } from "@/lib/data/teachers";
 import { computeRange } from "@/lib/slots";
 import {
@@ -48,12 +48,16 @@ export default async function Page({
   const fromISO = isoStart(gridStart);
   const toISO = isoStart(addDaysStr(gridStart, dayCount));
 
-  const [weekly, overrides, allBookings, pendingReqs] = await Promise.all([
+  const [weekly, overrides, allBookings, pendingReqs, students] = await Promise.all([
     getWeekly(me.id),
     getOverrides(me.id, gridStart),
     getTeacherBookings(me.id),
     getPendingRequests(me.id),
+    getTeacherStudents(me.id),
   ]);
+  const activeStudentOpts = students
+    .filter((s) => s.status === "ACTIVE")
+    .map((s) => ({ id: s.student_id, name: s.name }));
 
   const periodActive = allBookings.filter(
     (b) =>
@@ -68,6 +72,7 @@ export default async function Page({
       student_note: b.student_note,
       status: STATUS_KO[b.status] ?? b.status,
       id: b.id,
+      share_token: b.share_token,
     };
   }
 
@@ -130,6 +135,8 @@ export default async function Page({
         days={days}
         durationMin={duration}
         infoBySlot={infoBySlot}
+        students={activeStudentOpts}
+        shareTemplate={profile?.share_message_template ?? ""}
       />
     </>
   );

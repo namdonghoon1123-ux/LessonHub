@@ -12,6 +12,7 @@ export type TeacherProfile = {
   teacher_cancel_cutoff_hours: number;
   student_cancel_day_before_hour: number | null;
   ics_token: string;
+  share_message_template: string | null;
 };
 
 export async function getTeacherProfile(
@@ -34,6 +35,7 @@ export async function updateTeacherProfile(
     booking_window_days: number;
     subject: string;
     display_name: string;
+    share_message_template: string | null;
   }>,
 ) {
   const db = createAdminClient();
