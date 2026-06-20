@@ -32,6 +32,7 @@ export default function StudentCalendar({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [repeat, setRepeat] = useState(1);
+  const [note, setNote] = useState("");
 
   const defaultDay =
     days.find((d) => d.date === today && !d.isPast)?.date ??
@@ -47,6 +48,7 @@ export default function StudentCalendar({
     setError(null);
     setNotice(null);
     setRepeat(1);
+    setNote("");
     setTarget(s);
   };
 
@@ -58,8 +60,8 @@ export default function StudentCalendar({
       setNotice(null);
       const res =
         repeat > 1
-          ? await bookRecurringAction(teacherId, slot.startAtISO, repeat)
-          : await bookSlotAction(teacherId, slot.startAtISO);
+          ? await bookRecurringAction(teacherId, slot.startAtISO, repeat, note)
+          : await bookSlotAction(teacherId, slot.startAtISO, note);
       if (!res.ok) {
         setError(res.error ?? "예약에 실패했습니다.");
         router.refresh(); // 이미 찬 슬롯이면 즉시 '마감'으로 갱신
@@ -250,6 +252,19 @@ export default function StudentCalendar({
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div className="mt-3">
+              <p className="mb-1.5 text-[13px] font-semibold text-sub">
+                선생님께 한마디 <span className="font-normal text-muted">(선택)</span>
+              </p>
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={2}
+                placeholder="예: 10분 정도 늦을 수 있어요"
+                className="w-full rounded-[10px] border-[1.5px] border-line px-3 py-2 text-[14px] outline-none focus:border-coral"
+              />
             </div>
 
             <div className="mt-5 flex justify-end gap-2">

@@ -8,8 +8,10 @@ import {
   updateBookingComments,
 } from "@/lib/data/bookings";
 import {
+  decrementRemainingLessons,
   rejectLinkByTeacher,
   setLinkStatusByTeacher,
+  updateStudentMgmt,
 } from "@/lib/data/links";
 import { createAuthUser, createLink } from "@/lib/data/admin";
 import { updateTeacherProfile } from "@/lib/data/teachers";
@@ -120,8 +122,28 @@ export async function completeBookingAction(id: string): Promise<Result> {
   const b = await ownedBooking(id);
   if (!b) return { ok: false, error: "권한이 없습니다." };
   await setBookingStatus(id, "COMPLETED", { completed_at: new Date().toISOString() });
+  await decrementRemainingLessons(b.student_id, b.teacher_id); // 잔여 횟수 설정 시 차감
   refresh();
   return { ok: true };
+}
+
+export async function saveStudentMgmtAction(
+  linkId: string,
+  memo: string,
+  remaining: number | null,
+): Promise<Result> {
+  const me = await requireRole("TEACHER");
+  try {
+    await updateStudentMgmt(linkId, me.id, {
+      teacher_memo: memo.trim() || null,
+      remaining_lessons:
+        remaining == null || Number.isNaN(remaining) ? null : Math.max(0, remaining),
+    });
+    revalidatePath("/teacher/students");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
 }
 
 export async function noShowBookingAction(id: string): Promise<Result> {

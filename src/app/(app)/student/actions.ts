@@ -33,6 +33,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
 export async function bookSlotAction(
   teacherId: string,
   startAtISO: string,
+  note?: string,
 ): Promise<Result> {
   const me = await requireRole("STUDENT");
 
@@ -67,6 +68,7 @@ export async function bookSlotAction(
     startAtISO,
     durationMin: teacher.lesson_duration_min,
     lessonTitle: teacher.subject,
+    studentNote: note,
   });
   if (!res.ok) return res;
   revalidatePath("/student");
@@ -78,6 +80,7 @@ export async function bookRecurringAction(
   teacherId: string,
   startAtISO: string,
   count: number,
+  note?: string,
 ): Promise<Result> {
   const me = await requireRole("STUDENT");
   const teachers = await getStudentTeachers(me.id);
@@ -132,6 +135,7 @@ export async function bookRecurringAction(
       durationMin: duration,
       lessonTitle: teacher.subject,
       recurringSeriesId: seriesId,
+      studentNote: note,
     });
     if (res.ok) created++;
   }

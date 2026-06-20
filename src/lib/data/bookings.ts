@@ -20,6 +20,7 @@ export type BookingRow = {
   teacher_comment: string | null;
   teacher_private_comment: string | null;
   student_comment: string | null;
+  student_note: string | null;
   canceled_at: string | null;
   recurring_series_id: string | null;
   created_at: string;
@@ -49,6 +50,7 @@ export async function createBooking(input: {
   durationMin: number;
   lessonTitle: string | null;
   recurringSeriesId?: string;
+  studentNote?: string | null;
 }): Promise<{ ok: boolean; error?: string }> {
   const db = createAdminClient();
   const { error } = await db.from("bookings").insert({
@@ -59,6 +61,7 @@ export async function createBooking(input: {
     status: "BOOKED",
     lesson_title_snapshot: input.lessonTitle,
     recurring_series_id: input.recurringSeriesId ?? null,
+    student_note: input.studentNote?.trim() || null,
   });
   if (error) {
     if (error.code === "23505") return { ok: false, error: "이미 예약된 시간입니다." };

@@ -19,6 +19,17 @@ export type UIBooking = {
   deadlineISO: string;
 };
 
+function groupByMonth(items: UIBooking[]): [string, UIBooking[]][] {
+  const map = new Map<string, UIBooking[]>();
+  for (const b of items) {
+    const w = kstWall(new Date(b.start_at));
+    const key = `${w.y}. ${String(w.mo + 1).padStart(2, "0")}`;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(b);
+  }
+  return [...map.entries()];
+}
+
 const STATUS_LABEL: Record<BookingStatus, string> = {
   PENDING: "대기",
   BOOKED: "확정",
@@ -65,9 +76,16 @@ export default function MyBookings({
       {past.length === 0 ? (
         <EmptyState>지난 수업이 없습니다.</EmptyState>
       ) : (
-        <div className="flex flex-col gap-2.5">
-          {past.map((b) => (
-            <BookingCard key={b.id} b={b} past />
+        <div className="flex flex-col gap-4">
+          {groupByMonth(past).map(([month, list]) => (
+            <div key={month}>
+              <p className="mb-2 text-[13px] font-bold text-sub tabular-nums">{month}</p>
+              <div className="flex flex-col gap-2.5">
+                {list.map((b) => (
+                  <BookingCard key={b.id} b={b} past />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}

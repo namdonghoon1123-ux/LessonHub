@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
-import Image from "next/image";
 
 export function LogoMark({ size = 28, radius = 8 }: { size?: number; radius?: number }) {
+  // next/image 최적화 레이어를 거치지 않는 plain img (정적 서빙, 외장SSD 캐시 이슈 회피)
   return (
-    <Image
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
       src="/lessonhub-logo.png"
       alt="LessonHub"
       width={size}
       height={size}
-      priority
       className="object-cover"
       style={{ borderRadius: radius, width: size, height: size }}
     />

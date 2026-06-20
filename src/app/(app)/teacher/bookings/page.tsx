@@ -14,6 +14,7 @@ export default async function Page() {
     lesson_title: r.lesson_title_snapshot,
     teacher_comment: r.teacher_comment,
     teacher_private_comment: r.teacher_private_comment,
+    student_note: r.student_note,
   }));
   return <TeacherBookings items={items} />;
 }

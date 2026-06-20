@@ -1,14 +1,6 @@
-import { requireRole } from "@/lib/auth";
-import { getAvailableTeachers, getStudentLinks } from "@/lib/data/links";
-import StudentTeachers from "./StudentTeachers";
+import { redirect } from "next/navigation";
 
-export default async function Page() {
-  const me = await requireRole("STUDENT");
-  const [links, all] = await Promise.all([
-    getStudentLinks(me.id),
-    getAvailableTeachers(),
-  ]);
-  const linkedIds = new Set(links.map((l) => l.teacher_id));
-  const available = all.filter((t) => !linkedIds.has(t.teacher_id));
-  return <StudentTeachers links={links} available={available} />;
+// 학생 셀프 연결 페이지는 비활성화됨 (연결은 선생님/관리자가 관리)
+export default function Page() {
+  redirect("/student");
 }

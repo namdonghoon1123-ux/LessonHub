@@ -48,9 +48,12 @@ export async function getStudentTeachers(
 }
 
 export type LinkedStudent = {
+  link_id: string;
   student_id: string;
   name: string;
   status: "PENDING" | "ACTIVE";
+  teacher_memo: string | null;
+  remaining_lessons: number | null;
 };
 
 export type StudentLink = {
@@ -189,7 +192,7 @@ export async function getTeacherStudents(
   const db = createAdminClient();
   const { data: links } = await db
     .from("links")
-    .select("student_id, status")
+    .select("id, student_id, status, teacher_memo, remaining_lessons")
     .eq("teacher_id", teacherId);
   const ids = (links ?? []).map((l) => l.student_id);
   if (ids.length === 0) return [];
@@ -199,8 +202,46 @@ export async function getTeacherStudents(
     .in("id", ids);
   const nameById = new Map((profs ?? []).map((p) => [p.id, p.name]));
   return (links ?? []).map((l) => ({
+    link_id: l.id,
     student_id: l.student_id,
     name: nameById.get(l.student_id) ?? "학생",
     status: l.status as "PENDING" | "ACTIVE",
+    teacher_memo: l.teacher_memo,
+    remaining_lessons: l.remaining_lessons,
   }));
+}
+
+// 학생 관리 저장 (메모 + 잔여 레슨). 선생님 소유 link만.
+export async function updateStudentMgmt(
+  linkId: string,
+  teacherId: string,
+  fields: { teacher_memo: string | null; remaining_lessons: number | null },
+) {
+  const db = createAdminClient();
+  const { error } = await db
+    .from("links")
+    .update(fields)
+    .eq("id", linkId)
+    .eq("teacher_id", teacherId);
+  if (error) throw new Error(error.message);
+}
+
+// 레슨 완료 시 잔여 횟수 차감 (설정된 경우에만)
+export async function decrementRemainingLessons(
+  studentId: string,
+  teacherId: string,
+) {
+  const db = createAdminClient();
+  const { data } = await db
+    .from("links")
+    .select("id, remaining_lessons")
+    .eq("student_id", studentId)
+    .eq("teacher_id", teacherId)
+    .maybeSingle();
+  if (data && data.remaining_lessons != null && data.remaining_lessons > 0) {
+    await db
+      .from("links")
+      .update({ remaining_lessons: data.remaining_lessons - 1 })
+      .eq("id", data.id);
+  }
 }

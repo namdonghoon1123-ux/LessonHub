@@ -8,7 +8,6 @@ export const navByRole: Record<Role, NavItem[]> = {
     { href: "/student", label: "예약하기" },
     { href: "/student/bookings", label: "내 예약" },
     { href: "/student/feedback", label: "피드백" },
-    { href: "/student/teachers", label: "선생님" },
   ],
   TEACHER: [
     { href: "/teacher", label: "주간 캘린더" },

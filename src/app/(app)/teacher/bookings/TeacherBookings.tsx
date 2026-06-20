@@ -22,6 +22,7 @@ export type UITB = {
   lesson_title: string | null;
   teacher_comment: string | null;
   teacher_private_comment: string | null;
+  student_note: string | null;
 };
 
 type Tab = "upcoming" | "done" | "canceled";
@@ -111,6 +112,9 @@ function Row({ b, onComment }: { b: UITB; onComment: () => void }) {
       <div className="min-w-0 flex-1">
         <p className="text-[14.5px] font-semibold">{b.student_name}</p>
         {b.lesson_title && <p className="text-[12px] text-muted">{b.lesson_title}</p>}
+        {b.student_note && (
+          <p className="mt-0.5 text-[12px] text-coral-deep">💬 {b.student_note}</p>
+        )}
       </div>
       <div className="text-right">
         <p className="text-[13px] font-semibold tabular-nums">
