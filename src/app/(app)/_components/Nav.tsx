@@ -5,8 +5,15 @@ import { usePathname } from "next/navigation";
 import { navByRole, type NavItem } from "@/lib/nav";
 import { roleLabel, type Profile } from "@/lib/types";
 import { logout } from "@/app/auth/actions";
+import { LogoMark } from "@/components/ui";
 
-export default function Nav({ profile }: { profile: Profile }) {
+export default function Nav({
+  profile,
+  badges = {},
+}: {
+  profile: Profile;
+  badges?: Record<string, number>;
+}) {
   const pathname = usePathname();
   const tabs = navByRole[profile.role];
   const home = tabs[0]?.href ?? "/";
@@ -21,18 +28,13 @@ export default function Nav({ profile }: { profile: Profile }) {
       {/* 상단 바 */}
       <div className="flex h-[54px] items-center gap-3 pl-4 pr-3">
         <Link href={home} className="flex shrink-0 items-center gap-2">
-          <span
-            className="grid h-7 w-7 place-items-center rounded-[8px] text-sm font-extrabold text-white"
-            style={{ background: "var(--gradient-brand)" }}
-          >
-            L
-          </span>
+          <LogoMark size={28} />
           <span className="text-[16px] font-bold tracking-[-0.3px]">LessonHub</span>
         </Link>
 
         {/* 데스크톱 탭 (인라인) */}
         <nav className="hidden flex-1 items-center gap-1 px-2 md:flex">
-          <Tabs tabs={tabs} pathname={pathname} />
+          <Tabs tabs={tabs} pathname={pathname} badges={badges} />
         </nav>
 
         {/* 우측 컨트롤 */}
@@ -56,13 +58,21 @@ export default function Nav({ profile }: { profile: Profile }) {
 
       {/* 모바일 탭 (스크롤 행) */}
       <nav className="flex gap-1 overflow-x-auto px-3 pb-2 [scrollbar-width:none] md:hidden">
-        <Tabs tabs={tabs} pathname={pathname} />
+        <Tabs tabs={tabs} pathname={pathname} badges={badges} />
       </nav>
     </header>
   );
 }
 
-function Tabs({ tabs, pathname }: { tabs: NavItem[]; pathname: string }) {
+function Tabs({
+  tabs,
+  pathname,
+  badges,
+}: {
+  tabs: NavItem[];
+  pathname: string;
+  badges: Record<string, number>;
+}) {
   // 가장 긴 prefix 매칭 탭만 활성 (예: /student 와 /student/teachers 충돌 방지)
   const activeHref = tabs
     .filter((t) => pathname === t.href || pathname.startsWith(t.href + "/"))
@@ -71,18 +81,24 @@ function Tabs({ tabs, pathname }: { tabs: NavItem[]; pathname: string }) {
     <>
       {tabs.map((t) => {
         const active = t.href === activeHref;
+        const badge = badges[t.href];
         return (
           <Link
             key={t.href}
             href={t.href}
             className={
-              "whitespace-nowrap rounded-full px-3.5 py-2 text-[13.5px] font-semibold transition-colors " +
+              "relative flex items-center gap-1 whitespace-nowrap rounded-full px-3.5 py-2 text-[13.5px] font-semibold transition-colors " +
               (active
                 ? "bg-coral-tint text-coral-deep"
                 : "text-muted hover:text-sub")
             }
           >
             {t.label}
+            {badge ? (
+              <span className="grid h-4 min-w-4 place-items-center rounded-full bg-coral px-1 text-[10px] font-bold text-white">
+                {badge}
+              </span>
+            ) : null}
           </Link>
         );
       })}

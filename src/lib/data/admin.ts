@@ -40,9 +40,9 @@ export async function createAuthUser(input: {
   name: string;
   role: Role;
   tier?: StudentTier;
-}): Promise<{ ok: boolean; error?: string }> {
+}): Promise<{ ok: boolean; error?: string; userId?: string }> {
   const db = createAdminClient();
-  const { error } = await db.auth.admin.createUser({
+  const { data, error } = await db.auth.admin.createUser({
     email: input.email,
     password: input.password,
     email_confirm: true,
@@ -58,7 +58,7 @@ export async function createAuthUser(input: {
       return { ok: false, error: "이미 등록된 이메일입니다." };
     return { ok: false, error: error.message };
   }
-  return { ok: true };
+  return { ok: true, userId: data.user.id };
 }
 
 export async function setUserActive(userId: string, active: boolean) {

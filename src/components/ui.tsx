@@ -1,4 +1,41 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
+
+export function LogoMark({ size = 28, radius = 8 }: { size?: number; radius?: number }) {
+  return (
+    <Image
+      src="/lessonhub-logo.png"
+      alt="LessonHub"
+      width={size}
+      height={size}
+      priority
+      className="object-cover"
+      style={{ borderRadius: radius, width: size, height: size }}
+    />
+  );
+}
+
+export function Spinner({ size = 32 }: { size?: number }) {
+  return (
+    <span
+      className="inline-block animate-spin rounded-full border-coral-tint border-t-coral"
+      style={{ width: size, height: size, borderWidth: Math.max(2, size / 11) }}
+      role="status"
+      aria-label="로딩 중"
+    />
+  );
+}
+
+export function LoadingScreen({ label = "불러오는 중…" }: { label?: string }) {
+  return (
+    <div className="flex flex-1 items-center justify-center py-24">
+      <div className="flex flex-col items-center gap-3">
+        <Spinner />
+        <span className="text-[13px] font-medium text-muted">{label}</span>
+      </div>
+    </div>
+  );
+}
 
 export function PageTitle({
   title,

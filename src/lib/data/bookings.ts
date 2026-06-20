@@ -18,6 +18,7 @@ export type BookingRow = {
   status: BookingStatus;
   lesson_title_snapshot: string | null;
   teacher_comment: string | null;
+  teacher_private_comment: string | null;
   student_comment: string | null;
   canceled_at: string | null;
   recurring_series_id: string | null;
@@ -162,6 +163,82 @@ export async function getBooking(id: string): Promise<BookingRow | null> {
   const db = createAdminClient();
   const { data } = await db.from("bookings").select("*").eq("id", id).single();
   return (data as BookingRow) ?? null;
+}
+
+// 레슨 코멘트 저장: 학생 전달 메시지 + 선생님 개인 메모
+export async function updateBookingComments(
+  id: string,
+  studentMessage: string,
+  privateMemo: string,
+) {
+  const db = createAdminClient();
+  const msg = studentMessage.trim();
+  const { error } = await db
+    .from("bookings")
+    .update({
+      teacher_comment: msg || null,
+      teacher_private_comment: privateMemo.trim() || null,
+      comment_delivered_at: msg ? new Date().toISOString() : null,
+      comment_seen_at: null, // 새로 전달 시 다시 '미확인'
+    })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export type FeedbackRow = {
+  id: string;
+  start_at: string;
+  teacher_comment: string;
+  comment_delivered_at: string | null;
+  comment_seen_at: string | null;
+  lesson_title_snapshot: string | null;
+  teacher_name: string;
+};
+
+export async function getStudentFeedback(
+  studentId: string,
+): Promise<FeedbackRow[]> {
+  const db = createAdminClient();
+  const { data } = await db
+    .from("bookings")
+    .select(
+      "id, start_at, teacher_comment, comment_delivered_at, comment_seen_at, lesson_title_snapshot, teacher_id",
+    )
+    .eq("student_id", studentId)
+    .not("teacher_comment", "is", null)
+    .order("start_at", { ascending: false });
+  const rows = data ?? [];
+  const names = await namesByIds([...new Set(rows.map((r) => r.teacher_id))]);
+  return rows.map((r) => ({
+    id: r.id,
+    start_at: r.start_at,
+    teacher_comment: r.teacher_comment as string,
+    comment_delivered_at: r.comment_delivered_at,
+    comment_seen_at: r.comment_seen_at,
+    lesson_title_snapshot: r.lesson_title_snapshot,
+    teacher_name: names.get(r.teacher_id) ?? "선생님",
+  }));
+}
+
+export async function countUnseenFeedback(studentId: string): Promise<number> {
+  const db = createAdminClient();
+  const { count } = await db
+    .from("bookings")
+    .select("id", { count: "exact", head: true })
+    .eq("student_id", studentId)
+    .not("comment_delivered_at", "is", null)
+    .is("comment_seen_at", null);
+  return count ?? 0;
+}
+
+export async function markFeedbackSeen(studentId: string) {
+  const db = createAdminClient();
+  await db
+    .from("bookings")
+    .update({ comment_seen_at: new Date().toISOString() })
+    .eq("student_id", studentId)
+    .not("comment_delivered_at", "is", null)
+    .is("comment_seen_at", null);
 }
 
 export async function setBookingStatus(

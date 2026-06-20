@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { signup, type AuthState } from "@/app/auth/actions";
+import { LogoMark } from "@/components/ui";
 
 export default function SignupPage() {
   const [state, formAction, pending] = useActionState<AuthState, FormData>(
@@ -13,12 +14,7 @@ export default function SignupPage() {
     <main className="flex min-h-screen flex-1 items-center justify-center p-6">
       <div className="w-full max-w-[360px]">
         <div className="mb-7 flex items-center gap-2.5">
-          <div
-            className="grid h-9 w-9 place-items-center rounded-[12px] text-lg font-extrabold text-white"
-            style={{ background: "var(--gradient-brand)" }}
-          >
-            L
-          </div>
+          <LogoMark size={36} radius={10} />
           <span className="text-[18px] font-extrabold tracking-[-0.4px]">
             LessonHub
           </span>

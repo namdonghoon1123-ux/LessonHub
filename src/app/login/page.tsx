@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { login, type AuthState } from "@/app/auth/actions";
+import { LogoMark } from "@/components/ui";
 
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState<AuthState, FormData>(
@@ -20,9 +21,9 @@ export default function LoginPage() {
         <span className="pointer-events-none absolute -bottom-16 -left-16 h-[220px] w-[220px] rounded-full bg-white/[0.12]" />
 
         <div className="relative flex items-center gap-2.5">
-          <div className="grid h-9 w-9 place-items-center rounded-[12px] bg-white/95 text-lg font-extrabold text-coral">
-            L
-          </div>
+          <span className="grid h-10 w-10 place-items-center rounded-[12px] bg-white/95">
+            <LogoMark size={30} radius={8} />
+          </span>
           <span className="text-[21px] font-extrabold tracking-[-0.4px]">
             LessonHub
           </span>

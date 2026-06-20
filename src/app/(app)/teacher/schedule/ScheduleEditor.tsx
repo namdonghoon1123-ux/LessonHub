@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Card, Chip, PageTitle } from "@/components/ui";
+import { Card, Chip } from "@/components/ui";
 import Modal from "@/components/Modal";
 import { WEEKDAY_KO, dayNum, fmtTimeStr } from "@/lib/time";
 import type { OverrideRow, WeeklyRow } from "@/lib/data/availability";
@@ -47,11 +47,6 @@ export default function ScheduleEditor({
 
   return (
     <>
-      <PageTitle
-        title="시간표 · 예외"
-        desc="주간 가능 시간 + 특정 날짜 예외 = 학생에게 보이는 슬롯"
-      />
-
       {error && (
         <p className="mb-4 rounded-[10px] bg-coral-tint px-3 py-2 text-[13px] font-medium text-coral-deep">
           {error}

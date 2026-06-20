@@ -25,6 +25,24 @@ export async function getTeacherProfile(
   return (data as TeacherProfile) ?? null;
 }
 
+export async function updateTeacherProfile(
+  teacherId: string,
+  fields: Partial<{
+    lesson_duration_min: number;
+    teacher_cancel_cutoff_hours: number;
+    booking_window_days: number;
+    subject: string;
+    display_name: string;
+  }>,
+) {
+  const db = createAdminClient();
+  const { error } = await db
+    .from("teacher_profiles")
+    .update(fields)
+    .eq("teacher_id", teacherId);
+  if (error) throw new Error(error.message);
+}
+
 export async function getTeacherBySlug(slug: string): Promise<{
   id: string;
   name: string;

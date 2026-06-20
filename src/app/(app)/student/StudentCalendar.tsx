@@ -60,8 +60,10 @@ export default function StudentCalendar({
         repeat > 1
           ? await bookRecurringAction(teacherId, slot.startAtISO, repeat)
           : await bookSlotAction(teacherId, slot.startAtISO);
-      if (!res.ok) setError(res.error ?? "예약에 실패했습니다.");
-      else {
+      if (!res.ok) {
+        setError(res.error ?? "예약에 실패했습니다.");
+        router.refresh(); // 이미 찬 슬롯이면 즉시 '마감'으로 갱신
+      } else {
         setTarget(null);
         if (res.requested && res.created !== undefined && res.created < res.requested) {
           setNotice(

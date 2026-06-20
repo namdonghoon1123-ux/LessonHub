@@ -2,13 +2,69 @@
 
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
-import { getBooking, setBookingStatus } from "@/lib/data/bookings";
+import {
+  getBooking,
+  setBookingStatus,
+  updateBookingComments,
+} from "@/lib/data/bookings";
 import {
   rejectLinkByTeacher,
   setLinkStatusByTeacher,
 } from "@/lib/data/links";
+import { createAuthUser, createLink } from "@/lib/data/admin";
+import { updateTeacherProfile } from "@/lib/data/teachers";
 
 export type Result = { ok: boolean; error?: string };
+
+export async function updateLessonSettingsAction(input: {
+  lessonDurationMin: number;
+  cancelCutoffHours: number;
+  bookingWindowDays: number;
+}): Promise<Result> {
+  const me = await requireRole("TEACHER");
+  if (input.lessonDurationMin < 10 || input.lessonDurationMin > 240)
+    return { ok: false, error: "레슨 길이는 10~240분 사이여야 합니다." };
+  try {
+    await updateTeacherProfile(me.id, {
+      lesson_duration_min: input.lessonDurationMin,
+      teacher_cancel_cutoff_hours: input.cancelCutoffHours,
+      booking_window_days: input.bookingWindowDays,
+    });
+    revalidatePath("/teacher/schedule");
+    revalidatePath("/teacher");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
+// 선생님이 학생(임시) 계정 생성 + 본인에게 자동 연결(ACTIVE)
+export async function createStudentAction(input: {
+  name: string;
+  email: string;
+  password: string;
+}): Promise<Result> {
+  const me = await requireRole("TEACHER");
+  if (!input.name || !input.email)
+    return { ok: false, error: "이름/이메일을 입력하세요." };
+  if (input.password.length < 6)
+    return { ok: false, error: "임시 비밀번호는 6자 이상이어야 합니다." };
+  const res = await createAuthUser({
+    email: input.email,
+    password: input.password,
+    name: input.name,
+    role: "STUDENT",
+    tier: "TEMP",
+  });
+  if (!res.ok || !res.userId) return { ok: false, error: res.error };
+  try {
+    await createLink(res.userId, me.id); // ACTIVE 연결
+    revalidatePath("/teacher/students");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
 
 export async function approveLinkAction(id: string): Promise<Result> {
   const me = await requireRole("TEACHER");
@@ -42,6 +98,22 @@ async function ownedBooking(id: string) {
 function refresh() {
   revalidatePath("/teacher");
   revalidatePath("/teacher/bookings");
+}
+
+export async function saveCommentAction(
+  id: string,
+  studentMessage: string,
+  privateMemo: string,
+): Promise<Result> {
+  const b = await ownedBooking(id);
+  if (!b) return { ok: false, error: "권한이 없습니다." };
+  try {
+    await updateBookingComments(id, studentMessage, privateMemo);
+    revalidatePath("/teacher/bookings");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
 }
 
 export async function completeBookingAction(id: string): Promise<Result> {
