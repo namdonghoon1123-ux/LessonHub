@@ -16,6 +16,7 @@ export default async function Page() {
     teacher_name: r.teacher_name,
     lesson_title: r.lesson_title_snapshot,
     seriesId: r.recurring_series_id,
+    shareToken: r.share_token,
     canCancel: canStudentCancel(r.start_at),
     deadlineISO: studentCancelDeadline(r.start_at).toISOString(),
   });

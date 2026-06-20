@@ -15,6 +15,7 @@ export type UIBooking = {
   teacher_name: string;
   lesson_title: string | null;
   seriesId: string | null;
+  shareToken: string;
   canCancel: boolean;
   deadlineISO: string;
 };
@@ -234,6 +235,14 @@ function BookingCard({ b, past }: { b: UIBooking; past?: boolean }) {
       <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
         {b.seriesId && <Chip tone="coral">반복</Chip>}
         <Chip tone={statusTone}>{STATUS_LABEL[b.status]}</Chip>
+        {!past && b.status === "BOOKED" && (
+          <a
+            href={`/api/ics/event/${b.shareToken}`}
+            className="rounded-[var(--radius-btn)] border border-line px-3 py-2 text-[13px] font-medium text-coral-deep hover:bg-coral-tint/40"
+          >
+            📅 캘린더에 추가
+          </a>
+        )}
         {!past && b.status === "BOOKED" && (
           <>
             <button
