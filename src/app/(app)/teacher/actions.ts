@@ -15,7 +15,31 @@ import {
 } from "@/lib/data/links";
 import { createAuthUser, createLink } from "@/lib/data/admin";
 import { updateTeacherProfile } from "@/lib/data/teachers";
+import { addOverride } from "@/lib/data/availability";
 import { syntheticEmail, usernameTaken } from "@/lib/account";
+
+// 주간 그리드에서 빈 슬롯 클릭 → 그 시간만 휴강(CLOSE) 처리
+export async function quickCloseSlotAction(
+  date: string,
+  startTime: string,
+  endTime: string,
+): Promise<Result> {
+  const me = await requireRole("TEACHER");
+  try {
+    await addOverride(me.id, {
+      date,
+      type: "CLOSE",
+      start_time: startTime,
+      end_time: endTime,
+      lesson_note: null,
+    });
+    revalidatePath("/teacher");
+    revalidatePath("/teacher/schedule");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
 
 export type Result = { ok: boolean; error?: string };
 

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 // 비로그인 접근 허용 경로 (정확히 일치하거나 하위 경로)
-const PUBLIC_PREFIXES = ["/login", "/signup", "/t"];
+const PUBLIC_PREFIXES = ["/login", "/signup", "/t", "/api/ics"];
 
 export async function proxy(request: NextRequest) {
   const { response, user } = await updateSession(request);

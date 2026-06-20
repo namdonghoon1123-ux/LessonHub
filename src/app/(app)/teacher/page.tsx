@@ -5,166 +5,134 @@ import { getPendingRequests } from "@/lib/data/links";
 import { getTeacherProfile } from "@/lib/data/teachers";
 import { computeRange } from "@/lib/slots";
 import {
-  WEEKDAY_KO,
   addDaysStr,
-  dayNum,
-  fmtTime,
   kstDateStr,
   kstTodayStr,
   weekStartStr,
+  weekdayOf,
 } from "@/lib/time";
 import { Card, PageTitle } from "@/components/ui";
 import PendingRequests from "./PendingRequests";
+import TeacherCalendar, { type SlotInfo } from "./TeacherCalendar";
+
+const STATUS_KO: Record<string, string> = {
+  BOOKED: "확정",
+  PENDING: "대기",
+};
+const isoStart = (d: string) => new Date(`${d}T00:00:00+09:00`).toISOString();
 
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ week?: string }>;
+  searchParams: Promise<{ view?: string; period?: string }>;
 }) {
   const me = await requireRole("TEACHER");
   const sp = await searchParams;
   const profile = await getTeacherProfile(me.id);
-  const duration = profile?.lesson_duration_min ?? 30;
-
+  const duration = profile?.lesson_duration_min ?? 60;
   const today = kstTodayStr();
-  const weekStart = sp.week ?? weekStartStr(today);
-  const weekEnd = addDaysStr(weekStart, 7);
+  const view = sp.view === "month" ? "month" : "week";
+
+  let periodStart: string;
+  let gridStart: string;
+  let dayCount: number;
+  if (view === "month") {
+    periodStart = sp.period ?? today.slice(0, 7) + "-01";
+    gridStart = addDaysStr(periodStart, -weekdayOf(periodStart));
+    dayCount = 42;
+  } else {
+    periodStart = sp.period ?? weekStartStr(today);
+    gridStart = periodStart;
+    dayCount = 7;
+  }
+  const fromISO = isoStart(gridStart);
+  const toISO = isoStart(addDaysStr(gridStart, dayCount));
 
   const [weekly, overrides, allBookings, pendingReqs] = await Promise.all([
     getWeekly(me.id),
-    getOverrides(me.id, weekStart),
+    getOverrides(me.id, gridStart),
     getTeacherBookings(me.id),
     getPendingRequests(me.id),
   ]);
 
-  // 이번 주 활성 예약 → start_at ISO별 학생명 맵
-  const weekActive = allBookings.filter(
+  const periodActive = allBookings.filter(
     (b) =>
       (b.status === "BOOKED" || b.status === "PENDING") &&
-      b.start_at >= isoStart(weekStart) &&
-      b.start_at < isoStart(weekEnd),
+      b.start_at >= fromISO &&
+      b.start_at < toISO,
   );
-  const nameBySlot = new Map(
-    weekActive.map((b) => [new Date(b.start_at).toISOString(), b.student_name]),
-  );
+  const infoBySlot: Record<string, SlotInfo> = {};
+  for (const b of periodActive) {
+    infoBySlot[new Date(b.start_at).toISOString()] = {
+      student_name: b.student_name,
+      student_note: b.student_note,
+      status: STATUS_KO[b.status] ?? b.status,
+      id: b.id,
+    };
+  }
 
-  const days = computeRange(weekStart, 7, {
+  const days = computeRange(gridStart, dayCount, {
     durationMin: duration,
     weekly,
     overrides,
-    bookings: weekActive.map((b) => ({
+    bookings: periodActive.map((b) => ({
       start_at: b.start_at,
       student_id: b.student_id,
       status: b.status,
     })),
   });
 
-  const openCount = days.reduce(
-    (n, d) => n + d.slots.filter((s) => s.status === "open").length,
-    0,
-  );
+  // 통계
+  const wkStart = weekStartStr(today);
+  const wkFrom = isoStart(wkStart);
+  const wkTo = isoStart(addDaysStr(wkStart, 7));
   const todayCount = allBookings.filter(
     (b) =>
       (b.status === "BOOKED" || b.status === "COMPLETED") &&
       kstDateStr(new Date(b.start_at)) === today,
   ).length;
+  const weekActive = allBookings.filter(
+    (b) =>
+      (b.status === "BOOKED" || b.status === "PENDING") &&
+      b.start_at >= wkFrom &&
+      b.start_at < wkTo,
+  ).length;
+  const openCount = days.reduce(
+    (n, d) => n + d.slots.filter((s) => s.status === "open").length,
+    0,
+  );
   const exceptionDays = new Set(
     overrides
-      .filter((o) => o.date >= weekStart && o.date < weekEnd)
+      .filter((o) => o.date >= gridStart && o.date < addDaysStr(gridStart, dayCount))
       .map((o) => o.date),
   ).size;
 
   return (
     <>
       <PageTitle
-        title="이번 주 운영"
-        desc={`${weekStart.slice(5)} ~ ${addDaysStr(weekStart, 6).slice(5)} · Asia/Seoul`}
-        right={
-          <div className="flex gap-1.5">
-            <NavA href={`/teacher?week=${addDaysStr(weekStart, -7)}`}>←</NavA>
-            <NavA href={`/teacher?week=${addDaysStr(weekStart, 7)}`}>→</NavA>
-          </div>
-        }
+        title={`${me.name} 선생님 · 운영`}
+        desc="Asia/Seoul · 빈 시간 클릭=휴강, 예약 클릭=정보"
       />
 
       <PendingRequests requests={pendingReqs} />
 
-      {/* 통계 스트립 */}
-      <Card className="mb-4 grid grid-cols-2 divide-x divide-line-soft sm:grid-cols-4">
+      <Card className="mb-4 grid grid-cols-2 divide-line-soft sm:grid-cols-4 sm:divide-x">
         <Stat n={todayCount} label="오늘 수업" highlight />
-        <Stat n={weekActive.length} label="이번 주 예약" />
+        <Stat n={weekActive} label="이번 주 예약" />
         <Stat n={openCount} label="열어둔 빈 슬롯" />
         <Stat n={exceptionDays} label="예외·휴무" />
       </Card>
 
-      {/* 주간 그리드 */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
-        {days.map((d) => {
-          const isToday = d.date === today;
-          return (
-            <div
-              key={d.date}
-              className={
-                "flex min-h-[130px] flex-col rounded-[var(--radius-card)] border bg-surface " +
-                (isToday ? "border-coral-border" : "border-line")
-              }
-            >
-              <div className={"px-2.5 py-2 " + (isToday ? "bg-coral-tint" : "")}>
-                <div className={`text-[12px] font-semibold ${d.weekday === 0 ? "text-rose" : "text-sub"}`}>
-                  {WEEKDAY_KO[d.weekday]}
-                </div>
-                <div className={`text-[18px] font-bold tabular-nums ${isToday ? "text-coral-deep" : ""}`}>
-                  {dayNum(d.date)}
-                </div>
-              </div>
-              <div className="flex flex-1 flex-col gap-1 p-2">
-                {d.isOff ? (
-                  <Mini>휴무</Mini>
-                ) : d.slots.length === 0 ? (
-                  <Mini>—</Mini>
-                ) : (
-                  d.slots.map((s) => {
-                    const name = nameBySlot.get(s.startAtISO);
-                    if (s.status === "full" || s.status === "mine")
-                      return (
-                        <span
-                          key={s.startAtISO}
-                          className="rounded-[6px] border-l-2 border-rose bg-rose-tint px-1.5 py-1 text-[11.5px] font-semibold text-rose tabular-nums"
-                        >
-                          {fmtTime(new Date(s.startAtISO))} {name ?? ""}
-                        </span>
-                      );
-                    if (s.status === "open")
-                      return (
-                        <span
-                          key={s.startAtISO}
-                          className="rounded-[6px] border border-dashed border-coral-border px-1.5 py-1 text-[11.5px] text-coral-deep tabular-nums"
-                        >
-                          {fmtTime(new Date(s.startAtISO))} 열림
-                        </span>
-                      );
-                    return (
-                      <span
-                        key={s.startAtISO}
-                        className="px-1.5 py-1 text-[11.5px] text-muted tabular-nums"
-                      >
-                        {fmtTime(new Date(s.startAtISO))}
-                      </span>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <TeacherCalendar
+        view={view}
+        periodStart={periodStart}
+        today={today}
+        days={days}
+        durationMin={duration}
+        infoBySlot={infoBySlot}
+      />
     </>
   );
-}
-
-function isoStart(dateStr: string): string {
-  // KST 자정 → UTC ISO
-  return new Date(new Date(`${dateStr}T00:00:00+09:00`)).toISOString();
 }
 
 function Stat({ n, label, highlight }: { n: number; label: string; highlight?: boolean }) {
@@ -175,24 +143,5 @@ function Stat({ n, label, highlight }: { n: number; label: string; highlight?: b
       </div>
       <div className="text-[12px] text-muted">{label}</div>
     </div>
-  );
-}
-
-function Mini({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex flex-1 items-center justify-center py-3 text-[11.5px] text-muted">
-      {children}
-    </div>
-  );
-}
-
-function NavA({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <a
-      href={href}
-      className="grid h-8 w-8 place-items-center rounded-[8px] border border-line text-sub hover:bg-line-soft"
-    >
-      {children}
-    </a>
   );
 }

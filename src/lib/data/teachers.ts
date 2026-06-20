@@ -11,6 +11,7 @@ export type TeacherProfile = {
   booking_window_days: number;
   teacher_cancel_cutoff_hours: number;
   student_cancel_day_before_hour: number | null;
+  ics_token: string;
 };
 
 export async function getTeacherProfile(
