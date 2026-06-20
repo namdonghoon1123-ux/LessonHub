@@ -43,12 +43,17 @@ const STATUS: Record<BookingStatus, { label: string; tone: "rose" | "success" | 
 };
 
 const PAGE_SIZE = 15;
+const pad = (n: number) => String(n).padStart(2, "0");
+const mKey = (iso: string) => {
+  const w = kstWall(new Date(iso));
+  return `${w.y}-${pad(w.mo + 1)}`;
+};
+const mLabel = (key: string) => key.replace("-", ". ");
 
 function groupByMonth(items: UITB[]): [string, UITB[]][] {
   const map = new Map<string, UITB[]>();
   for (const b of items) {
-    const w = kstWall(new Date(b.start_at));
-    const key = `${w.y}. ${String(w.mo + 1).padStart(2, "0")}`;
+    const key = mLabel(mKey(b.start_at));
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(b);
   }
@@ -57,19 +62,27 @@ function groupByMonth(items: UITB[]): [string, UITB[]][] {
 
 export default function TeacherBookings({ items }: { items: UITB[] }) {
   const [tab, setTab] = useState<Tab>("upcoming");
+  const [month, setMonth] = useState("all");
   const [page, setPage] = useState(1);
   const [commentTarget, setCommentTarget] = useState<UITB | null>(null);
   const active = TABS.find((t) => t.key === tab)!;
   const count = (t: (typeof TABS)[number]) =>
     items.filter((i) => t.match(i.status)).length;
 
-  const filtered = items
+  const tabItems = items
     .filter((i) => active.match(i.status))
     .sort((a, b) =>
       tab === "upcoming"
         ? a.start_at.localeCompare(b.start_at)
         : b.start_at.localeCompare(a.start_at),
     );
+  // 이 탭에 존재하는 월 목록 (최신순)
+  const months = [...new Set(tabItems.map((b) => mKey(b.start_at)))].sort((a, b) =>
+    b.localeCompare(a),
+  );
+  const filtered =
+    month === "all" ? tabItems : tabItems.filter((b) => mKey(b.start_at) === month);
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const cur = Math.min(page, totalPages);
   const slice = filtered.slice((cur - 1) * PAGE_SIZE, cur * PAGE_SIZE);
@@ -77,6 +90,7 @@ export default function TeacherBookings({ items }: { items: UITB[] }) {
 
   const selectTab = (k: Tab) => {
     setTab(k);
+    setMonth("all");
     setPage(1);
   };
 
@@ -100,6 +114,26 @@ export default function TeacherBookings({ items }: { items: UITB[] }) {
             {t.label} {count(t)}
           </button>
         ))}
+      </div>
+
+      <div className="mb-4 flex items-center gap-2">
+        <span className="text-[12.5px] font-semibold text-sub">월 선택</span>
+        <select
+          value={month}
+          onChange={(e) => {
+            setMonth(e.target.value);
+            setPage(1);
+          }}
+          className="h-9 rounded-[10px] border-[1.5px] border-line bg-surface px-3 text-[13px] font-medium outline-none focus:border-coral"
+        >
+          <option value="all">전체</option>
+          {months.map((m) => (
+            <option key={m} value={m}>
+              {mLabel(m)}
+            </option>
+          ))}
+        </select>
+        <span className="text-[12.5px] text-muted">{filtered.length}건</span>
       </div>
 
       {filtered.length === 0 ? (
